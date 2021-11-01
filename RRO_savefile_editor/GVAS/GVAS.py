@@ -59,10 +59,14 @@ class GVASData(object):
     def _readProperty(self, fstream):
         c = peekInt8(fstream)
         if c == 0:
+            print("None property found at ", end = '')
+            print(hex(fstream.tell()))
             return None
         pname = readUEString(fstream)
         # print(pname)
         if pname == "" or pname is None:
+            print("None property found at ", end = '')
+            print(hex(fstream.tell()))
             return None
         prop = UEProperty()
         prop._name = pname
@@ -190,6 +194,7 @@ class GVASData(object):
 
         for i in range(ntext):
             data.append(UETextProperty(fstream).value)
+            # print(i, '-', repr(data[-1]), '-', hex(fstream.tell()))
 
         prop._data = data
 
@@ -269,7 +274,6 @@ class GVASData(object):
                 fstream.seek(end_offset)
                 return
 
-
     def _writeBoolPropertyArray(self, fstream, prop):
         writeInt8(fstream, 0) # check bool
         writeInt32(fstream, prop.data.size)
@@ -321,13 +325,13 @@ class GVASData(object):
         prev_is_formatted=False
         for txt in prop.data:
             if txt is None:
-                if prev_is_formatted:
-                    writeInt32(fstream, 2)
-                else:
-                    writeInt32(fstream,0)
+                # if prev_is_formatted:
+                #     writeInt32(fstream, 2)
+                # else:
+                writeInt32(fstream,0)
                 writeInt8(fstream,-1)
                 writeInt32(fstream,0)
-                prev_is_formatted=False
+                # prev_is_formatted=False
                 sz += 9
                 continue
 
@@ -345,13 +349,13 @@ class GVASData(object):
 
             if '\n' in txt:
                 txt_parts = txt.split('\n')
-                if prev_is_formatted:
-                    writeInt32(fstream,2)
-                else:
-                    writeInt32(fstream,0)
-                writeInt8(fstream,-1)
-                writeInt32(fstream,0)
-                sz += 9
+                # if prev_is_formatted:
+                #     writeInt32(fstream,2)
+                # else:
+                #     writeInt32(fstream,0)
+                # writeInt8(fstream,-1)
+                # writeInt32(fstream,0)
+                # sz += 9
                 writeInt32(fstream,1)
                 writeInt8(fstream,3)
                 writeInt64(fstream,8)
@@ -381,6 +385,10 @@ class GVASData(object):
                 writeInt8(fstream,4)
                 prev_is_formatted = True
                 sz += 1
+                writeInt32(fstream,2)
+                writeInt8(fstream,-1)
+                writeInt32(fstream,0)
+                sz += 9
         # print(prop.name, sz)
         return sz
 
@@ -415,43 +423,60 @@ class UEType(object):
 class UETextProperty(UEType):
     count = 0
     def __init__(self, fstream):
-        UETextProperty.count += 1
+        # UETextProperty.count += 1
         # print('count =' + str(UETextProperty.count))
         self.value = None
 
         before_sep = readInt32(fstream)
-        nformat = 1
-        readInt8(fstream) # should be 0xff (separator)
-        opt = readInt32(fstream)
+        # nformat = 1
+        # readInt8(fstream) # should be 0xff (separator)
+        # opt = readInt32(fstream)
         # flags = readInt64(fstream)
 
-        if opt == 0:
-            if peekInt32(fstream) == 1:
-                before_sep = readInt32(fstream)
-                if before_sep == 1:
-                    # debug output inside file
-                    ndebug = readInt8(fstream)
-                    readInt64(fstream) # 8
-                    readInt8(fstream)
-                    readUEString(fstream)
-                    format_str = readUEString(fstream).replace('<br>', '\n')
-                    nformat = readInt32(fstream)
-                    readUEString(fstream)
-                    readInt8(fstream)
-                    readInt32(fstream)
-                    readInt8(fstream)
-                    opt = readInt32(fstream)
-            else:
-                return
-        if opt == 1:
-            if nformat == 1:
+        if before_sep == 1:
+            # UETextProperty.count += 1
+            # print("counter:", UETextProperty.count)
+            # before_sep = readInt32(fstream)
+            # if before_sep == 1:
+                # debug output inside file
+            assert readInt8(fstream) == 3
+            assert readInt64(fstream) == 8 # 8
+            assert readInt8(fstream) == 0
+            assert readUEString(fstream) == "56F8D27149CC5E2D12103BBEBFCA9097"
+            format_str = readUEString(fstream).replace('<br>', '\n')
+            assert format_str == "{0}\n{1}"
+            nformat = readInt32(fstream)
+            assert nformat == 2
+            assert readUEString(fstream) ==  "0"
+            assert readInt8(fstream) == 4
+            assert readInt32(fstream) == 2
+            assert readInt8(fstream) == -1
+            opt = readInt32(fstream)
+            assert opt == 1
+            words = []
+            for i in range(nformat):
+                words.append(readUEString(fstream))
+            assert readInt8(fstream) == 4
+            assert readInt32(fstream) == 2
+            assert readInt8(fstream) == -1
+            assert readInt32(fstream) == 0
+            self.value = format_str.format(*tuple(words))
+        else:
+            assert readInt8(fstream) == -1
+            opt = readInt32(fstream)
+            if opt == 1:
                 self.value = readUEString(fstream)
-            else :
-                words = []
-                for i in range(nformat):
-                    words.append(readUEString(fstream))
-                readInt8(fstream)
-                self.value = format_str.format(*tuple(words))
+            else:
+                self.value = None
+        # if opt == 1:
+        #     if nformat == 1:
+        #         self.value = readUEString(fstream)
+        #     else :
+        #         words = []
+        #         for i in range(nformat):
+        #             words.append(readUEString(fstream))
+        #         readInt8(fstream)
+        #         # self.value = format_str.format(*tuple(words))
 
 
 class GVASHeader(dict):
@@ -584,10 +609,13 @@ def isUTF16(s):
 
 if __name__ == "__main__":
     print("{:-^72s}".format(" Running unit tests for file `GVAS.py` "))
-    test_files = ["../slot9.sav", "../slot1.sav", "../slot2.sav"]
+    test_files = ["../../slot{}.sav".format(i) for i in range(1,11)]
     total_passed_count = 0
     total_failed_count = 0
+    import os.path
     for test_file in test_files:
+        if not os.path.isfile(test_file):
+            continue
         print(f'> Test file is {test_file}')
         passed_count = 0
         failed_count = 0
@@ -615,6 +643,7 @@ if __name__ == "__main__":
         print("- GVAS read...", end=' ')
         try:
             gvas = GVAS(test_file)
+            # print(gvas.data.find("FrameNameArray").data)
             print("\033[1;32mPASSED\033[0m")
             passed_count += 1
 
