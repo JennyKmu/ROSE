@@ -1,4 +1,4 @@
-﻿# RRO_savefile_editor_v0.3.0
+﻿# RRO_savefile_editor_v0.3.1
 
 This program is intended to be used as an external tool to Railroads Online server hosts. It will read save files, allow to modify entries within it, and then save the file (creating a backup file in the process).
 
@@ -23,10 +23,10 @@ Setting up pip so that you can easily install python modules is recommended. Mor
 Currently, functionnalities are limited to:
 * Editing xp value for each player;
 * Editing money value for each player;
+* Editing rolling stock names and numbers
 
 ## In the work
 
-* Editing rolling stock names and numbers
 * Editing rolling stock contents
 * Plotting a map of the network
 * Exporting SVG files of the network
