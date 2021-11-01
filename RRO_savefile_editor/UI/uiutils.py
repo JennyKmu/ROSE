@@ -15,6 +15,8 @@ KeyTranslatorWin = {
     b"\xe0M":b"KEY_RIGHT",
     b"\xe0P":b"KEY_DOWN",
     b"\xe0K":b"KEY_LEFT",
+    b"\xe0I":b"PAGE_UP",
+    b"\xe0Q":b"PAGE_DOWN",
     b"\r":b"RETURN",
     b"\x08":b"BACKSPACE",
     b"\x1b":b"ESCAPE",

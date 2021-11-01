@@ -47,7 +47,7 @@ def main():
         "Jenny",
     ]
 
-    version = (0,3,0)
+    version = (0,3,1)
 
     def header():
         print("="*72)
@@ -104,9 +104,10 @@ def main():
 
 
     def loop(loc = "."):
+        if __name__ == "__main__":
+            loc = ".."
         from pathlib import Path
         filename = selectSaveFile(loc)
-        filepath = Path(filename)
         if filename is None:
             print("No save file detected ! Please check program location.")
             print("Press any key to exit.")
@@ -119,6 +120,7 @@ def main():
             print("------------------")
             getKey()
             exit()
+        filepath = Path(filename)
 
         gvas = GVAS.GVAS(filename)
         print("Currently loaded file is '\033[1m{}\033[0m'".format(filename))
@@ -127,8 +129,8 @@ def main():
             choice = mainMenu()
             if choice == "Players":
                 playerMenu(gvas)
-            elif choice == "Locos and Cars":
-                frameMenu(gvas)
+            elif choice == "Rolling stock":
+                rstockMenu(gvas)
             elif choice == "Save & Exit":
                 fbackup = Path("./backups") / Path("backup_"+filepath.name)
                 print("> Saving backup file as {}".format(fbackup))
