@@ -66,7 +66,7 @@ class _GetchUnix:
         import tty, sys, termios # import termios now or else you'll get the Unix version on the Mac
 
     def __call__(self, _chekmorebytes=True):
-        print("_GetchUnix")
+        # print("_GetchUnix")
         import sys, tty, termios
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
@@ -99,7 +99,7 @@ class _GetchWindows:
         import msvcrt
 
     def __call__(self, _checkmorebytes=True):
-        print("_GetchWindows")
+        # print("_GetchWindows")
         import msvcrt
         r = msvcrt.getch()
         if r in NeedSecondByteWin and  _checkmorebytes == True:
@@ -131,7 +131,7 @@ class _GetchMacCarbon:
         Carbon.Evt #see if it has this (in Unix, it doesn't)
 
     def __call__(self):
-        print("_GetchMacCarbon")
+        # print("_GetchMacCarbon")
         import Carbon
         if Carbon.Evt.EventAvail(0x0008)[0]==0: # 0x0008 is the keyDownMask
             return ''
