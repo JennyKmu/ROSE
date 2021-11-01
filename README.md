@@ -1,4 +1,4 @@
-﻿# RRO_savefile_editor_v0.3.1
+﻿# RRO_savefile_editor_v0.3.2
 
 This program is intended to be used as an external tool to Railroads Online server hosts. It will read save files, allow to modify entries within it, and then save the file (creating a backup file in the process).
 
