@@ -104,7 +104,9 @@ def main():
 
 
     def loop(loc = "."):
+        from pathlib import Path
         filename = selectSaveFile(loc)
+        filepath = Path(filename)
         if filename is None:
             print("No save file detected ! Please check program location.")
             print("Press any key to exit.")
@@ -128,24 +130,37 @@ def main():
             elif choice == "Locos and Cars":
                 frameMenu(gvas)
             elif choice == "Save & Exit":
-                fbackup = "backups/backup_" + filename
+                fbackup = Path("./backups") / Path("backup_"+filepath.name)
                 print("> Saving backup file as {}".format(fbackup))
                 if not os.path.exists('backups'):
                     os.makedirs('backups')
                 shutil.copy(filename, fbackup)
 
                 print("> Overwriting file {}".format(filename))
-                gvas.write("dev_"+filename)
+                # gvas.write("dev_"+filepath.name)
+                gvas.write(filename)
                 print("Press any key to exit.")
                 print("------------------")
                 getKey()
                 exit()
             elif choice == "Exit":
                 exit()
+                pass
 
-    loop()
+    try:
+        loop()
+    except Exception as e:
+        print(e)
+        print("Please send the above error to the dev team. Press any key to leave.")
+        getKey()
+
 
 
 
 if __name__=="__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(e)
+        print("Please send the above error to the dev team. Press any key to leave.")
+        getKey()
