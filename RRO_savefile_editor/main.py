@@ -70,7 +70,7 @@ def main():
         print("> Have the script file inside the folder containing saved games")
         print("  (Should be located in C:\\Users\\Username\\AppData\\Local\\arr\\Saved\\SaveGames)")
         print("> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program !")
-        print("> At any point during execution you can stop execution by pressing ctrl-C.")
+        print("> At any point during execution you can stop execution by pressing Ctrl-D.")
         print("> And finally, \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program !")
         print("------------------")
 

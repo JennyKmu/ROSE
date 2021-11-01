@@ -5,7 +5,38 @@
 #     def __init__(self, code):
 #
 
+NeedSecondByteWin = [
+    b'\xe0',
+    b'\x00',
+]
 
+KeyTranslatorWin = {
+    b"\xe0H":b"KEY_UP",
+    b"\xe0M":b"KEY_RIGHT",
+    b"\xe0P":b"KEY_DOWN",
+    b"\xe0K":b"KEY_LEFT",
+    b"\r":b"RETURN",
+    b"\x08":b"BACKSPACE",
+    b"\x1b":b"ESCAPE",
+    b"\x03":b"CTRL_C",
+    b"\x04":b"CTRL_D"
+}
+
+
+NeedSecondByteUnix = [
+    b'\x1b',
+]
+
+KeyTranslatorUnix = {
+    b"\x1b[A":b"KEY_UP",
+    b"\x1b[B":b"KEY_DOWN",
+    b"\x1b[C":b"KEY_RIGHT",
+    b"\x1b[D":b"KEY_LEFT",
+    b"\x1b":b"ESCAPE",
+    b"\r":b"RETURN",
+    b"\x03":b"CTRL_C",
+    b"\x04":b"CTRL_D"
+}
 
 ### From StackOverflow:
 # https://stackoverflow.com/questions/13207678/whats-the-simplest-way-of-detecting-keyboard-input-in-a-script-from-the-termina
@@ -15,38 +46,78 @@ class _Getch:
 screen. From http://code.activestate.com/recipes/134892/"""
     def __init__(self):
         try:
-            self.impl = _GetchWindows()
+            self._impl = _GetchWindows()
         except ImportError:
             try:
-                self.impl = _GetchMacCarbon()
+                self._impl = _GetchMacCarbon()
             except(AttributeError, ImportError):
-                self.impl = _GetchUnix()
+                self._impl = _GetchUnix()
 
-    def __call__(self): return self.impl()
+    def __call__(self): return self._impl()
+
+    @property
+    def impl(self):
+        return self._impl
+
 
 
 class _GetchUnix:
     def __init__(self):
         import tty, sys, termios # import termios now or else you'll get the Unix version on the Mac
 
-    def __call__(self):
+    def __call__(self, _chekmorebytes=True):
+        print("_GetchUnix")
         import sys, tty, termios
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
             tty.setraw(sys.stdin.fileno())
             ch = sys.stdin.read(1)
+            if ch in NeedSecondByteUnix and _chekmorebytes:
+                ch2 = self(_chekmorebytes=False)
+                if ch2 != '':
+                    ch3 = self(_chekmorebytes=False)
+                    ch = ch + ch2 + ch3
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch
+
+    def translate(self, b):
+        try:
+            r = KeyTranslatorUnix[b]
+            if r == b"CTRL_C":
+                raise KeyboardInterrupt
+            if r == b"CTRL_D":
+                raise SystemExit
+            return r
+        except KeyError:
+            return b
+
 
 class _GetchWindows:
     def __init__(self):
         import msvcrt
 
-    def __call__(self):
+    def __call__(self, _checkmorebytes=True):
+        print("_GetchWindows")
         import msvcrt
-        return msvcrt.getch()
+        r = msvcrt.getch()
+        if r in NeedSecondByteWin and  _checkmorebytes == True:
+            r = r + msvcrt.getch()
+
+        return r
+
+    def translate(self, b):
+        try:
+            r = KeyTranslatorWin[b]
+            if r == b"CTRL_C":
+                raise KeyboardInterrupt
+            if r == b"CTRL_D":
+                raise SystemExit
+            return r
+        except KeyError:
+            return b
+
 
 class _GetchMacCarbon:
     """
@@ -60,6 +131,7 @@ class _GetchMacCarbon:
         Carbon.Evt #see if it has this (in Unix, it doesn't)
 
     def __call__(self):
+        print("_GetchMacCarbon")
         import Carbon
         if Carbon.Evt.EventAvail(0x0008)[0]==0: # 0x0008 is the keyDownMask
             return ''
@@ -79,43 +151,18 @@ class _GetchMacCarbon:
 
 
 # Adapted below by Jenny
-def getKey(_second_byte=False):
-    inkey = _Getch()
-    import sys
+def getKey():
+    inkey = _Getch().impl
+    # import sys
     # for i in range(sys.maxsize):
     while True:
-        k=inkey()
-        if not _second_byte:
-            if k in NeedSecondByte:
-                k = k+getKey(_second_byte=True)
-        try:
-            k = KeyTranslator[k]
-        except KeyError:
-            pass
-
-        if k==b"CTRL_C":
-            raise KeyboardInterrupt()
-
+        k = inkey()
+        k = inkey.translate(k)
         if k!='': break
 
     return k
 #^^^^
 
-NeedSecondByte = [
-    b'\xe0',
-    b'\x00',
-]
-
-KeyTranslator = {
-    b"\xe0H":b"KEY_UP",
-    b"\xe0M":b"KEY_RIGHT",
-    b"\xe0P":b"KEY_DOWN",
-    b"\xe0K":b"KEY_LEFT",
-    b"\r":b"RETURN",
-    b"\x08":b"BACKSPACE",
-    b"\x1b":b"ESCAPE",
-    b"\x03":b"CTRL_C",
-}
 
 if __name__ == "__main__":
     while True:
