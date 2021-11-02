@@ -67,7 +67,7 @@ def inner_main():
         print("> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program, even though it should create backups !")
         print("> Have a working Python installation (the program should work with any Python 3 version)")
         print("> Install required python modules (numpy)")
-        print("> Have the script file inside the folder containing saved games")
+        print("> Have the program inside the folder containing saved games")
         print("  (Should be located in C:\\Users\\Username\\AppData\\Local\\arr\\Saved\\SaveGames)")
         print("> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program !")
         print("> At any point during execution you can stop execution by pressing Ctrl-D.")
