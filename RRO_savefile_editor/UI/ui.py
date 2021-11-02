@@ -312,7 +312,7 @@ def rstockMenu(gvas):
     else: split_data = False
     while True:
         print("Select field to edit (ESCAPE to quit, ENTER to valid selection)")
-        # print("Use <br> (maximum once per field) to create multiple line values.")
+        print("Use <br> (maximum once per field) to create multiple line values.")
         cur_page = int(offset/10)
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page+1, n_page))
@@ -344,8 +344,9 @@ def rstockMenu(gvas):
             num = '-' if num is None else num
             nam = '-' if nam is None else nam
 
-            num = num if '\n' not in num else num.replace('\n', '<br>')
-            nam = nam if '\n' not in nam else nam.replace('\n', '<br>')
+            # not necessary anymore (new line stored as <br>)
+            # num = num if '<br>' not in num else num.replace('\n', '<br>')
+            # nam = nam if '<br>' not in nam else nam.replace('\n', '<br>')
 
 
             print(line_format.format(
@@ -384,11 +385,11 @@ def rstockMenu(gvas):
                 n_rline +=1
                 try:
                     val = str(val)
-                    if val.count('<br>') >= 1 :
+                    if val.count('<br>') > 1 :
                         print("\033[{}A\033[J".format(n_rline), end='')
-                        prompt_text = "> Can't handle multiple lines for now! Enter new value: "
+                        prompt_text = "> Can't handle more than two lines for now! Enter new value: "
                         continue
-                    val = val.replace('<br>', '\n')
+                    # val = val.replace('<br>', '\n')
                     if val == '':
                         val = None
 
@@ -404,9 +405,9 @@ def rstockMenu(gvas):
                 break
 
         if ltot<=10:
-            print("\033[{}A\033[J".format(ltot+3), end='')
+            print("\033[{}A\033[J".format(ltot+4), end='')
         else:
-            print("\033[{}A\033[J".format(n_line+4), end='')
+            print("\033[{}A\033[J".format(n_line+5), end='')
 
         if k == b'ESCAPE':
             return None

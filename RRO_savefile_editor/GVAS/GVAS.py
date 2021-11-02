@@ -46,8 +46,10 @@ class GVASData(object):
                 print("WARNING: None Property encountered !")
             else:
                 self._properties.append(prop)
-            # print(prop.name)
+            # print(prop.name) # DEBUG
             if prop.name == "None": break
+            # if prop._dtype == "TextProperty": # DEBUG
+            #     print(prop)
         return self
 
     def find(self, property_name):
@@ -63,7 +65,7 @@ class GVASData(object):
             print(hex(fstream.tell()))
             return None
         pname = readUEString(fstream)
-        # print(pname)
+        # print(pname) #DEBUG
         if pname == "" or pname is None:
             print("None property found at ", end = '')
             print(hex(fstream.tell()))
@@ -322,7 +324,6 @@ class GVASData(object):
         writeInt8(fstream, 0) # check bool
         writeInt32(fstream, len(prop.data))
         sz = 4
-        prev_is_formatted=False
         for txt in prop.data:
             if txt is None:
                 # if prev_is_formatted:
@@ -335,7 +336,7 @@ class GVASData(object):
                 sz += 9
                 continue
 
-            if not '\n' in txt:
+            if not '<br>' in txt:
                 writeInt32(fstream,2)
                 writeInt8(fstream,-1)
                 writeInt32(fstream,1)
@@ -347,15 +348,8 @@ class GVASData(object):
                     sz += 4+2*len(txt)+2
                 continue
 
-            if '\n' in txt:
-                txt_parts = txt.split('\n')
-                # if prev_is_formatted:
-                #     writeInt32(fstream,2)
-                # else:
-                #     writeInt32(fstream,0)
-                # writeInt8(fstream,-1)
-                # writeInt32(fstream,0)
-                # sz += 9
+            if '<br>' in txt:
+                txt_parts = txt.split('<br>')
                 writeInt32(fstream,1)
                 writeInt8(fstream,3)
                 writeInt64(fstream,8)
@@ -374,21 +368,37 @@ class GVASData(object):
                 sz += 1
                 writeInt32(fstream,2)
                 writeInt8(fstream,-1)
-                writeInt32(fstream,1)
-                sz += 9
-                for t in txt_parts:
-                    writeUEString(fstream, t)
-                    if isUTF8(t):
-                        sz += 4+len(t)+1
+                sz += 5
+                if txt_parts[0] != '':
+                    writeInt32(fstream,1)
+                    sz += 4
+                    writeUEString(fstream, txt_parts[0])
+                    if isUTF8(txt_parts[0]):
+                        sz += 4+len(txt_parts[0])+1
                     else:
-                        sz += 4+2*len(t)+2
+                        sz += 4+2*len(txt_parts[0])+2
+                else:
+                    writeInt32(fstream, 0)
+                    sz += 4
+                writeUEString(fstream, '1')
+                sz += 6
                 writeInt8(fstream,4)
-                prev_is_formatted = True
                 sz += 1
-                writeInt32(fstream,2)
-                writeInt8(fstream,-1)
-                writeInt32(fstream,0)
-                sz += 9
+                if txt_parts[1] != '':
+                    writeInt32(fstream, 2)
+                    writeInt8(fstream,-1)
+                    writeInt32(fstream,1)
+                    sz += 9
+                    writeUEString(fstream, txt_parts[1])
+                    if isUTF8(txt_parts[1]):
+                        sz += 4+len(txt_parts[1])+1
+                    else:
+                        sz += 4+2*len(txt_parts[1])+2
+                else:
+                    writeInt32(fstream,2)
+                    writeInt8(fstream,-1)
+                    writeInt32(fstream,0)
+                    sz += 9
         # print(prop.name, sz)
         return sz
 
@@ -428,39 +438,37 @@ class UETextProperty(UEType):
         self.value = None
 
         before_sep = readInt32(fstream)
-        # nformat = 1
-        # readInt8(fstream) # should be 0xff (separator)
-        # opt = readInt32(fstream)
-        # flags = readInt64(fstream)
 
         if before_sep == 1:
             # UETextProperty.count += 1
             # print("counter:", UETextProperty.count)
-            # before_sep = readInt32(fstream)
-            # if before_sep == 1:
-                # debug output inside file
             assert readInt8(fstream) == 3
             assert readInt64(fstream) == 8 # 8
             assert readInt8(fstream) == 0
             assert readUEString(fstream) == "56F8D27149CC5E2D12103BBEBFCA9097"
-            format_str = readUEString(fstream).replace('<br>', '\n')
-            assert format_str == "{0}\n{1}"
-            nformat = readInt32(fstream)
-            assert nformat == 2
+            format_str = readUEString(fstream)
+            assert format_str == "{0}<br>{1}"
+            assert readInt32(fstream) == 2
             assert readUEString(fstream) ==  "0"
             assert readInt8(fstream) == 4
             assert readInt32(fstream) == 2
             assert readInt8(fstream) == -1
             opt = readInt32(fstream)
-            assert opt == 1
-            words = []
-            for i in range(nformat):
-                words.append(readUEString(fstream))
+            if opt == 1:
+                first_line = readUEString(fstream)
+            else:
+                first_line = ''
+            readUEString(fstream) # always "1"
+
             assert readInt8(fstream) == 4
             assert readInt32(fstream) == 2
             assert readInt8(fstream) == -1
-            assert readInt32(fstream) == 0
-            self.value = format_str.format(*tuple(words))
+            opt = readInt32(fstream)
+            if opt == 1:
+                second_line = readUEString(fstream)
+            else:
+                second_line = ""
+            self.value = format_str.format(first_line, second_line)
         else:
             assert readInt8(fstream) == -1
             opt = readInt32(fstream)
@@ -468,16 +476,7 @@ class UETextProperty(UEType):
                 self.value = readUEString(fstream)
             else:
                 self.value = None
-        # if opt == 1:
-        #     if nformat == 1:
-        #         self.value = readUEString(fstream)
-        #     else :
-        #         words = []
-        #         for i in range(nformat):
-        #             words.append(readUEString(fstream))
-        #         readInt8(fstream)
-        #         # self.value = format_str.format(*tuple(words))
-
+        # print(self.value)
 
 class GVASHeader(dict):
 
@@ -610,10 +609,11 @@ def isUTF16(s):
 if __name__ == "__main__":
     print("{:-^72s}".format(" Running unit tests for file `GVAS.py` "))
     test_files = ["../../slot{}.sav".format(i) for i in range(1,11)]
+    # test_files = ["../../slot7.sav"]
     total_passed_count = 0
     total_failed_count = 0
     import os.path
-    for test_file in test_files:
+    for i, test_file in enumerate(test_files):
         if not os.path.isfile(test_file):
             continue
         print(f'> Test file is {test_file}')
@@ -658,7 +658,7 @@ if __name__ == "__main__":
         print("- GVAS write...", end=' ')
 
         try:
-            gvas.write('./testgvaswrite.sav')
+            gvas.write(f"./testgvaswrite{i+1}.sav")
             print("\033[1;32mPASSED\033[0m")
             passed_count += 1
 
@@ -673,7 +673,7 @@ if __name__ == "__main__":
         print("- GVAS read vs write...", end=' ')
         with open(test_file, 'rb') as f:
             rdata = f.read()
-        with open("./testgvaswrite.sav", 'rb') as f:
+        with open(f"./testgvaswrite{i+1}.sav", 'rb') as f:
             wdata = f.read()
         if rdata == wdata:
             print("\033[1;32mPASSED\033[0m")

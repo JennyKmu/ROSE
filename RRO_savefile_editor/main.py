@@ -12,7 +12,7 @@ try:
 except ModuleNotFoundError:
     from .UI import *
 
-def main():
+def inner_main():
     # Check if python3
     if not sys.version_info > (3,8):
         print("------------------")
@@ -47,7 +47,7 @@ def main():
         "Jenny",
     ]
 
-    version = (0,3,2)
+    version = (0,3,3)
 
     def header():
         print("="*72)
@@ -156,13 +156,17 @@ def main():
         print("Please send the above error to the dev team. Press any key to leave.")
         getKey()
 
-
-
-
-if __name__=="__main__":
+def main():
     try:
-        main()
+        inner_main()
+    except ImportError as e:
+        print(e)
+        print("Please install missing python packages. Press any key to leave.")
+        getKey()
     except Exception as e:
         print(e)
-        print("Please send the above error to the dev team. Press any key to leave.")
+        print("Please send the above error(s) to the dev team. Press any key to leave.")
         getKey()
+
+if __name__=="__main__":
+        main()
