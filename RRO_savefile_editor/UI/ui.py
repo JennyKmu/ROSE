@@ -146,12 +146,12 @@ def resetTreesToNewGame(gvas):
                 print(f"The trees have been reset.")
                 print("(Press any key to go back to previous menu)")
                 getKey()
-                print("\033[{}A\033[J".format(6), end='')
+                print("\033[{}A\033[J".format(8), end='')
                 return None
 
 
         if k == b'ESCAPE':
-            print("\033[{}A\033[J".format(4), end='')
+            print("\033[{}A\033[J".format(6), end='')
             return None
 
         print("\033[{}A\033[J".format(1), end='')
