@@ -2,17 +2,18 @@
 
 # built-in imports
 import sys, glob, os, shutil
-try:
-    from GVAS import *
-except ModuleNotFoundError:
-    from .GVAS import *
-
-try:
-    from UI import *
-except ModuleNotFoundError:
-    from .UI import *
 
 def inner_main():
+    try:
+        from GVAS import GVAS
+    except ModuleNotFoundError:
+        from .GVAS import GVAS
+
+    try:
+        from UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
+    except ModuleNotFoundError:
+        from .UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
+
     # Check if python3
     if not sys.version_info > (3,8):
         print("------------------")
