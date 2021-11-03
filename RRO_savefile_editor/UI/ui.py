@@ -120,7 +120,6 @@ def resetTreesToNewGame(gvas):
     print(" * Rolling stock being yeeted through the air at hypersonic speeds...")
     print(" * Or worse, through the ground. But for that there's another experimental feature.")
 
-    print("\n".join(p.name for p in gvas.data._properties))
     removedTreesProp = gvas.data.find("RemovedVegetationAssetsArray")
 
     cursor = 0
@@ -143,7 +142,7 @@ def resetTreesToNewGame(gvas):
             if cursor == 0:
                 k = b'ESCAPE'
             elif cursor == 1:
-                removedTreesProp.data = default_removed_trees
+                removedTreesProp._data = default_removed_trees
                 print(f"The trees have been reset.")
                 print("(Press any key to go back to previous menu)")
                 getKey()
