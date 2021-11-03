@@ -500,7 +500,57 @@ def renameStockMenu(gvas):
 
 
 def moveStockMenu(gvas):
-    pass
+    n_line = 0
+    min_height = 1000
+    new_height = 20000
+    print("This feature is \033[1;31mEXPERIMENTAL\033[0m. Use at your own risks.")
+    frameloc = gvas.data.find("FrameLocationArray").data
+    indexes = frameloc[:,2]<min_height
+    submapframes = frameloc[indexes,:]
+    nbelow = int(submapframes.size/3)
+    if nbelow == 0:
+        print(f"No car/loco was found below {min_height} game units in height.")
+        print(f"Press any key to return to previous menu.")
+        getKey()
+        print("\033[{}A\033[J".format(3), end='')
+        return
+
+    print(f"\033[1;32m{nbelow}\033[0m cars/locos were found below {min_height} game units in height.")
+    print(f"If you proceed, those cars will be repositionned at {new_height} game units in height.")
+    cursor = 0
+    choices = [ "Cancel", "Proceed at your own risks" ]
+    while True:
+        if cursor == 0:
+            print(" "*5 + selectfmt + "{:^29s}".format(choices[0]) + "\033[0m"
+                + " "*5 + "{:^29s}".format(choices[1]))
+        else:
+            print(" "*5 + "{:^29s}".format(choices[0])
+                + " "*5 + selectfmt + "{:^29s}".format(choices[1]) + "\033[0m")
+        k = getKey()
+
+        if k == b'KEY_RIGHT':
+            cursor = min(1, cursor+1)
+        if k == b'KEY_LEFT':
+            cursor = max(0, cursor-1)
+
+        if k == b'RETURN':
+            if cursor == 0:
+                k = b'ESCAPE'
+            elif cursor == 1:
+                frameloc[indexes,2] = new_height
+                print(f"{nbelow} cars/locos have been displaced. Watch out for your head !")
+                print("(Press any key to go back to previous menu)")
+                getKey()
+                print("\033[{}A\033[J".format(6), end='')
+                return None
+
+
+        if k == b'ESCAPE':
+            print("\033[{}A\033[J".format(4), end='')
+            return None
+
+        print("\033[{}A\033[J".format(1), end='')
+
 
 def mainStockMenu(gvas):
     options = [
