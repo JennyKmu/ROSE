@@ -21,7 +21,7 @@ def inner_main():
             print("------------------")
             exit()
 
-
+    # To enable ANSI control sequences on Windows
     os.system('color')
     # if os.name == 'nt':
     #     from ctypes import windll
@@ -73,9 +73,11 @@ def inner_main():
     try:
         import numpy
     except ImportError:
-        print("> \033[1;31mERROR: Impossible to import numpy module.\033[0m")
-        print("> Please install numpy to use this program.")
+        print("!> \033[1;31mERROR: Impossible to import numpy module.\033[0m")
+        print("!> Please install numpy to use this program.")
+        print("!> Press Enter to exit.")
         print("------------------")
+        input()
         exit()
 
     # Importing inner modules
