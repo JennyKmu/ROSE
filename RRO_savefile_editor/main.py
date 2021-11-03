@@ -45,9 +45,10 @@ def inner_main():
 
     contributors = [
         "Jenny",
+        "Leif_The_Head",
     ]
 
-    version = (0,3,3)
+    version = (0,3,4)
 
     def header():
         print("="*72)

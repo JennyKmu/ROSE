@@ -290,6 +290,81 @@ frametypeTranslator = {
     "handcar":"Handcar",
 }
 
+frametypeNamingLimiter = {
+    "default":{"numlen":4, "numlines":1, "namelen":10, "namelines":2},
+    "flatcar_logs":{"numlen":12, "numlines":1, "namelen":7, "namelines":1},
+    "flatcar_stakes":{"numlen":8, "numlines":1, "namelen":8, "namelines":1},
+    "flatcar_cordwood":{"numlen":8, "numlines":1, "namelen":8, "namelines":1},
+    "flatcar_hopper":{"numlen":4, "numlines":1, "namelen":7, "namelines":1},
+    "flatcar_tanker":{"numlen":12, "numlines":1, "namelen":19, "namelines":1},
+    "boxcar":{"numlen":7, "numlines":4, "namelen":13, "namelines":4},
+    "porter_040":{"numlen":2, "numlines":1, "namelen":12, "namelines":1},
+    "porter_042":{"numlen":2, "numlines":1, "namelen":12, "namelines":1},
+    "climax":{"numlen":2, "numlines":1, "namelen":11, "namelines":7},
+    "heisler":{"numlen":2, "numlines":1, "namelen":11, "namelines":6},
+    "cooke260":{"numlen":3, "numlines":1, "namelen":12, "namelines":1},
+    "cooke260_tender":{"numlen":6, "numlines":1, "namelen":11, "namelines":1},
+    "class70":{"numlen":3, "numlines":1, "namelen":14, "namelines":1},
+    "class70_tender":{"numlen":0, "numlines":0, "namelen":22, "namelines":3},
+    "eureka":{"numlen":2, "numlines":1, "namelen":8, "namelines":1},
+    "eureka_tender":{"numlen":0, "numlines":0, "namelen":18, "namelines":1},
+    "handcar":{"numlen":5, "numlines":1, "namelen":18, "namelines":1},
+}
+
+def getNamingLimits(frametype, field):
+    if not frametype in frametypeNamingLimiter:
+        frametype = "default"
+    
+    if field == 0:
+        maxlen = frametypeNamingLimiter[frametype]["numlen"]
+        maxlines = frametypeNamingLimiter[frametype]["numlines"]
+    else:
+        maxlen = frametypeNamingLimiter[frametype]["namelen"]
+        maxlines = frametypeNamingLimiter[frametype]["namelines"]
+    
+    return maxlen, maxlines            
+
+def namingSanityCheck(frametype, field, input):
+    if not input.startswith("\i"):
+        if input.isspace() or input == '': # if there is no text to work with, return nothing
+            return ''
+        
+        lines = input.split("<br>") # split into separate lines first
+        
+        maxlen, maxlines = getNamingLimits(frametype,field)
+        
+        if maxlen == 0 or maxlines == 0: # of it's not to be named at all
+            return "\Error: This field isn't displayed at all. Enter to leave"
+        
+        if len(lines) > maxlines: # check if line count is good
+            return "\Error: Too many lines. Max is {}. Try again:".format(maxlines)
+        
+        sanelines = []
+        linesHaveContent = False
+        
+        for line in lines:
+            if len(line) > maxlen: # check if length for every line is good
+                return "\Error: Line(s) too long. Max is {} per line. Try again:".format(maxlen)
+                
+            if line.isspace() or line == '':  # see if the line has content at all: all spaces or nothing
+                line = ' '                       #if that's the case, make it one space
+            else:
+                linesHaveContent = True
+            
+            sanelines.append(line)    
+            
+        #if we made it this far, reassemble the string
+        if linesHaveContent: # if there is no content over multiple lines, return nothing instead
+            saneinput = "<br>".join(sanelines)
+        
+            return saneinput
+        else:
+            return ''
+            
+    else: 
+        return input[2:]
+    
+
 def rstockMenu(gvas):
     framenumbers = gvas.data.find("FrameNumberArray").data
     framenames = gvas.data.find("FrameNameArray").data
@@ -312,7 +387,8 @@ def rstockMenu(gvas):
     else: split_data = False
     while True:
         print("Select field to edit (ESCAPE to quit, ENTER to valid selection)")
-        print("Use <br> (maximum once per field) to create multiple line values.")
+        print("Use <br> to create multiple line values where applicable. Override sanity checks with \i")
+        #print("Sanity checks are enabled. To ignore limits start your input with \i")
         cur_page = int(offset/10)
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page+1, n_page))
@@ -378,17 +454,27 @@ def rstockMenu(gvas):
             if cur_line not in range(offset, offset+10):
                 cur_line = offset
         if k == b'RETURN':
-            prompt_text = "> Enter new value: "
+            maximums = getNamingLimits(frametypes[cur_line], cur_col)
+            if maximums[0] == 0 or maximums[1] == 0:
+                prompt_text = "> This field isn't displayed at all. Enter to leave "
+            else:
+                prompt_text = "> Max Length {0}, max lines {1}; Enter new value: ".format(maximums[0],maximums[1])
             while True:
                 n_rline = 0
                 val = input(prompt_text)
                 n_rline +=1
                 try:
                     val = str(val)
-                    if val.count('<br>') > 1 :
+                    # if val.count('<br>') > 1 :
+                        # print("\033[{}A\033[J".format(n_rline), end='')
+                        # prompt_text = "> Can't handle more than two lines for now! Enter new value: "
+                        # continue
+                    val = namingSanityCheck(frametypes[cur_line],cur_col,val)   # new sanity check
+                    if val.startswith("\Error: "):                               # filter Error returns
                         print("\033[{}A\033[J".format(n_rline), end='')
-                        prompt_text = "> Can't handle more than two lines for now! Enter new value: "
+                        prompt_text = "> {} ".format(val[1:])
                         continue
+                        
                     # val = val.replace('<br>', '\n')
                     if val == '':
                         val = None

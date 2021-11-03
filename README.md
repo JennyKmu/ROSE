@@ -1,4 +1,4 @@
-﻿# RRO_savefile_editor_v0.3.3
+﻿# RRO_savefile_editor_v0.3.4
 
 This program is intended to be used as an external tool to Railroads Online server hosts. It will read save files, allow to modify entries within it, and then save the file (creating a backup file in the process).
 
@@ -24,6 +24,7 @@ Currently, functionnalities are limited to:
 * Editing xp value for each player;
 * Editing money value for each player;
 * Editing rolling stock names and numbers
+  * Editing is limited to what can displayed on each rolling stock. Override by starting with \i when entering a new value
 
 ## In the work
 
