@@ -1,4 +1,5 @@
-import glob
+import glob, os, shutil
+from pathlib import Path
 
 try:
     from uiutils import getKey
@@ -30,21 +31,22 @@ def selectSaveFile(loc):
         if k == b'ESCAPE':
             return -1
 
-def mainMenu():
+def mainMenu(gvas):
     options = [
-        "Players",
-        "Rolling stock",
-        "Save & Exit",
-        "Exit",
+        ("Players", playerMenu),
+        ("Rolling stock", mainStockMenu),
+        ("Environment", mainEnvMenu),
+        ("Save & Exit", saveAndExit),
+        ("Exit", noSaveAndExit)
     ]
     current = 0
     while True:
         print("Select the submenu (press ENTER to confirm):")
         for i, f in enumerate(options):
             if i == current:
-                print(" - "+selectfmt+"{}\033[0m".format(f))
+                print(" - "+selectfmt+"{}\033[0m".format(f[0]))
             else:
-                print(" - {}".format(f))
+                print(" - {}".format(f[0]))
         k = getKey()
         if k == b'KEY_UP':
             current = max(0, current-1)
@@ -52,9 +54,41 @@ def mainMenu():
             current = min(len(options)-1, current+1)
         print("\033[{}A\033[J".format(len(options)+1), end='')
         if k == b'RETURN':
-            return options[current]
+            options[current][1](gvas)
         if k == b'ESCAPE':
-            return None
+            print("You're about to exit the program without saving potential changes.")
+            print("Press Enter to confirm you want to exit, or any other key to go back.")
+            k = getKey()
+            print("\033[{}A\033[J".format(2), end='')
+            if k == b'RETURN':
+                noSaveAndExit(gvas)
+
+
+def saveAndExit(gvas):
+    fbackup = Path("./backups") / Path("backup_"+gvas._sourcefilename)
+    print("> Saving backup file as {}".format(fbackup))
+    if not os.path.exists('backups'):
+        os.makedirs('backups')
+    shutil.copy(filename, fbackup)
+
+    print("> Overwriting file {}".format(filename))
+    # gvas.write("dev_"+filepath.name)
+    gvas.write(filename)
+    print("Press any key to close.")
+    print("------------------")
+    getKey()
+    exit()
+
+def noSaveAndExit(gvas):
+    # gvas arg for compatibility with other ui functions
+    print("Press any key to close.")
+    print("------------------")
+    getKey()
+    exit()
+
+def mainEnvMenu(gvas):
+    pass
+
 #
 # class SubMenu(object):
 #     def __init__(self,
