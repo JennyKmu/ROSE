@@ -4,16 +4,6 @@
 import sys, glob, os, shutil
 
 def inner_main():
-    try:
-        from GVAS import GVAS
-    except ModuleNotFoundError:
-        from .GVAS import GVAS
-
-    try:
-        from UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
-    except ModuleNotFoundError:
-        from .UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
-
     # Check if python3
     if not sys.version_info > (3,8):
         print("------------------")
@@ -57,8 +47,8 @@ def inner_main():
         print("| {:^68s} |".format("v{}.{}.{}".format(*version)))
         print("| {:^68s} |".format("Created by Jenny."))
         print("| {:^68s} |".format(""))
-        print("| {:<68s} |".format("Feel free to use or modify the script."))
-        print("| {:<68s} |".format("Just add your name to the list of contributors and change version."))
+        print("| {:^68s} |".format("See repo on GitHub for sources and documentation:"))
+        print("| {:^68s} |".format("https://github.com/JennyKmu/RRO_savefile_editor"))
         print("| {:^68s} |".format(""))
         print("| {:<68s} |".format("Contributors :"))
         for contributor in contributors:
@@ -66,14 +56,15 @@ def inner_main():
         print("="*72)
         print()
         print("--- How to use ---")
-        print("> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program, even though it should create backups !")
+        print("> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program, even though it should create a backup!")
         print("> Have a working Python installation (the program should work with any Python 3 version)")
         print("> Install required python modules (numpy)")
         print("> Have the program inside the folder containing saved games")
         print("  (Should be located in C:\\Users\\Username\\AppData\\Local\\arr\\Saved\\SaveGames)")
         print("> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program !")
-        print("> At any point during execution you can stop execution by pressing Ctrl-D.")
-        print("> And finally, \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program !")
+        print("> At any point during execution you can stop execution by pressing Ctrl-D (or Ctrl-C)")
+        print("> Likewise, you can always go back to previous menu by pressing Escape.")
+        print("> And finally, \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program!")
         print("------------------")
 
     header()
@@ -87,23 +78,16 @@ def inner_main():
         print("------------------")
         exit()
 
+    # Importing inner modules
+    try:
+        from GVAS import GVAS
+    except ModuleNotFoundError:
+        from .GVAS import GVAS
 
-
-
-    # Importing custom modules
-    # try:
-    #     from GVAS.GVAS import GVAS
-    # except ModuleNotFoundError:
-    #     from .GVAS.GVAS import GVAS
-    # try:
-    #     from UI import getKey
-    # except ModuleNotFoundError:
-    #     from .UI import getKey
-    # try:
-    #     from UI import selectSaveFile, mainMenu, playerMenu
-    # except ModuleNotFoundError:
-    #     from .UI import selectSaveFile, mainMenu, playerMenu
-
+    try:
+        from UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
+    except ModuleNotFoundError:
+        from .UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
 
     def loop(loc = "."):
         if __name__ == "__main__":
