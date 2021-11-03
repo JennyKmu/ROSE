@@ -28,11 +28,14 @@ Currently, functionnalities are limited to:
   * Editing is limited to what can be displayed on each rolling stock. Override by starting with \i when entering a new value.
 * Rolling stock clean-up (**EXPERIMENTAL**):
   * Attempts to detect rolling stock which fell through the map, and moves them high up in the air, for you to recover them and rerail them. Watch out for your head!
+* Reset trees (**EXPERIMENTAL**) back to the state they are in when starting a new game.
 
 ## In the work
 
 * Editing rolling stock contents
 * Plotting a map of the network
+* Build new tracks
+* Better tree reset feature (avoid existing tracks)
 * Exporting SVG files of the network
 * Editing industries contents
 * Editing water, sand and firewood places contents
@@ -48,6 +51,19 @@ Currently, functionnalities are limited to:
   * Check that the program is placed in the right folder, next to your saves
   * If it is, then it's most likely an issue with your python installation. Reinstall it from the official https://www.python.org/downloads/. Also check you're using a version 3.x. **Installation from Windows Store will not work !**
 * **The program starts, but tells me a module is not found**
-  * Install the python module that was not found using pip.
+  * Install the python module that was not found using pip. Check below for detailed instruction.
 * The UI is not yet functionnal with Unix sytems, and hasn't been tested with Mac (probably not working either).
 * If you can't find a solution to your issue, the preferred way is to open an new issue on GitHub, and if necessary join your savefile there: https://github.com/JennyKmu/RRO_savefile_editor/issues
+
+## Setting up the environment
+
+* First go to the official https://www.python.org/downloads/, download Python 3 (latest release recommended), and install it. When asked so, **add pip to Path**.
+* Open a command prompt (cmd or powershell) as administrator, and type in:
+  * ``pip install numpy``
+
+If you already had installed Python, but the pip command doesn't work, then you'll need to add pip to Path yourself (you probably didn't check the option originally). To do so:
+* In the Windows search bar, look for "Environment Variables", and open the tool that shows up.
+* In that tool, click "Environment Variables"
+* Select the "Path" variable, and click "Modify"
+* **Do not delete anything there**. Add a new line, in which you will put the Path/To/Python/Install/Scripts (Usually C:\\Users\\Username\\AppData\\Local\\Programs\\Python\\Python38-32\\Scripts)
+* Apply your changes and exit the tool. Now pip should work well.
