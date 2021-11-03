@@ -106,7 +106,7 @@ def inner_main():
 
     def loop(loc = "."):
         if __name__ == "__main__":
-            loc = "..\.."
+            loc = ".."
         from pathlib import Path
         filename = selectSaveFile(loc)
         if filename is None:
