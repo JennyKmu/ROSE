@@ -365,34 +365,6 @@ def namingSanityCheck(frametype, field, input):
         return input[2:]
 
 
-def rstockMenu(gvas):
-def mainStockMenu(gvas):
-    options = {
-        "Rename":renameStockMenu,
-        "Teleport":moveStockMenu,
-    }
-    current = 0
-    while True:
-        print("Select the feature you want to run (press ENTER to confirm):")
-        for i, f in enumerate(options):
-            if i == current:
-                print(" - "+selectfmt+"{}\033[0m".format(f))
-            else:
-                print(" - {}".format(f))
-        k = getKey()
-        if k == b'KEY_UP':
-            current = max(0, current-1)
-        if k == b'KEY_DOWN':
-            current = min(len(options)-1, current+1)
-        print("\033[{}A\033[J".format(len(options)+1), end='')
-        if k == b'RETURN':
-            options[current](gvas)
-        if k == b'ESCAPE':
-            return None
-
-def moveStockMenu(gvas):
-    pass
-
 def renameStockMenu(gvas):
     framenumbers = gvas.data.find("FrameNumberArray").data
     framenames = gvas.data.find("FrameNameArray").data
@@ -525,6 +497,35 @@ def renameStockMenu(gvas):
 
         if k == b'ESCAPE':
             return None
+
+
+def moveStockMenu(gvas):
+    pass
+
+def mainStockMenu(gvas):
+    options = [
+        ("Rename", renameStockMenu),
+        ("Teleport", moveStockMenu),
+    ]
+    current = 0
+    while True:
+        print("Select the feature you want to run (press ENTER to confirm):")
+        for i, f in enumerate(options):
+            if i == current:
+                print(" - "+selectfmt+"{}\033[0m".format(f[0]))
+            else:
+                print(" - {}".format(f[0]))
+        k = getKey()
+        if k == b'KEY_UP':
+            current = max(0, current-1)
+        if k == b'KEY_DOWN':
+            current = min(len(options)-1, current+1)
+        print("\033[{}A\033[J".format(len(options)+1), end='')
+        if k == b'RETURN':
+            options[current][1](gvas)
+        if k == b'ESCAPE':
+            return None
+
 
 
 if __name__ == "__main__":
