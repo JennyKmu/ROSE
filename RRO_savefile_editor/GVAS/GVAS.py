@@ -335,8 +335,8 @@ class GVASData(object):
                 # prev_is_formatted=False
                 sz += 9
                 #continue
-            else:
-            #if not '<br>' in txt:
+            # else:
+            elif txt.count('<br>') != 1:
                 writeInt32(fstream,2)
                 writeInt8(fstream,-1)
                 writeInt32(fstream,1)
@@ -349,57 +349,58 @@ class GVASData(object):
                 continue
 
             # if '<br>' in txt:
-                # txt_parts = txt.split('<br>')
-                # writeInt32(fstream,1)
-                # writeInt8(fstream,3)
-                # writeInt64(fstream,8)
-                # writeInt8(fstream,0)
-                # sz += 14
-                # magic = "56F8D27149CC5E2D12103BBEBFCA9097"
-                # writeUEString(fstream, magic)
-                # sz += 4+len(magic)+1
-                # writeUEString(fstream, "{0}<br>{1}")
-                # sz += 4+10+1
-                # writeInt32(fstream, 2)
-                # sz += 4
-                # writeUEString(fstream, '0')
-                # sz += 4+1+1
-                # writeInt8(fstream, 4)
-                # sz += 1
-                # writeInt32(fstream,2)
-                # writeInt8(fstream,-1)
-                # sz += 5
-                # if txt_parts[0] != '':
-                    # writeInt32(fstream,1)
-                    # sz += 4
-                    # writeUEString(fstream, txt_parts[0])
-                    # if isUTF8(txt_parts[0]):
-                        # sz += 4+len(txt_parts[0])+1
-                    # else:
-                        # sz += 4+2*len(txt_parts[0])+2
-                # else:
-                    # writeInt32(fstream, 0)
-                    # sz += 4
-                # writeUEString(fstream, '1')
-                # sz += 6
-                # writeInt8(fstream,4)
-                # sz += 1
-                # if txt_parts[1] != '':
-                    # writeInt32(fstream, 2)
-                    # writeInt8(fstream,-1)
-                    # writeInt32(fstream,1)
-                    # sz += 9
-                    # writeUEString(fstream, txt_parts[1])
-                    # if isUTF8(txt_parts[1]):
-                        # sz += 4+len(txt_parts[1])+1
-                    # else:
-                        # sz += 4+2*len(txt_parts[1])+2
-                # else:
-                    # writeInt32(fstream,2)
-                    # writeInt8(fstream,-1)
-                    # writeInt32(fstream,0)
-                    # sz += 9
-        # print(prop.name, sz)
+            else:
+                txt_parts = txt.split('<br>')
+                writeInt32(fstream,1)
+                writeInt8(fstream,3)
+                writeInt64(fstream,8)
+                writeInt8(fstream,0)
+                sz += 14
+                magic = "56F8D27149CC5E2D12103BBEBFCA9097"
+                writeUEString(fstream, magic)
+                sz += 4+len(magic)+1
+                writeUEString(fstream, "{0}<br>{1}")
+                sz += 4+10+1
+                writeInt32(fstream, 2)
+                sz += 4
+                writeUEString(fstream, '0')
+                sz += 4+1+1
+                writeInt8(fstream, 4)
+                sz += 1
+                writeInt32(fstream,2)
+                writeInt8(fstream,-1)
+                sz += 5
+                if txt_parts[0] != '':
+                    writeInt32(fstream,1)
+                    sz += 4
+                    writeUEString(fstream, txt_parts[0])
+                    if isUTF8(txt_parts[0]):
+                        sz += 4+len(txt_parts[0])+1
+                    else:
+                        sz += 4+2*len(txt_parts[0])+2
+                else:
+                    writeInt32(fstream, 0)
+                    sz += 4
+                writeUEString(fstream, '1')
+                sz += 6
+                writeInt8(fstream,4)
+                sz += 1
+                if txt_parts[1] != '':
+                    writeInt32(fstream, 2)
+                    writeInt8(fstream,-1)
+                    writeInt32(fstream,1)
+                    sz += 9
+                    writeUEString(fstream, txt_parts[1])
+                    if isUTF8(txt_parts[1]):
+                        sz += 4+len(txt_parts[1])+1
+                    else:
+                        sz += 4+2*len(txt_parts[1])+2
+                else:
+                    writeInt32(fstream,2)
+                    writeInt8(fstream,-1)
+                    writeInt32(fstream,0)
+                    sz += 9
+        # print(prop.name, sz) # DEBUG
         return sz
 
     def _writeStructPropertyArray(self, fstream, prop):
