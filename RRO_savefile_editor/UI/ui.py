@@ -65,15 +65,15 @@ def mainMenu(gvas):
 
 
 def saveAndExit(gvas):
-    fbackup = Path("./backups") / Path("backup_"+gvas._sourcefilename)
+    fbackup = Path("./backups") / Path("backup_"+gvas._sourcefilename.name)
     print("> Saving backup file as {}".format(fbackup))
     if not os.path.exists('backups'):
         os.makedirs('backups')
-    shutil.copy(filename, fbackup)
+    shutil.copy(gvas._sourcefilename, fbackup)
 
-    print("> Overwriting file {}".format(filename))
+    print("> Overwriting file {}".format(gvas._sourcefilename))
     # gvas.write("dev_"+filepath.name)
-    gvas.write(filename)
+    gvas.write(gvas._sourcefilename)
     print("Press any key to close.")
     print("------------------")
     getKey()

@@ -40,7 +40,7 @@ def inner_main():
     ]
 
     version = (0,3,5)
-    dev_version = True
+    dev_version = False
 
     def header():
         print("="*72)
