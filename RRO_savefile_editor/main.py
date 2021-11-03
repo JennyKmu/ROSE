@@ -114,7 +114,7 @@ def inner_main():
             exit()
         filepath = Path(filename)
 
-        gvas = GVAS.GVAS(filename)
+        gvas = GVAS.GVAS(filepath)
         print("Currently loaded file is '\033[1m{}\033[0m'".format(filename))
         print("------------------")
 

@@ -87,7 +87,75 @@ def noSaveAndExit(gvas):
     exit()
 
 def mainEnvMenu(gvas):
-    pass
+    options = [
+        ("Reset trees to new game state (EXPERIMENTAL)", resetTreesToNewGame),
+    ]
+    current = 0
+    while True:
+        print("Select the feature you want to run (press ENTER to confirm):")
+        for i, f in enumerate(options):
+            if i == current:
+                print(" - "+selectfmt+"{}\033[0m".format(f[0]))
+            else:
+                print(" - {}".format(f[0]))
+        k = getKey()
+        if k == b'KEY_UP':
+            current = max(0, current-1)
+        if k == b'KEY_DOWN':
+            current = min(len(options)-1, current+1)
+        print("\033[{}A\033[J".format(len(options)+1), end='')
+        if k == b'RETURN':
+            options[current][1](gvas)
+        if k == b'ESCAPE':
+            return None
+
+
+
+def resetTreesToNewGame(gvas):
+    import numpy as np
+    from .defaultRemovedTrees import default_removed_trees
+    print("This is an \033[1;31mEXPERIMENTAL\033[0m feature. Use at your own risks.")
+    print("Risks include in particular:")
+    print(" * Trees in the middle of the track (obviously)")
+    print(" * Rolling stock being yeeted through the air at hypersonic speeds...")
+    print(" * Or worse, through the ground. But for that there's another experimental feature.")
+
+    print("\n".join(p.name for p in gvas.data._properties))
+    removedTreesProp = gvas.data.find("RemovedVegetationAssetsArray")
+
+    cursor = 0
+    choices = [ "Cancel", "Proceed at your own risks" ]
+    while True:
+        if cursor == 0:
+            print(" "*5 + selectfmt + "{:^29s}".format(choices[0]) + "\033[0m"
+                + " "*5 + "{:^29s}".format(choices[1]))
+        else:
+            print(" "*5 + "{:^29s}".format(choices[0])
+                + " "*5 + selectfmt + "{:^29s}".format(choices[1]) + "\033[0m")
+        k = getKey()
+
+        if k == b'KEY_RIGHT':
+            cursor = min(1, cursor+1)
+        if k == b'KEY_LEFT':
+            cursor = max(0, cursor-1)
+
+        if k == b'RETURN':
+            if cursor == 0:
+                k = b'ESCAPE'
+            elif cursor == 1:
+                removedTreesProp.data = default_removed_trees
+                print(f"The trees have been reset.")
+                print("(Press any key to go back to previous menu)")
+                getKey()
+                print("\033[{}A\033[J".format(6), end='')
+                return None
+
+
+        if k == b'ESCAPE':
+            print("\033[{}A\033[J".format(4), end='')
+            return None
+
+        print("\033[{}A\033[J".format(1), end='')
 
 #
 # class SubMenu(object):
