@@ -290,7 +290,13 @@ frametypeTranslator = {
     "handcar":"Handcar",
 }
 
-def rstockMenu(gvas):
+def mainStockMenu(gvas):
+    pass
+
+def moveStockMenu(gvas):
+    pass
+
+def renameStockMenu(gvas):
     framenumbers = gvas.data.find("FrameNumberArray").data
     framenames = gvas.data.find("FrameNameArray").data
     frametypes = gvas.data.find("FrameTypeArray").data

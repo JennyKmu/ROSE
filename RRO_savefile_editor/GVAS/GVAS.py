@@ -607,8 +607,10 @@ def isUTF16(s):
 
 
 if __name__ == "__main__":
+    import glob
     print("{:-^72s}".format(" Running unit tests for file `GVAS.py` "))
-    test_files = ["../../slot{}.sav".format(i) for i in range(1,11)]
+    # test_files = ["../../slot{}.sav".format(i) for i in range(1,11)]
+    test_files = glob.glob('../../slot*.sav')
     # test_files = ["../../slot7.sav"]
     total_passed_count = 0
     total_failed_count = 0
@@ -681,9 +683,9 @@ if __name__ == "__main__":
         else:
             print("\033[1;31mFAILED\033[0m")
             failed_count += 1
-            for i in range(len(rdata)):
-                if rdata[i] != wdata[i]:
-                    print("First diff occuring at address {}".format(hex(i)))
+            for j in range(len(rdata)):
+                if rdata[j] != wdata[j]:
+                    print("First diff occuring at address {}".format(hex(j)))
                     break
 
 
@@ -699,6 +701,18 @@ if __name__ == "__main__":
         total_passed_count += passed_count
         total_failed_count += failed_count
         print("{:-^72s}".format('-'))
+
+
+        DEBUG = True
+        if DEBUG:
+            # For debugging, put whatever you want to do there
+            print("> Advanced debug:")
+            print("\n".join([p.name for p in gvas.data._properties]))
+            print(gvas.data.find("FrameLocationArray").data)
+            frame_xyz = gvas.data.find("FrameLocationArray").data
+            print(frame_xyz[frame_xyz[:,2] < 1000.,:])
+            frame_xyz[frame_xyz[:,2] < 1000.,2] = 20000.
+            gvas.write(f"./testgvaswrite{i+1}.sav")
 
 
 

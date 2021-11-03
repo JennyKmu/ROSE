@@ -130,7 +130,7 @@ def inner_main():
             if choice == "Players":
                 playerMenu(gvas)
             elif choice == "Rolling stock":
-                rstockMenu(gvas)
+                mainStockMenu(gvas)
             elif choice == "Save & Exit":
                 fbackup = Path("./backups") / Path("backup_"+filepath.name)
                 print("> Saving backup file as {}".format(fbackup))
