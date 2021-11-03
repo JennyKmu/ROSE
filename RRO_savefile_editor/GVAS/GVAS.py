@@ -334,9 +334,9 @@ class GVASData(object):
                 writeInt32(fstream,0)
                 # prev_is_formatted=False
                 sz += 9
-                continue
-
-            if not '<br>' in txt:
+                #continue
+            # else:
+            elif txt.count('<br>') != 1:
                 writeInt32(fstream,2)
                 writeInt8(fstream,-1)
                 writeInt32(fstream,1)
@@ -348,7 +348,8 @@ class GVASData(object):
                     sz += 4+2*len(txt)+2
                 continue
 
-            if '<br>' in txt:
+            # if '<br>' in txt:
+            else:
                 txt_parts = txt.split('<br>')
                 writeInt32(fstream,1)
                 writeInt8(fstream,3)
@@ -399,7 +400,7 @@ class GVASData(object):
                     writeInt8(fstream,-1)
                     writeInt32(fstream,0)
                     sz += 9
-        # print(prop.name, sz)
+        # print(prop.name, sz) # DEBUG
         return sz
 
     def _writeStructPropertyArray(self, fstream, prop):
