@@ -39,12 +39,16 @@ def inner_main():
         "Leif_The_Head",
     ]
 
-    version = (0,3,4)
+    version = (0,3,5)
+    dev_version = True
 
     def header():
         print("="*72)
         print("| {:^68s} |".format("~~~ RAILROADS Online savefile editor ~~~"))
-        print("| {:^68s} |".format("v{}.{}.{}".format(*version)))
+        if not dev_version:
+            print("| {:^68s} |".format("v{}.{}.{}".format(*version)))
+        else:
+            print("| {:^68s} |".format("v{}.{}.{} - UNDER DEV".format(*version)))
         print("| {:^68s} |".format("Created by Jenny."))
         print("| {:^68s} |".format(""))
         print("| {:^68s} |".format("See repo on GitHub for sources and documentation:"))
@@ -110,32 +114,11 @@ def inner_main():
             exit()
         filepath = Path(filename)
 
-        gvas = GVAS.GVAS(filename)
+        gvas = GVAS.GVAS(filepath)
         print("Currently loaded file is '\033[1m{}\033[0m'".format(filename))
         print("------------------")
-        while True:
-            choice = mainMenu()
-            if choice == "Players":
-                playerMenu(gvas)
-            elif choice == "Rolling stock":
-                mainStockMenu(gvas)
-            elif choice == "Save & Exit":
-                fbackup = Path("./backups") / Path("backup_"+filepath.name)
-                print("> Saving backup file as {}".format(fbackup))
-                if not os.path.exists('backups'):
-                    os.makedirs('backups')
-                shutil.copy(filename, fbackup)
 
-                print("> Overwriting file {}".format(filename))
-                # gvas.write("dev_"+filepath.name)
-                gvas.write(filename)
-                print("Press any key to exit.")
-                print("------------------")
-                getKey()
-                exit()
-            elif choice == "Exit":
-                exit()
-                pass
+        mainMenu(gvas)
 
     try:
         loop()
@@ -149,12 +132,12 @@ def main():
         inner_main()
     except ImportError as e:
         print(e)
-        print("Please install missing python packages. Press any key to leave.")
-        getKey()
+        print("Please install missing python packages. Press Enter to leave.")
+        input()
     except Exception as e:
         print(e)
-        print("Please send the above error(s) to the dev team. Press any key to leave.")
-        getKey()
+        print("Please send the above error(s) to the dev team. Press Enter to leave.")
+        input()
 
 if __name__=="__main__":
         main()
