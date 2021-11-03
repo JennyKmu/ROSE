@@ -291,7 +291,28 @@ frametypeTranslator = {
 }
 
 def mainStockMenu(gvas):
-    pass
+    options = {
+        "Rename":renameStockMenu,
+        "Teleport":moveStockMenu,
+    }
+    current = 0
+    while True:
+        print("Select the feature you want to run (press ENTER to confirm):")
+        for i, f in enumerate(options):
+            if i == current:
+                print(" - "+selectfmt+"{}\033[0m".format(f))
+            else:
+                print(" - {}".format(f))
+        k = getKey()
+        if k == b'KEY_UP':
+            current = max(0, current-1)
+        if k == b'KEY_DOWN':
+            current = min(len(options)-1, current+1)
+        print("\033[{}A\033[J".format(len(options)+1), end='')
+        if k == b'RETURN':
+            options[current](gvas)
+        if k == b'ESCAPE':
+            return None
 
 def moveStockMenu(gvas):
     pass
