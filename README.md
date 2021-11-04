@@ -1,4 +1,4 @@
-﻿# RRO_savefile_editor_v0.3.4
+﻿# RRO_savefile_editor_v0.3.6
 
 This program is intended to be used as an external tool to Railroads Online server hosts. It will read save files, allow to modify entries within it, and then save the file (creating a backup file in the process).
 
@@ -13,6 +13,10 @@ There are two ways to use the program. You can either:
 Below is the detailed guide for using the .pyz files.
 
 Using the .exe is straightforward: download the .exe file, place it in the same folder as your saves, and execute it.
+
+## Checksums
+
+With each release will be included the SHA-256 hash of the .pyz and .exe files. This made to check that the files haven't been tempered with since they were prepared for release (meaning that no one modified them). To check that the hash is correct, open a command prompt (powershell) at the location of the downloaded file, and type: ``Get-FileHash  <filename> -Algorithm SHA256 | Fromat-List``. Compare the result to the hash given with the release notice.
 
 ## Requirements
 
