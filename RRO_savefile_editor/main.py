@@ -3,7 +3,7 @@
 # built-in imports
 import sys, glob, os, shutil
 
-def inner_main(_isPyInstalled):
+def inner_main():
     # Check if python3
     if not sys.version_info > (3,8):
         print("------------------")
