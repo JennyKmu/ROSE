@@ -2,6 +2,18 @@
 
 This program is intended to be used as an external tool to Railroads Online server hosts. It will read save files, allow to modify entries within it, and then save the file (creating a backup file in the process).
 
+There are two ways to use the program. You can either:
+* Have a python installation, with required modules, and use the released .pyz files.
+  * Advantages: you only have to download the .pyz file to update the program, which is quite light, and you'll be able to use other python programs from other sources.
+  * Disadvantages: you need to properly setup your python environment the first time, though once it's done it will be straightforward to add the newly required modules with each update.
+* Use the standalone .exe files.
+  * Advantages: only one file to download and execute, theoretically no need to install python or anything else.
+  * Disadvantages: the executable is heavier, you'll have to fully download it with each update, it can only run on Windows, and might not run at all depending on your configuration.
+
+Below is the detailed guide for using the .pyz files.
+
+Using the .exe is straightforward: download the .exe file, place it in the same folder as your saves, and execute it.
+
 ## Requirements
 
 * Having a working Python 3 install. Development was made using Python 3.8, so the program will warn you if you try using an older version, but allow you to continue if it's a Python 3 version.
