@@ -142,7 +142,7 @@ def resetTreesToNewGame(gvas):
             if cursor == 0:
                 k = b'ESCAPE'
             elif cursor == 1:
-                removedTreesProp._data = default_removed_trees
+                removedTreesProp._data = np.asarray(default_removed_trees)
                 print(f"The trees have been reset.")
                 print("(Press any key to go back to previous menu)")
                 getKey()
