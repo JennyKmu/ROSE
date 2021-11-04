@@ -1,4 +1,4 @@
-import glob, os, shutil
+import sys, glob, os, shutil
 from pathlib import Path
 
 try:
@@ -77,14 +77,14 @@ def saveAndExit(gvas):
     print("Press any key to close.")
     print("------------------")
     getKey()
-    exit()
+    sys.exit()
 
 def noSaveAndExit(gvas):
     # gvas arg for compatibility with other ui functions
     print("Press any key to close.")
     print("------------------")
     getKey()
-    exit()
+    sys.exit()
 
 def mainEnvMenu(gvas):
     options = [

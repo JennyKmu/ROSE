@@ -1,3 +1,8 @@
 __pycache__
 *.sav
 backup
+build
+dist
+*.spec
+*.exe
+*.pyz

@@ -3,7 +3,7 @@
 # built-in imports
 import sys, glob, os, shutil
 
-def inner_main():
+def inner_main(_isPyInstalled):
     # Check if python3
     if not sys.version_info > (3,8):
         print("------------------")
@@ -14,12 +14,12 @@ def inner_main():
             c = input("> ")
             if not c == "continue":
                 print("------------------")
-                exit()
+                sys.exit()
             else:
                 print("------------------")
         else:
             print("------------------")
-            exit()
+            sys.exit()
 
     # To enable ANSI control sequences on Windows
     os.system('color')
@@ -82,11 +82,11 @@ def inner_main():
         print("!> Press Enter to exit.")
         print("------------------")
         input()
-        exit()
+        sys.exit()
 
     # Importing inner modules
     try:
-        from GVAS import GVAS
+        from GVAS.GVAS import GVAS
     except ModuleNotFoundError:
         from .GVAS import GVAS
 
@@ -96,25 +96,25 @@ def inner_main():
         from .UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
 
     def loop(loc = "."):
+        from pathlib import Path
         if __name__ == "__main__":
             loc = ".."
-        from pathlib import Path
         filename = selectSaveFile(loc)
         if filename is None:
             print("No save file detected ! Please check program location.")
             print("Press any key to exit.")
             print("------------------")
             getKey()
-            exit()
+            sys.exit()
         if filename == -1:
             print("No save file selected.")
             print("Press any key to exit.")
             print("------------------")
             getKey()
-            exit()
+            sys.exit()
         filepath = Path(filename)
 
-        gvas = GVAS.GVAS(filepath)
+        gvas = GVAS(filepath)
         print("Currently loaded file is '\033[1m{}\033[0m'".format(filename))
         print("------------------")
 
