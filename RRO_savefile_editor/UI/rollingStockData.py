@@ -146,3 +146,4 @@ def namingsanitycheck(frametype, field, newname):
 
     else:
         return newname[2:]
+
