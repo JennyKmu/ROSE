@@ -13,7 +13,6 @@ except:
 selectfmt = "\033[1;32;42m"
 
 
-
 def selectSaveFile(loc):
     filelist = glob.glob(loc + '/' + "slot*.sav")
     current = 0

@@ -40,7 +40,6 @@ def inner_main():
         "Leif_The_Head",
     ]
 
-
     version = (0, 3, 7)
     dev_version = True
 
