@@ -1,4 +1,4 @@
-﻿# RROSE - v0.3.6
+﻿# RROSE - v0.3.7
 
 This program is intended to be used as an external tool to Railroads Online server hosts. It will read save files, allow to modify entries within it, and then save the file (creating a backup file in the process).
 
@@ -42,13 +42,17 @@ Currently, functionnalities are limited to:
 * Editing money value for each player;
 * Editing rolling stock names and numbers;
   * Editing is limited to what can be displayed on each rolling stock. Override by starting with \i when entering a new value.
+* Editing cargo on wagons:
+  * Changing cargo type (within allowed types and empty)
+    * Upon switching to 'Empty', the wagon is emptied. If switching to any cargo, the wagon is filled.
+  * Changing cargo amount
 * Rolling stock clean-up (**EXPERIMENTAL**):
   * Attempts to detect rolling stock which fell through the map, and moves them high up in the air, for you to recover them and rerail them. Watch out for your head!
 * Reset trees (**EXPERIMENTAL**) back to the state they are in when starting a new game.
 
 ## In the work
 
-* Editing rolling stock contents
+* Editing locomotive and tender contents
 * Plotting a map of the network
 * Build new tracks
 * Better tree reset feature (avoid existing tracks)
