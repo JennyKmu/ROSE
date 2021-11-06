@@ -120,7 +120,7 @@ def inner_main():
         print("Currently loaded file is '\033[1m{}\033[0m'".format(filename))
         print("------------------")
 
-        mainMenu(gvas)
+        mainMenu(gvas, dev_version)
 
     try:
         loop()
