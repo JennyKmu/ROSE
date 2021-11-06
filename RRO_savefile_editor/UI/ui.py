@@ -37,7 +37,7 @@ def selectSaveFile(loc):
             return -1
 
 
-def mainMenu(gvas):
+def mainMenu(gvas, dev_version = False):
     options = [
         ("Players", playerMenu),
         ("Rolling stock", mainStockMenu),
@@ -45,6 +45,16 @@ def mainMenu(gvas):
         ("Save & Exit", saveAndExit),
         ("Exit", noSaveAndExit)
     ]
+    if dev_version:
+        from .uidev import devslotA, devslotB, devslotC, devslotD, devslotE
+        dev_options = [
+            ("DEV A", devslotA),
+            ("DEV B", devslotB),
+            ("DEV C", devslotC),
+            ("DEV D", devslotD),
+            ("DEV E", devslotE)
+        ]
+        options = dev_options + options
     current = 0
     while True:
         print("Select the submenu (press ENTER to confirm):")
