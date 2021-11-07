@@ -24,11 +24,12 @@ frametypeNamingLimiter = {
 
 
 frametypeTranslatorLong = {
+    "default": "Unknown",
     "flatcar_logs": "Flatcar T1: Logs",
     "flatcar_stakes": "Flatcar T2: Stakes",
     "flatcar_cordwood": "Flatcar T3: Bulkhead",
-    "flatcar_hopper": "Hopper",
-    "flatcar_tanker": "Tanker",
+    "flatcar_hopper": "Hoppercar",
+    "flatcar_tanker": "Tankercar",
     "boxcar": "Boxcar",
     "porter_040": "Porter 0-4-0",
     "porter_042": "Porter 0-4-2",
@@ -45,6 +46,7 @@ frametypeTranslatorLong = {
 
 
 frametypeTranslatorShort = {
+    "default": "Unknown",
     "flatcar_logs": "Logcar",
     "flatcar_stakes": "Stakes",
     "flatcar_cordwood": "Bulkhead",
@@ -56,11 +58,11 @@ frametypeTranslatorShort = {
     "climax": "Climax",
     "heisler": "Heisler",
     "cooke260": "Mogul",
-    "cooke260_tender": "Mogul Tender",
+    "cooke260_tender": "Mogul-T",
     "class70": "Class 70",
-    "class70_tender": "Class 70 Tender",
+    "class70_tender": "Class 70-T",
     "eureka": "Eureka",
-    "eureka_tender": "Eureka Tender",
+    "eureka_tender": "Eureka-T",
     "handcar": "Handcar",
 }
 
@@ -93,7 +95,41 @@ cargotypeTranslator = {
 }
 
 
-def getnaminglimits(frametype, field):
+firewoodReserves = {
+    "porter_040": 66,
+    "porter_042": 164,
+    "climax": 332,
+    "heisler": 454,
+    "cooke260_tender": 1460,
+    "class70_tender": 1350,
+    "eureka_tender": 499,
+}
+
+
+waterReserves = {
+    "porter_040": 800,
+    "porter_042": 800,
+    "climax": 3000,
+    "heisler": 3000,
+    "cooke260_tender": 9500,
+    "class70_tender": 9500,
+    "eureka_tender": 3800,
+}
+
+
+waterBoiler = {
+    "porter_040": 500,
+    "porter_042": 500,
+    "climax": 4000,
+    "heisler": 5000,
+    "cooke260": 5000,
+    "class70": 6000,
+    "eureka": 5000,
+}
+
+
+def getnaminglimits(frametype, field) -> tuple[int, int]:
+    # Returns the limits of that field. 0 = Number, 1 = Name
     if frametype not in frametypeNamingLimiter:
         frametype = "default"
 
@@ -107,7 +143,8 @@ def getnaminglimits(frametype, field):
     return maxlen, maxlines
 
 
-def namingsanitycheck(frametype, field, newname):
+def namingsanitycheck(frametype, field, newname) -> str:
+    # Limits the input to the field to change. 0 = Number, 1 = Name
     if not newname.startswith("\i"):
         if newname.isspace() or newname == '':  # if there is no text to work with, return nothing
             return ''
@@ -146,3 +183,89 @@ def namingsanitycheck(frametype, field, newname):
 
     else:
         return newname[2:]
+
+
+def gettypedescription(frametype, short=0) -> str:
+    # Lookup for rolling stock type
+    if short == 1:
+        if frametype in frametypeTranslatorShort.keys():
+            return frametypeTranslatorShort[frametype]
+        else:
+            return frametypeTranslatorShort["default"]
+    else:
+        if frametype in frametypeTranslatorLong.keys():
+            return frametypeTranslatorLong[frametype]
+        else:
+            return frametypeTranslatorLong["default"]
+
+
+def getnaming():
+    pass
+
+
+def getnumber():
+    pass
+
+
+def setnaming():
+    pass
+
+
+def setnumber():
+    pass
+
+
+def getshortnaming():
+    pass
+
+
+def getcargo():
+    pass
+
+
+def setcargo():
+    pass
+
+
+def getcargocars():
+    pass
+
+
+def getcargocarsoftype():
+    pass
+
+
+def getfuelreserve():
+    pass
+
+
+def setfuelreserve():
+    pass
+
+
+def getfuelreservecars():
+    pass
+
+
+def getwaterreserve():
+    pass
+
+
+def setwaterreserve():
+    pass
+
+
+def getwaterreservecars():
+    pass
+
+
+def getwaterboiler():
+    pass
+
+
+def setwaterboiler():
+    pass
+
+
+def getcarsbasedontype():
+    pass
