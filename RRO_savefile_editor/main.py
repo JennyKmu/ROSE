@@ -3,7 +3,7 @@
 # built-in imports
 import os
 import sys
-
+import traceback
 
 def inner_main():
     # Check if python3
@@ -125,6 +125,7 @@ def inner_main():
     try:
         loop()
     except Exception as e:
+        traceback.print_tb(e.__traceback__)
         print(e)
         print("Please send the above error to the dev team. Press any key to leave.")
         getKey()
@@ -134,10 +135,12 @@ def main():
     try:
         inner_main()
     except ImportError as e:
+        traceback.print_tb(e.__traceback__)
         print(e)
         print("Please install missing python packages. Press Enter to leave.")
         input()
     except Exception as e:
+        traceback.print_tb(e.__traceback__)
         print(e)
         print("Please send the above error(s) to the dev team. Press Enter to leave.")
         input()
