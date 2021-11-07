@@ -577,7 +577,11 @@ def teleportStockMenu(gvas):
                 if ans == "YES":
                     global n_yeeted
 
-                    framelocs[cur_line] = [n_yeeted*2400., 0., 15000.]
+                    framelocs[cur_line] = [
+                        720.+(n_yeeted%3)*540.,
+                        -2503-3000.-int(n_yeeted/3)*2042,
+                        10300.
+                        ]
                     framerots[cur_line] = [0., 90., 0.]
 
                     n_yeeted += 1
