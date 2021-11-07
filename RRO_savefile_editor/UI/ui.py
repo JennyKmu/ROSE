@@ -3,7 +3,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from .rollingStockData import *
+from .rollingStock import *
 
 try:
     from uiutils import getKey
@@ -574,6 +574,205 @@ def moveStockMenu(gvas):
         print("\033[{}A\033[J".format(1), end='')
 
 
+def engineStockMenu(gvas):
+    framenumbers = gvas.data.find("FrameNumberArray").data
+    framenames = gvas.data.find("FrameNameArray").data
+    frametypes = gvas.data.find("FrameTypeArray").data
+    frameboilerwater = gvas.data.find("BoilerWaterLevelArray").data
+    frametenderwater = gvas.data.find("TenderWaterAmountArray").data
+    frametenderfuel = gvas.data.find("TenderFuelAmountArray").data
+
+    ind = []
+    for i in range(len(frametypes)):
+        if (frametypes[i] in waterBoiler.keys()) or (frametypes[i] in waterReserves.keys()) or \
+                (frametypes[i] in firewoodReserves.keys()):
+            ind.append(i)
+
+    cur_col = 0
+    cur_line = 0
+    formatters = [
+        "{:<48s}",
+        "{:>14}",
+        "{:>14}",
+        "{:>12}",
+    ]
+    dashline =''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    offset = 0
+    ltot = len(ind)
+    if ltot > 10:
+        split_data = True
+        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+    else:
+        split_data = False
+    while True:
+        print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
+        print("Enter nothing to fill up, or type in an amount.")
+        cur_page = int(offset / 10)
+        if split_data:
+            print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
+        print(" | ".join(formatters).format(
+            "Engine / Tender",
+            "Water Boiler",
+            "Water Tank",
+            "Firewood",
+        ))
+        print(dashline)
+        n_line = 0
+        for i in range(len(ind)):
+            if i not in range(offset, offset + 10) and split_data:
+                continue
+            n_line += 1
+            if i == cur_line:
+                line_format = formatters[0]
+                for j in range(3):
+                    line_format += " | "
+                    if j == cur_col:
+                        line_format += selectfmt + formatters[j + 1] + "\033[0m"
+                    else:
+                        line_format += formatters[j + 1]
+            else:
+                line_format = " | ".join(formatters)
+
+            frametype = frametypes[ind[i]]
+            num = framenumbers[ind[i]]
+            nam = framenames[ind[i]]
+
+            num = '' if num is None else num
+            nam = '' if nam is None else nam
+
+            namestr = "{:<10s}:".format(frametypeTranslatorShort[frametype])
+            if not num == '':
+                namestr += " {:>4}".format(num.split("<br>")[0].strip())
+            if not nam == '':
+                namestr += " " + nam.split("<br>")[0].strip()
+            namestr = namestr[:48]
+
+            if frametype in waterBoiler.keys():
+                waterboilerstr = "{.1f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
+            else:
+                waterboilerstr = ''
+
+            if frametype in waterReserves.keys():
+                waterreservestr = "{.1f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
+            else:
+                waterreservestr = ''
+
+            if frametype in firewoodReserves.keys():
+                firewoodstr = "{:.0f} / {:4}".format(frametenderfuel[ind[i]], firewoodReserves[frametype])
+            else:
+                firewoodstr = ''
+
+            print(line_format.format(
+                namestr,
+                waterboilerstr,
+                waterreservestr,
+                firewoodstr,
+            ))
+        k = getKey()
+
+        if k == b'KEY_RIGHT':
+            cur_col = min(2, cur_col + 1)
+        if k == b'KEY_LEFT':
+            cur_col = max(0, cur_col - 1)
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+            if cur_line < offset:
+                k = b'PAGE_UP'
+        if k == b'KEY_DOWN':
+            cur_line = min(ltot - 1, cur_line + 1)
+            if cur_line >= offset + 10:
+                k = b'PAGE_DOWN'
+        if k == b'PAGE_UP':
+            offset = max(0, offset - 10)
+            if cur_line not in range(offset, offset + 10):
+                cur_line = offset + 10 - 1
+        if k == b'PAGE_DOWN':
+            max_offset = ltot - ltot % 10
+            offset = min(offset + 10, max_offset)
+            if cur_line not in range(offset, offset + 10):
+                cur_line = offset
+        if k == b'RETURN':
+            curframetype = frametypes[ind[cur_line]]
+            if cur_col == 0 and curframetype in waterBoiler.keys():
+                prompt_text = "> Enter new value or leave blank for max: "
+                while True:
+                    val = input(prompt_text)
+                    try:
+                        if val == '':
+                            val = waterBoiler[curframetype]
+                        else:
+                            val = float(val)
+                    except ValueError:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid input! Enter new value: "
+                        continue
+
+                    if val < 0 or val > waterBoiler[curframetype]:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid amount! Enter new value: "
+                        continue
+
+                    frameboilerwater[ind[cur_line]] = val
+                    print("\033[{}A\033[J".format(1), end='')
+                    break
+
+            elif cur_col == 1 and curframetype in waterReserves.keys():
+                prompt_text = "> Enter new value or leave blank for max: "
+                while True:
+                    val = input(prompt_text)
+                    try:
+                        if val == '':
+                            val = waterReserves[curframetype]
+                        else:
+                            val = int(val)
+                    except ValueError:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid input! Enter new value: "
+                        continue
+
+                    if val < 0 or val > waterReserves[curframetype]:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid amount! Enter new value: "
+                        continue
+
+                    frametenderwater[ind[cur_line]] = val
+                    print("\033[{}A\033[J".format(1), end='')
+                    break
+
+            elif cur_col == 2 and curframetype in firewoodReserves.keys():
+                prompt_text = "> Enter new value or leave blank for max: "
+                while True:
+                    val = input(prompt_text)
+                    try:
+                        if val == '':
+                            val = firewoodReserves[curframetype]
+                        else:
+                            val = int(val)
+                    except ValueError:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid input! Enter new value: "
+                        continue
+
+                    if val < 0 or val > firewoodReserves[curframetype]:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid amount! Enter new value: "
+                        continue
+
+                    frametenderfuel[ind[cur_line]] = val
+                    print("\033[{}A\033[J".format(1), end='')
+                    break
+
+        if ltot <= 10:
+            print("\033[{}A\033[J".format(ltot + 4), end='')
+        else:
+            print("\033[{}A\033[J".format(n_line + 5), end='')
+
+        if k == b'ESCAPE':
+            return None
+
+
 def cargoStockMenu(gvas):
     framenumbers = gvas.data.find("FrameNumberArray").data
     framenames = gvas.data.find("FrameNameArray").data
@@ -583,7 +782,7 @@ def cargoStockMenu(gvas):
 
     ind = []
     for i in range(len(frametypes)):
-        if frametypes[i] in frametypeCargoLimits:
+        if frametypes[i] in frametypeCargoLimits.keys():
             ind.append(i)
 
     cur_col = 0
@@ -760,6 +959,7 @@ def mainStockMenu(gvas):
         ("Rename", renameStockMenu),
         ("Teleport", moveStockMenu),
         ("Cargo", cargoStockMenu),
+        ("Locomotive Restock", engineStockMenu),
     ]
     current = 0
     while True:
