@@ -57,6 +57,10 @@ Currently, functionnalities are limited to:
   * Changing cargo amount
 * Editing Engine and Tender contents:
   * Refill firewood, water, sand.
+* Editing Utility contents:
+  * Can refill water towers
+  * Can refill sand towers
+  * Can refill firewood depots
 * Rolling stock respawn :
   * Allows to respawn rolling stock at one of the six spawn points. The rolling stock should be re-railed when respawning at one of the spawn points.
   * If all the points are occupied, an option is available to teleport rolling stock close to the spawn points (behind the deck at the end of the tracks).
@@ -70,8 +74,8 @@ Currently, functionnalities are limited to:
 * Better tree reset feature (avoid existing tracks)
 * Exporting SVG files of the network
 * Editing industries contents
-* Editing water, sand and firewood places contents
-* Teleportation of rolling stock and players, as well as rerailing
+* Teleportation of players
+* Better teleportation of rolling stock, as well as rerailing
 * Deletion of rolling stock, tracks, or players
 * A "No cheat" mode, which will allow to take loans, sell unused rolling stock (at a lower price), order refills for water, sand or firewood...
 * Improvements of the UI
