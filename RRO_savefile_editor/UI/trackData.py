@@ -18,6 +18,12 @@ spawnOrientations = np.asarray([
     [0., 90., 0.],
 ])
 
+spawnZOffset = {
+    "heisler": 10233.,
+    "cooke260": 10239.,
+    "class70": 10194.,
+    "eureka": 10194.
+}
 
 def nextAvailableSpawn(gvas, pos):
     framelocs = gvas.data.find("FrameLocationArray").data

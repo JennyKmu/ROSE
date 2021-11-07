@@ -562,6 +562,11 @@ def teleportStockMenu(gvas):
                     n_line += 2
                     if ans == "YES":
                         framelocs[cur_line] = spawnPositions[spawn_idx]
+                        zoffset = spawnZOffset.get(
+                            frametypes[cur_line],
+                            spawnPositions[spawn_idx][2]
+                        )
+                        framelocs[cur_line][2] = zoffset
                         framerots[cur_line] = spawnOrientations[spawn_idx]
                         moved_something = True
             elif cur_col == 1:
