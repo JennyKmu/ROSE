@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from .industryPlacables import *
 from .rollingStock import *
+from .trackData import *
 
 try:
     from uiutils import getKey
@@ -517,121 +518,6 @@ def editplacables(gvas):
             return None
 
 
-#
-# class SubMenu(object):
-#     def __init__(self,
-#                         formatter,
-#                         header,
-#                         col_names,
-#                         sep_size,
-#                         properties,
-#                         editable=True,
-#                         editable_range=[1,2],
-#                         special_format=None):
-#         self.max_lines = 10
-#         self.cur_col = 0
-#         self.cur_lin = 0
-#         self.cur_range = 0
-#         self.header = header
-#         self.col_names = col_names
-#         self.formatter = formatter
-#         self.properties = properties
-#         self.sep_size = sep_size
-#         self.editable = editable
-#         self.editable_range = editable_range
-#         if special_format is None:
-#             self.special_format = [None]*len(self.properties)
-#         else:
-#             self.special_format = special_format
-#
-#     def __call__(self, gvas):
-#         props = [gvas.find(prop).data for prop in self.properties]
-#         while True:
-#             print(self.header)
-#             print(' | '.join(self.formatter).format(self.col_names))
-#             print('-'*self.sep_size)
-#             if len(props[0]) <= self.max_lines:
-#                 for i in range(len(props[0]):
-#                     if i == self.cur_lin and self.editable:
-#                         k = 0
-#                         line_format = []
-#                         for j in range(len(props)):
-#                             if j in self.editable_range and self.editable_range[k] == j and k == self.cur_col:
-#                                 line_format.append(selectfmt + self.formatter[j] + "\033[0m")
-#                             else:
-#                                 line_format.append(self.formatter[j])
-#                                 k += 1
-#                         line_format = " | ".join(line_format)
-#                     else :
-#                         line_format = " | ".join(self.formatter)
-#
-#                     values = []
-#                     for p in range(len(props)):
-#                         if self.special_format[p] is not None:
-#                             values.append(self.special_format[p](props[p][i]))
-#                         else:
-#                             values.append(props[p][i])
-#                     print(line_format.format(*tuple(values)))
-#
-#             else:
-#                 raise NotImplementedError("Under Construction")
-#
-#
-#             k = getKey()
-#
-#             if k == b'KEY_RIGHT':
-#                 cur_col = min(1,cur_col+1)
-#             if k == b'KEY_LEFT':
-#                 cur_col = max(0, cur_col-1)
-#             if k == b'KEY_UP':
-#                 cur_line = max(0, cur_line-1)
-#             if k == b'KEY_DOWN':
-#                 cur_line = min(len(player_names_prop.data)-1, cur_line+1)
-#             if k == b'RETURN':
-#                 self.edit()
-#
-#             if len(props[0]) <= self.max_lines:
-#                 print("\033[{}A\033[J".format(len(props[0])+3), end='')
-#             else:
-#                 raise NotImplementedError()
-#
-#             if k == b'ESCAPE':
-#                 return None
-#
-#
-#
-#     def edit(self, props):
-#         prompt_text = "> Enter new value: "
-#         while True:
-#             n_line = 0
-#             val = input(prompt_text)
-#             n_line +=1
-#             try:
-#                 if self.special_input[self.cur_col] is not None:
-#                     val = self.special_input[self.cur_col](val)
-#             except ValueError:
-#                 print("\033{}A\033[J".format(n_line), end='')
-#                 prompt_text = "> Invalid input! Enter new value: "
-#                 continue
-#             except Exception as e:
-#                 print("\033{}A\033[J".format(n_line), end='')
-#                 prompt_text = "> {} Enter new value: ".format(e.message)
-#                 continue
-#
-#             data = [props[k] for k in self.editable_range]
-#             data[cur_col][cur_line] = val
-#             print("\033[{}A\033[J".format(n_line), end='')
-#             break
-#
-#
-#         raise NotImplementedError("You need to implement that")
-#
-#
-# def newPlayerMenu(gvas):
-#     menu = SubMenu(
-#         )
-#     menu(gvas)
-
 def playerMenu(gvas):
     player_names_prop = gvas.data.find("PlayerNameArray")
     player_money_prop = gvas.data.find("PlayerMoneyArray")
@@ -866,6 +752,200 @@ def renameStockMenu(gvas):
             return None
 
 
+n_yeeted = 0
+
+def teleportStockMenu(gvas):
+    framenumbers = gvas.data.find("FrameNumberArray").data
+    framenames = gvas.data.find("FrameNameArray").data
+    frametypes = gvas.data.find("FrameTypeArray").data
+    framelocs = gvas.data.find("FrameLocationArray").data
+    framerots = gvas.data.find("FrameRotationArray").data
+    framebrakes = gvas.data.find("BrakeValueArray").data
+    framecouplingfront = gvas.data.find("CouplerFrontStateArray").data
+    framecouplingrear = gvas.data.find("CouplerRearStateArray").data
+    # print(framenumbers)
+    # print(framenames)
+    # print(frametypes)
+    cur_col = 0
+    cur_line = 0
+    formatters = [
+        "{:^7s}",
+        "{:<12s}",
+        "{:<16s}",
+        "{:<32s}",
+        "{:^11s}",
+        "{:^11s}"
+    ]
+
+    min_height = 1000.
+    indexes = framelocs[:, 2] < min_height
+    submapframes = framelocs[indexes, :]
+
+
+    status_str = "⬤"
+
+    offset = 0
+    ltot = len(frametypes)
+    if ltot > 10:
+        split_data = True
+        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+    else:
+        split_data = False
+    while True:
+        n_line = 0
+        print("Select method (ESCAPE to quit, ENTER to valid selection)")
+        n_line += 1
+        cur_page = int(offset / 10)
+
+        print("\033[1;41m" + "      " + "\033[0m marks frames which are below ground.")
+        n_line += 1
+        indexes = framelocs[:, 2] < min_height
+        submapframes = framelocs[indexes, :]
+        nbelow = int(submapframes.size / 3)
+        if nbelow == 0:
+            n_line += 1
+            print(f"No frame was found below {int(min_height/100.):d} m in height.")
+        else :
+            n_line += 1
+            print(f"\033[1;32m{nbelow}\033[0m frames were found below {int(min_height/100.):d} m in height.")
+
+
+
+
+        if split_data:
+            print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
+            n_line += 1
+        print(" | ".join(formatters).format(
+            "Status",
+            "Frame type",
+            "Number",
+            "Name",
+            "Respawn",
+            "Yeet it"
+        ))
+        print("-" * (32 * 3 + 3 * 2))
+        n_line += 2
+
+
+        for i in range(len(frametypes)):
+            if i not in range(offset, offset + 10) and split_data:
+                continue
+
+            if i == cur_line:
+                line_format = " | ".join(formatters[0:4])
+                for j in range(2):
+                    line_format += " | "
+                    if j == cur_col:
+                        line_format += selectfmt + formatters[j + 4] + "\033[0m"
+                    else:
+                        line_format += formatters[j + 4]
+            else:
+                line_format = " | ".join(formatters)
+
+            num = framenumbers[i]
+            nam = framenames[i]
+
+            num = '-' if num is None else num
+            nam = '-' if nam is None else nam
+
+            # not necessary anymore (new line stored as <br>)
+            # num = num if '<br>' not in num else num.replace('\n', '<br>')
+            # nam = nam if '<br>' not in nam else nam.replace('\n', '<br>')
+
+            if framelocs[i,2] < min_height:
+                line_format = line_format.split(" | ")
+                line_format[0] = "\033[1;41m" + line_format[0] + "\033[0m"
+                line_format = " | ".join(line_format)
+
+            print(line_format.format(
+                " ",
+                frametypeTranslatorShort[frametypes[i]],
+                num,
+                nam,
+                "[RESPAWN]",
+                "[YEET IT]"
+            ))
+            n_line += 1
+        k = getKey()
+
+        if k == b'KEY_RIGHT':
+            cur_col = min(1, cur_col + 1)
+        if k == b'KEY_LEFT':
+            cur_col = max(0, cur_col - 1)
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+            if cur_line < offset:
+                k = b'PAGE_UP'
+        if k == b'KEY_DOWN':
+            cur_line = min(ltot - 1, cur_line + 1)
+            if cur_line >= offset + 10:
+                k = b'PAGE_DOWN'
+        if k == b'PAGE_UP':
+            offset = max(0, offset - 10)
+            if cur_line not in range(offset, offset + 10):
+                cur_line = offset + 10 - 1
+        if k == b'PAGE_DOWN':
+            max_offset = ltot - ltot % 10
+            offset = min(offset + 10, max_offset)
+            if cur_line not in range(offset, offset + 10):
+                cur_line = offset
+        if k == b'RETURN':
+            moved_something = False
+            if cur_col == 0:
+                # RESPAWN
+                # check if respawn possible
+                spawn_idx = nextAvailableSpawn(gvas, framelocs[cur_line])
+                if spawn_idx is None:
+                    print("There is no spawn point available for respawn !")
+                    print("You can try to 'Yeet it' next to the spawn.")
+                    print("Press any key to continue.")
+                    getKey()
+                    n_line += 3
+                else:
+                    print(f"Spawn point number {spawn_idx+1} is available.")
+                    ans = input("Type 'YES' to proceed: ")
+                    n_line += 2
+                    if ans == "YES":
+                        framelocs[cur_line] = spawnPositions[spawn_idx]
+                        zoffset = spawnZOffset.get(
+                            frametypes[cur_line],
+                            spawnPositions[spawn_idx][2]
+                        )
+                        framelocs[cur_line][2] = zoffset
+                        framerots[cur_line] = spawnOrientations[spawn_idx]
+                        moved_something = True
+            elif cur_col == 1:
+                # YEET IT !
+                print("The frame will be yeeted close to the spawn point.")
+                ans = input("Type 'YES' to proceed (at your own risks): ")
+                n_line += 2
+                if ans == "YES":
+                    global n_yeeted
+
+                    framelocs[cur_line] = [
+                        720.+(n_yeeted%3)*540.,
+                        -2503-2100.-int(n_yeeted/3)*1500,
+                        10300.
+                        ]
+                    framerots[cur_line] = [0., 90., 0.]
+
+                    n_yeeted += 1
+                    moved_something = True
+            if moved_something:
+                framebrakes[cur_line] = 1.0
+                framecouplingrear[cur_line] = False
+                framecouplingfront[cur_line] = False
+
+
+        if ltot <= 10:
+            print("\033[{}A\033[J".format(n_line), end='')
+        else:
+            print("\033[{}A\033[J".format(n_line), end='')
+
+        if k == b'ESCAPE':
+            return None
+
+
 def moveStockMenu(gvas):
     n_line = 0
     min_height = 1000
@@ -876,14 +956,11 @@ def moveStockMenu(gvas):
     submapframes = frameloc[indexes, :]
     nbelow = int(submapframes.size / 3)
     if nbelow == 0:
-        print(f"No car/loco was found below {min_height} game units in height.")
-        print(f"Press any key to return to previous menu.")
-        getKey()
-        print("\033[{}A\033[J".format(3), end='')
-        return
-
-    print(f"\033[1;32m{nbelow}\033[0m cars/locos were found below {min_height} game units in height.")
-    print(f"If you proceed, those cars will be repositionned at {new_height} game units in height.")
+        n_line += 1
+        print(f"No car/loco was found below {int(min_height/100.):d} m in height.")
+    else :
+        n_line += 1
+        print(f"\033[1;32m{nbelow}\033[0m cars/locos were found below {int(min_height/100.):d} m in height.")
     cursor = 0
     choices = ["Cancel", "Proceed at your own risks"]
     while True:
@@ -994,12 +1071,12 @@ def engineStockMenu(gvas):
             namestr = namestr[:48]
 
             if frametype in waterBoiler.keys():
-                waterboilerstr = "{.1f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
+                waterboilerstr = "{:.1f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
             else:
                 waterboilerstr = ''
 
             if frametype in waterReserves.keys():
-                waterreservestr = "{.1f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
+                waterreservestr = "{:.1f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
             else:
                 waterreservestr = ''
 
@@ -1248,7 +1325,7 @@ def cargoStockMenu(gvas):
                     print("\033[{}A\033[J".format(1), end='')
 
                     if k == b'KEY_RIGHT':
-                        cursor = min(len(choices), cursor + 1)
+                        cursor = min(len(choices)-1, cursor + 1)
                     if k == b'KEY_LEFT':
                         cursor = max(0, cursor - 1)
 
@@ -1301,7 +1378,7 @@ def cargoStockMenu(gvas):
 def mainStockMenu(gvas):
     options = [
         ("Rename", renameStockMenu),
-        ("Teleport", moveStockMenu),
+        ("Respawn", teleportStockMenu),
         ("Cargo", cargoStockMenu),
         ("Locomotive Restock", engineStockMenu),
     ]
