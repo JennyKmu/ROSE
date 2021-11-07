@@ -726,12 +726,12 @@ def engineStockMenu(gvas):
             namestr = namestr[:48]
 
             if frametype in waterBoiler.keys():
-                waterboilerstr = "{.1f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
+                waterboilerstr = "{:.1f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
             else:
                 waterboilerstr = ''
 
             if frametype in waterReserves.keys():
-                waterreservestr = "{.1f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
+                waterreservestr = "{:.1f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
             else:
                 waterreservestr = ''
 
@@ -980,7 +980,7 @@ def cargoStockMenu(gvas):
                     print("\033[{}A\033[J".format(1), end='')
 
                     if k == b'KEY_RIGHT':
-                        cursor = min(len(choices), cursor + 1)
+                        cursor = min(len(choices)-1, cursor + 1)
                     if k == b'KEY_LEFT':
                         cursor = max(0, cursor - 1)
 
