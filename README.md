@@ -20,7 +20,7 @@ With each release will be included the SHA-256 hash of the .pyz and .exe files. 
 
 ## Requirements
 
-* Having a working Python 3 install. Development was made using Python 3.8, so the program will warn you if you try using an older version, but allow you to continue if it's a Python 3 version.
+* Having a working Python 3 install. Development was made using Python 3.9, so the program will warn you if you try using an older version, but allow you to continue if it's a Python 3 version.
 * Having necessary python modules installed:
   * numpy (see https://pypi.org/project/numpy/ )
 
@@ -56,11 +56,12 @@ Currently, functionnalities are limited to:
     * Upon switching to 'Empty', the wagon is emptied. If switching to any cargo, the wagon is filled.
   * Changing cargo amount
 * Editing Engine and Tender contents:
-  * Refill firewood, water, sand.
+  * Refill firewood, water.
+  * Known Issue: Sand amounts cannot be changed, as they aren't saved in the first place.
 * Editing Utility contents:
   * Can refill water towers
-  * Can refill sand towers
   * Can refill firewood depots
+  * Known Issue: Sand towers are not listed, as their sand amount isn't saved either.
 * Rolling stock respawn :
   * Allows to respawn rolling stock at one of the six spawn points. The rolling stock should be re-railed when respawning at one of the spawn points.
   * If all the points are occupied, an option is available to teleport rolling stock close to the spawn points (behind the deck at the end of the tracks).
