@@ -415,6 +415,9 @@ def teleportStockMenu(gvas):
     frametypes = gvas.data.find("FrameTypeArray").data
     framelocs = gvas.data.find("FrameLocationArray").data
     framerots = gvas.data.find("FrameRotationArray").data
+    framebrakes = gvas.data.find("BrakeValueArray").data
+    framecouplingfront = gvas.data.find("CouplerFrontStateArray").data
+    framecouplingrear = gvas.data.find("CouplerRearStateArray").data
     # print(framenumbers)
     # print(framenames)
     # print(frametypes)
@@ -542,6 +545,7 @@ def teleportStockMenu(gvas):
             if cur_line not in range(offset, offset + 10):
                 cur_line = offset
         if k == b'RETURN':
+            moved_something = False
             if cur_col == 0:
                 # RESPAWN
                 # check if respawn possible
@@ -559,6 +563,7 @@ def teleportStockMenu(gvas):
                     if ans == "YES":
                         framelocs[cur_line] = spawnPositions[spawn_idx]
                         framerots[cur_line] = spawnOrientations[spawn_idx]
+                        moved_something = True
             elif cur_col == 1:
                 # YEET IT !
                 print("The frame will be yeeted close to the spawn point.")
@@ -571,6 +576,11 @@ def teleportStockMenu(gvas):
                     framerots[cur_line] = [0., 90., 0.]
 
                     n_yeeted += 1
+                    moved_something = True
+            if moved_something:
+                framebrakes[cur_line] = 1.0
+                framecouplingrear[cur_line] = False
+                framecouplingfront[cur_line] = False
 
 
         if ltot <= 10:
