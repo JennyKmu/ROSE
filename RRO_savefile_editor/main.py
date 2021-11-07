@@ -7,10 +7,10 @@ import traceback
 
 def inner_main():
     # Check if python3
-    if not sys.version_info > (3, 8):
+    if not sys.version_info > (3, 9):
         print("------------------")
         print("> \033[1;31mERROR: Python version not officially supported.\033[0m")
-        print("> Please use/install Python version 3.8 or above.")
+        print("> Please use/install Python version 3.9 or above.")
         if sys.version_info > (3,):
             print("> You can input 'continue' if you're sure your python install meets requirements.")
             c = input("> ")
@@ -41,7 +41,8 @@ def inner_main():
     ]
 
     version = (0, 3, 7)
-    dev_version = True
+    dev_version = False
+    beta_version = True
 
     def header():
         print("=" * 72)
@@ -71,7 +72,14 @@ def inner_main():
         print("> At any point during execution you can stop execution by pressing Ctrl-D (or Ctrl-C)")
         print("> Likewise, you can always go back to previous menu by pressing Escape.")
         print("> And finally, \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program!")
-        print("------------------")
+        print("=" * 72)
+
+        if beta_version:
+            print("| {:^68s} | ".format(
+                "THIS IS A BETA VERSION. Please report potential issues on GitHub."
+            ))
+            print("=" * 72)
+
 
     header()
 
