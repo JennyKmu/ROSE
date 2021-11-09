@@ -110,6 +110,7 @@ def mainEnvMenu(gvas):
     options = [
         #("Edit Industry Contents", editindustries),
         ("Edit Utility Contents", editplacables),
+        ("Smart tree reset", resetTreesSmart),
         ("Reset trees to new game state (EXPERIMENTAL)", resetTreesToNewGame),
     ]
     current = 0
@@ -139,7 +140,7 @@ def resetTreesToNewGame(gvas):
     print("Risks include in particular:")
     print(" * Trees in the middle of the track (obviously)")
     print(" * Rolling stock being yeeted through the air at hypersonic speeds...")
-    print(" * Or worse, through the ground. But for that there's another experimental feature.")
+    print(" * Or worse, through the ground. But for that you can use the respawn tool.")
 
     removedTreesProp = gvas.data.find("RemovedVegetationAssetsArray")
 
@@ -175,6 +176,84 @@ def resetTreesToNewGame(gvas):
             return None
 
         print("\033[{}A\033[J".format(1), end='')
+
+
+def resetTreesSmart(gvas):
+    import numpy as np
+    from .defaultRemovedTrees import default_removed_trees
+    print("This is an \033[1;31mEXPERIMENTAL\033[0m feature. Use at your own risks.")
+    print("Risks include in particular:")
+    print(" * Trees in the middle of the track (obviously)")
+    print(" * Rolling stock being yeeted through the air at hypersonic speeds...")
+    print(" * Or worse, through the ground. But for that you can use the respawn tool.")
+    print("This tool will attempt to reset trees avoiding tracks and other assets.")
+    print("Expect some computing time after launching the tool.")
+
+    removedTreesProp = gvas.data.find("RemovedVegetationAssetsArray")
+    splinepoints = gvas.data.find("SplineControlPointsArray")
+
+
+    cursor = 0
+    choices = ["Cancel", "Proceed at your own risks"]
+    while True:
+        if cursor == 0:
+            print(" " * 5 + selectfmt + "{:^29s}".format(choices[0]) + "\033[0m"
+                  + " " * 5 + "{:^29s}".format(choices[1]))
+        else:
+            print(" " * 5 + "{:^29s}".format(choices[0])
+                  + " " * 5 + selectfmt + "{:^29s}".format(choices[1]) + "\033[0m")
+        k = getKey()
+
+        if k == b'KEY_RIGHT':
+            cursor = min(1, cursor + 1)
+        if k == b'KEY_LEFT':
+            cursor = max(0, cursor - 1)
+
+        if k == b'RETURN':
+            if cursor == 0:
+                k = b'ESCAPE'
+            elif cursor == 1:
+                # Distance from placed elements where trees aren't respawned
+                safedistance=5000.
+                A = removedTreesProp.data
+                B = splinepoints.data.T
+                C = np.asarray(default_removed_trees)
+                # Remove originnally cut trees from the list
+                dims = np.maximum(C.max(0),A.max(0))+1
+                A = A[~np.in1d(np.ravel_multi_index(A.T,dims),np.ravel_multi_index(C.T,dims))]
+
+                # Compute distance mask
+                dist = np.min(
+                              np.sqrt(
+                                      np.sum(
+                                             (A[:,:,None]-B[None,:,:])**2,
+                                             axis=1
+                                             )
+                                      ),
+                              axis=1
+                              )
+                mask = dist < safedistance
+
+                # Keep only cut trees that are close to the tracks
+                A = A[mask,:]
+
+                # Add originally cut trees
+                A = np.vstack([C, A])
+
+                # Save to gvas (might be unnecessary but let's make sure it's done)
+                removedTreesProp.data = A
+
+                print(f"The trees have been reset.")
+                print("(Press any key to go back to previous menu)")
+                getKey()
+                print("\033[{}A\033[J".format(10), end='')
+                return None
+
+        if k == b'ESCAPE':
+            print("\033[{}A\033[J".format(8), end='')
+            return None
+
+        print("\033[{}A\033[J".format(3), end='')
 
 
 #def editindustries(gvas):
