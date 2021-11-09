@@ -214,7 +214,7 @@ def resetTreesSmart(gvas):
                 k = b'ESCAPE'
             elif cursor == 1:
                 # Distance from placed elements where trees aren't respawned
-                safedistance=5000.
+                safedistancesplines=500.
                 A = removedTreesProp.data
                 B = splinepoints.data.T
                 C = np.asarray(default_removed_trees)
@@ -223,21 +223,13 @@ def resetTreesSmart(gvas):
                 A = A[~np.in1d(np.ravel_multi_index(A.T,dims),np.ravel_multi_index(C.T,dims))]
 
                 # Compute distance mask
-                dist = np.min(
-                              np.sqrt(
-                                      np.sum(
-                                             (A[:,:,None]-B[None,:,:])**2,
-                                             axis=1
-                                             )
-                                      ),
-                              axis=1
-                              )
-                mask = dist < safedistance
+                dist = np.min(np.sqrt(np.sum((A[:,:,None]-B[None,:,:])**2, axis=1)), axis=1)
+                masksplines = dist < safedistancesplines
 
                 # Keep only cut trees that are close to the tracks
-                A = A[mask,:]
+                A = A[masksplines,:]
 
-                # Add originally cut trees
+                # Add originally cut trees back
                 A = np.vstack([C, A])
 
                 # Save to gvas (might be unnecessary but let's make sure it's done)
