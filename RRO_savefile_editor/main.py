@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
 
 # built-in imports
-import sys, glob, os, shutil
+import os
+import sys
+import traceback
 
 def inner_main():
     # Check if python3
-    if not sys.version_info > (3,8):
+    if not sys.version_info > (3, 9):
         print("------------------")
-        print("> \033[1;31mERROR: Python version not officialy supported.\033[0m")
-        print("> Please use/install Python version 3.8 or above.")
-        if sys.version_info > (3,):
-            print("> You can input 'continue' if you're sure your python install meets requirements.")
-            c = input("> ")
-            if not c == "continue":
-                print("------------------")
-                sys.exit()
-            else:
-                print("------------------")
-        else:
-            print("------------------")
-            sys.exit()
+        print("> \033[1;31mERROR: Python version not officially supported.\033[0m")
+        print("> Please use/install Python version 3.9 or above (3.10+ recomended).")
+        # if sys.version_info > (3,):
+        #     print("> You can input 'continue' if you're sure your python install meets requirements.")
+        #     c = input("> ")
+        #     if not c == "continue":
+        #         print("------------------")
+        #         sys.exit()
+        #     else:
+        #         print("------------------")
+        # else:
+        print("------------------")
+        print("Press Enter to exit.")
+        input()
+        sys.exit()
 
     # To enable ANSI control sequences on Windows
     os.system('color')
@@ -31,7 +35,6 @@ def inner_main():
     # import colorama
     # colorama.init()
 
-
     # Contributors list:
 
     contributors = [
@@ -39,11 +42,12 @@ def inner_main():
         "Leif_The_Head",
     ]
 
-    version = (0,3,5)
+    version = (0, 3, 7)
     dev_version = False
+    beta_version = True
 
     def header():
-        print("="*72)
+        print("=" * 72)
         print("| {:^68s} |".format("~~~ RAILROADS Online savefile editor ~~~"))
         if not dev_version:
             print("| {:^68s} |".format("v{}.{}.{}".format(*version)))
@@ -57,10 +61,11 @@ def inner_main():
         print("| {:<68s} |".format("Contributors :"))
         for contributor in contributors:
             print("| * {:<66s} |".format(contributor))
-        print("="*72)
+        print("=" * 72)
         print()
         print("--- How to use ---")
-        print("> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program, even though it should create a backup!")
+        print(
+            "> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program, even though it should create a backup!")
         print("> Have a working Python installation (the program should work with any Python 3 version)")
         print("> Install required python modules (numpy)")
         print("> Have the program inside the folder containing saved games")
@@ -68,8 +73,15 @@ def inner_main():
         print("> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program !")
         print("> At any point during execution you can stop execution by pressing Ctrl-D (or Ctrl-C)")
         print("> Likewise, you can always go back to previous menu by pressing Escape.")
-        print("> And finally, \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program!")
-        print("------------------")
+        print("> And finally, \033[31;1mBACK-UP YOUR SAVEFILES\033[0m before using this program!")
+        print("=" * 72)
+
+        if beta_version:
+            print("| {:^68s} | ".format(
+                "THIS IS A BETA VERSION. Please report potential issues on GitHub."
+            ))
+            print("=" * 72)
+
 
     header()
 
@@ -95,7 +107,7 @@ def inner_main():
     except ModuleNotFoundError:
         from .UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
 
-    def loop(loc = "."):
+    def loop(loc="."):
         from pathlib import Path
         if __name__ == "__main__":
             loc = ".."
@@ -118,26 +130,31 @@ def inner_main():
         print("Currently loaded file is '\033[1m{}\033[0m'".format(filename))
         print("------------------")
 
-        mainMenu(gvas)
+        mainMenu(gvas, dev_version)
 
     try:
         loop()
     except Exception as e:
+        traceback.print_tb(e.__traceback__)
         print(e)
         print("Please send the above error to the dev team. Press any key to leave.")
         getKey()
+
 
 def main():
     try:
         inner_main()
     except ImportError as e:
+        traceback.print_tb(e.__traceback__)
         print(e)
         print("Please install missing python packages. Press Enter to leave.")
         input()
     except Exception as e:
+        traceback.print_tb(e.__traceback__)
         print(e)
         print("Please send the above error(s) to the dev team. Press Enter to leave.")
         input()
 
-if __name__=="__main__":
-        main()
+
+if __name__ == "__main__":
+    main()
