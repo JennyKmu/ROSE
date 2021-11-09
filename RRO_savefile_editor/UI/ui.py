@@ -213,29 +213,70 @@ def resetTreesSmart(gvas):
             if cursor == 0:
                 k = b'ESCAPE'
             elif cursor == 1:
+                import time
+                t0 = time.perf_counter()
                 # Distance from placed elements where trees aren't respawned
                 safedistancesplines=500.
                 A = removedTreesProp.data
-                B = splinepoints.data.T
+                B = splinepoints.data
+
                 C = np.asarray(default_removed_trees)
                 # Remove originnally cut trees from the list
-                dims = np.maximum(C.max(0),A.max(0))+1
-                A = A[~np.in1d(np.ravel_multi_index(A.T,dims),np.ravel_multi_index(C.T,dims))]
+                A = A[~((A[:,None,:] == C).all(-1)).any(1)]
 
-                # Compute distance mask
-                dist = np.min(np.sqrt(np.sum((A[:,:,None]-B[None,:,:])**2, axis=1)), axis=1)
-                masksplines = dist < safedistancesplines
+                # Generate buckets
+                avx = np.mean(A[:,0])
+                avy = np.mean(A[:,1])
+                # avx = 0.  # worse load balance
+                # avy = 0.
+                nbuckets = 4
+                Abuckets = [
+                    A[np.logical_and(A[:,0]<avx  , A[:,1]<avy), :],
+                    A[np.logical_and(A[:,0]<avx  , A[:,1]>=avy), :],
+                    A[np.logical_and(A[:,0]>=avx , A[:,1]<avy),  :],
+                    A[np.logical_and(A[:,0]>=avx , A[:,1]>=avy), :]
+                ]
+                ds=500. # safedistancesplines
+                Bbuckets = [
+                    B[np.logical_and(B[:,0]<ds+avx   , B[:,1]<ds+avy  ), :].T,
+                    B[np.logical_and(B[:,0]<ds+avx   , B[:,1]>=-ds+avy), :].T,
+                    B[np.logical_and(B[:,0]>=-ds+avx , B[:,1]<ds+avy  ), :].T,
+                    B[np.logical_and(B[:,0]>=-ds+avx , B[:,1]>=-ds+avy), :].T
+                ]
+                # TODO: add safe distance to buildings
+                # Performance indicators
+                # stat_A = [a.shape[0] for a in Abuckets]
+                # stat_B = [b.shape[1] for b in Bbuckets]
+                # print(f"A balance: {stat_A} over {A.shape[0]} - indicator = {(np.max(stat_A)-np.min(stat_A))/np.mean(stat_A)}")
+                # print(f"B balance: {stat_B} over {B.shape[0]} - indicator = {(np.max(stat_B)-np.min(stat_B))/np.mean(stat_B)}")
+                for i in range(nbuckets):
+                    A = Abuckets[i]
+                    B = Bbuckets[i]
+                    # Compute distance mask
+                    # ta = time.perf_counter()
+                    # norm2
+                    # distmask = safedistancesplines > np.min(np.sqrt(np.sum((A[:,:2,None]-B[None,:2,:])**2, axis=1)), axis=1)
+                    # distmask = safedistancesplines > np.min((np.sum((A[:,:2,None]-B[None,:2,:])**2, axis=1))**0.5, axis=1)
+                    # norm1
+                    distmask = safedistancesplines > np.min(np.sum(np.abs(A[:,:2,None]-B[None,:2,:]), axis=1), axis=1)
+                    # time: np.mean([8.704, 8.611, 8.585]) = 8.633 s
+                    # masksplines = dist < safedistancesplines
+                    # tb = time.perf_counter()
+                    # print(f"dist+mask: {tb-ta} ns")
 
-                # Keep only cut trees that are close to the tracks
-                A = A[masksplines,:]
+                    # Keep only cut trees that are close to the tracks
+                    Abuckets[i] = A[distmask,:]
+
+                A = np.vstack(Abuckets)
 
                 # Add originally cut trees back
                 A = np.vstack([C, A])
 
                 # Save to gvas (might be unnecessary but let's make sure it's done)
-                removedTreesProp.data = A
+                removedTreesProp._data = A
 
-                print(f"The trees have been reset.")
+                t1 = time.perf_counter()
+                print(f"The trees have been reset. Computation took {t1-t0:f} ns.")
                 print("(Press any key to go back to previous menu)")
                 getKey()
                 print("\033[{}A\033[J".format(10), end='')
