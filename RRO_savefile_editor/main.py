@@ -10,18 +10,20 @@ def inner_main():
     if not sys.version_info > (3, 9):
         print("------------------")
         print("> \033[1;31mERROR: Python version not officially supported.\033[0m")
-        print("> Please use/install Python version 3.9 or above.")
-        if sys.version_info > (3,):
-            print("> You can input 'continue' if you're sure your python install meets requirements.")
-            c = input("> ")
-            if not c == "continue":
-                print("------------------")
-                sys.exit()
-            else:
-                print("------------------")
-        else:
-            print("------------------")
-            sys.exit()
+        print("> Please use/install Python version 3.9 or above (3.10+ recomended).")
+        # if sys.version_info > (3,):
+        #     print("> You can input 'continue' if you're sure your python install meets requirements.")
+        #     c = input("> ")
+        #     if not c == "continue":
+        #         print("------------------")
+        #         sys.exit()
+        #     else:
+        #         print("------------------")
+        # else:
+        print("------------------")
+        print("Press Enter to exit.")
+        input()
+        sys.exit()
 
     # To enable ANSI control sequences on Windows
     os.system('color')
@@ -71,7 +73,7 @@ def inner_main():
         print("> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program !")
         print("> At any point during execution you can stop execution by pressing Ctrl-D (or Ctrl-C)")
         print("> Likewise, you can always go back to previous menu by pressing Escape.")
-        print("> And finally, \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program!")
+        print("> And finally, \033[31;1mBACK-UP YOUR SAVEFILES\033[0m before using this program!")
         print("=" * 72)
 
         if beta_version:
