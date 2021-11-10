@@ -179,8 +179,12 @@ def resetTreesToNewGame(gvas):
 
 
 def resetTreesSmart(gvas):
+    # NOTE:
+    # - 500. for safe dist with norm1 gives a not to bad result, could be used
+    #   to make a "network for rehab after long time unused"
     import numpy as np
     from .defaultRemovedTrees import default_removed_trees
+    from .betterDefaultRemovedTrees import better_default_removed_trees
     print("This is an \033[1;31mEXPERIMENTAL\033[0m feature. Use at your own risks.")
     print("Risks include in particular:")
     print(" * Trees in the middle of the track (obviously)")
@@ -189,8 +193,23 @@ def resetTreesSmart(gvas):
     print("This tool will attempt to reset trees avoiding tracks and other assets.")
     print("Expect some computing time after launching the tool.")
 
+
+    # Distance from placed elements where trees aren't respawned
+    safeDistSplines= 1000.
+    safeDistWater= 700.
+    safeDistFirewood = 1500.
+    safeDistSand = 1200.
+
     removedTreesProp = gvas.data.find("RemovedVegetationAssetsArray")
     splinepoints = gvas.data.find("SplineControlPointsArray")
+    waterpos = gvas.data.find("WatertowerLocationArray")
+    industrytype = gvas.data.find("IndustryTypeArray")
+    industrypos = gvas.data.find("IndustryLocationArray")
+    firewoodpos = industrypos.data[industrytype.data == firewoodDepot["type"], :]
+    sandpos = gvas.data.find("SandhouseTypeArray")
+
+    if firewoodpos.size == 0:       firewoodpos = None
+    # others are returned as None if not found in the savefile
 
 
     cursor = 0
@@ -214,69 +233,165 @@ def resetTreesSmart(gvas):
                 k = b'ESCAPE'
             elif cursor == 1:
                 import time
+                import struct
                 t0 = time.perf_counter()
-                # Distance from placed elements where trees aren't respawned
-                safedistancesplines=500.
+
                 A = removedTreesProp.data
                 B = splinepoints.data
+                C = waterpos.data if waterpos is not None else None
+                D = firewoodpos
+                E = sandpos.data if sandpos is not None else None
 
-                C = np.asarray(default_removed_trees)
+                print(f"Before reset: {A.shape}")
+                print(repr(A))
+                print([struct.pack('<f', v) for v in A[0]])
+                T = np.asarray(default_removed_trees, dtype=np.float32)
+                R = np.asarray(better_default_removed_trees, dtype=np.float32)
                 # Remove originnally cut trees from the list
-                A = A[~((A[:,None,:] == C).all(-1)).any(1)]
+                A = A[~((A[:,None,:] == T).all(-1)).any(1)]
+                A = A[~((A[:,None,:] == R).all(-1)).any(1)]
 
-                # Generate buckets
-                avx = np.mean(A[:,0])
-                avy = np.mean(A[:,1])
-                # avx = 0.  # worse load balance
-                # avy = 0.
-                nbuckets = 4
-                Abuckets = [
-                    A[np.logical_and(A[:,0]<avx  , A[:,1]<avy), :],
-                    A[np.logical_and(A[:,0]<avx  , A[:,1]>=avy), :],
-                    A[np.logical_and(A[:,0]>=avx , A[:,1]<avy),  :],
-                    A[np.logical_and(A[:,0]>=avx , A[:,1]>=avy), :]
-                ]
-                ds=500. # safedistancesplines
-                Bbuckets = [
-                    B[np.logical_and(B[:,0]<ds+avx   , B[:,1]<ds+avy  ), :].T,
-                    B[np.logical_and(B[:,0]<ds+avx   , B[:,1]>=-ds+avy), :].T,
-                    B[np.logical_and(B[:,0]>=-ds+avx , B[:,1]<ds+avy  ), :].T,
-                    B[np.logical_and(B[:,0]>=-ds+avx , B[:,1]>=-ds+avy), :].T
-                ]
-                # TODO: add safe distance to buildings
-                # Performance indicators
-                # stat_A = [a.shape[0] for a in Abuckets]
-                # stat_B = [b.shape[1] for b in Bbuckets]
-                # print(f"A balance: {stat_A} over {A.shape[0]} - indicator = {(np.max(stat_A)-np.min(stat_A))/np.mean(stat_A)}")
-                # print(f"B balance: {stat_B} over {B.shape[0]} - indicator = {(np.max(stat_B)-np.min(stat_B))/np.mean(stat_B)}")
-                for i in range(nbuckets):
-                    A = Abuckets[i]
-                    B = Bbuckets[i]
-                    # Compute distance mask
-                    # ta = time.perf_counter()
-                    # norm2
-                    # distmask = safedistancesplines > np.min(np.sqrt(np.sum((A[:,:2,None]-B[None,:2,:])**2, axis=1)), axis=1)
-                    # distmask = safedistancesplines > np.min((np.sum((A[:,:2,None]-B[None,:2,:])**2, axis=1))**0.5, axis=1)
-                    # norm1
-                    distmask = safedistancesplines > np.min(np.sum(np.abs(A[:,:2,None]-B[None,:2,:]), axis=1), axis=1)
-                    # time: np.mean([8.704, 8.611, 8.585]) = 8.633 s
-                    # masksplines = dist < safedistancesplines
-                    # tb = time.perf_counter()
-                    # print(f"dist+mask: {tb-ta} ns")
+                print(f"After removing origin: {A.shape}")
+                check_comp_data = (
+                    B.size > 0 or
+                    C is not None or
+                    D.size > 0 or
+                    E is not None
+                    )
+                # Check if there's enough data for comparison else give rose default trees
+                if A.size == 0 or not check_comp_data:
+                    A = np.vstack([T, R])
+                    removedTreesProp._data = A.astype(np.float32)
+                    t0 = time.perf_counter()
+                    print(f"There is no tree to reset. Computation took {t1-t0:f} s.")
+                    print("(Press any key to go back to previous menu)")
+                    getKey()
+                    print("\033[{}A\033[J".format(10), end='')
+                    return None
 
-                    # Keep only cut trees that are close to the tracks
-                    Abuckets[i] = A[distmask,:]
+                # spline_size_limit_for_buckets
+                if B.size > 100*3:
+                    # Generate buckets
+                    avx = np.mean(A[:,0])
+                    avy = np.mean(A[:,1])
+                    # avx = 0.  # worse load balance
+                    # avy = 0.
+                    nbuckets = 4
+                    Distbuckets = [None]*nbuckets
+                    Abuckets = [
+                        A[np.logical_and(A[:,0]<avx  , A[:,1]<avy), :],
+                        A[np.logical_and(A[:,0]<avx  , A[:,1]>=avy), :],
+                        A[np.logical_and(A[:,0]>=avx , A[:,1]<avy),  :],
+                        A[np.logical_and(A[:,0]>=avx , A[:,1]>=avy), :]
+                    ]
+                    ds=safeDistSplines
+                    Bbuckets = [
+                        B[np.logical_and(B[:,0]<ds+avx   , B[:,1]<ds+avy  ), :].T,
+                        B[np.logical_and(B[:,0]<ds+avx   , B[:,1]>=-ds+avy), :].T,
+                        B[np.logical_and(B[:,0]>=-ds+avx , B[:,1]<ds+avy  ), :].T,
+                        B[np.logical_and(B[:,0]>=-ds+avx , B[:,1]>=-ds+avy), :].T
+                    ]
+                    # utilities might not need buckets
+                    # if C is not None:
+                    #     ds=safeDistWater
+                    #     Cbuckets = [
+                    #         C[np.logical_and(C[:,0]<ds+avx   , C[:,1]<ds+avy  ), :].T,
+                    #         C[np.logical_and(C[:,0]<ds+avx   , C[:,1]>=-ds+avy), :].T,
+                    #         C[np.logical_and(C[:,0]>=-ds+avx , C[:,1]<ds+avy  ), :].T,
+                    #         C[np.logical_and(C[:,0]>=-ds+avx , C[:,1]>=-ds+avy), :].T
+                    #     ]
+                    # if D is not None:
+                    #     ds = safeDistFirewood
+                    #     Dbuckets = [
+                    #         D[np.logical_and(D[:,0]<ds+avx   , D[:,1]<ds+avy  ), :].T,
+                    #         D[np.logical_and(D[:,0]<ds+avx   , D[:,1]>=-ds+avy), :].T,
+                    #         D[np.logical_and(D[:,0]>=-ds+avx , D[:,1]<ds+avy  ), :].T,
+                    #         D[np.logical_and(D[:,0]>=-ds+avx , D[:,1]>=-ds+avy), :].T
+                    #     ]
+                    # if E is not None:
+                    #     ds = safeDistSand
+                    #     Ebuckets = [
+                    #         E[np.logical_and(E[:,0]<ds+avx   , E[:,1]<ds+avy  ), :].T,
+                    #         E[np.logical_and(E[:,0]<ds+avx   , E[:,1]>=-ds+avy), :].T,
+                    #         E[np.logical_and(E[:,0]>=-ds+avx , E[:,1]<ds+avy  ), :].T,
+                    #         E[np.logical_and(E[:,0]>=-ds+avx , E[:,1]>=-ds+avy), :].T
+                    #     ]
+                    # TODO: add safe distance to buildings
+                    # Performance indicators
+                    # stat_A = [a.shape[0] for a in Abuckets]
+                    # stat_B = [b.shape[1] for b in Bbuckets]
+                    # print(f"A balance: {stat_A} over {A.shape[0]} - indicator = {(np.max(stat_A)-np.min(stat_A))/np.mean(stat_A)}")
+                    # print(f"B balance: {stat_B} over {B.shape[0]} - indicator = {(np.max(stat_B)-np.min(stat_B))/np.mean(stat_B)}")
+                    for i in range(nbuckets):
+                        a = Abuckets[i]
+                        b = Bbuckets[i]
+                        if a.size == 0:
+                            Distbuckets[i] = np.zeros(0, dtype=bool)
+                            continue
+                        if b.size == 0:
+                            Distbuckets[i] = np.zeros(a.shape[0], dtype=bool)
+                            continue
+                        # buckets might not be needed for utilities
+                        # c = Cbuckets[i]
+                        # d = Dbuckets[i]
+                        # e = Ebuckets[i]
+                        # Compute distance mask
+                        # norm2
+                        bdistmask = safeDistSplines  > np.min(np.sqrt(np.sum((a[:,:2,None]-b[None,:2,:])**2, axis=1)), axis=1)
+                        # buckets might not be needed for utilites
+                        # cdistmask = safeDistWater    > np.min(np.sqrt(np.sum((a[:,:2,None]-c[None,:2,:])**2, axis=1)), axis=1)
+                        # ddistmask = safeDistFirewood > np.min(np.sqrt(np.sum((a[:,:2,None]-d[None,:2,:])**2, axis=1)), axis=1)
+                        # edistmask = safeDistFirewood > np.min(np.sqrt(np.sum((a[:,:2,None]-e[None,:2,:])**2, axis=1)), axis=1)
+                        # norm1 (slightly faster but maybe lower quality)
+                        # bdistmask = safeDistSplines  > np.min(np.sum(np.abs(a[:,:2,None]-b[None,:2,:]), axis=1), axis=1)
+                        # cdistmask = safeDistWater    > np.min(np.sum(np.abs(a[:,:2,None]-c[None,:2,:]), axis=1), axis=1)
+                        # ddistmask = safeDistFirewood > np.min(np.sum(np.abs(a[:,:2,None]-d[None,:2,:]), axis=1), axis=1)
+                        # edistmask = safeDistSand     > np.min(np.sum(np.abs(a[:,:2,None]-e[None,:2,:]), axis=1), axis=1)
 
-                A = np.vstack(Abuckets)
+                        # merge masks
+                        Distbuckets[i] = bdistmask
+                        # Distbuckets[i] = np.any(
+                        #         np.vstack([bdistmask, cdistmask, ddistmask, edistmask]),
+                        #         axis = 1)
 
+                        # Keep only cut trees that are close to the tracks
+                        # Abuckets[i] = a[distmask,:]
+                    A = np.vstack(Abuckets) # vstack since 2D (and want to keep axis 1 size)
+                    distmask = np.hstack(Distbuckets) # hstack since 1D (and want to concatenate the arrays)
+                elif B.size > 0:
+                    distmask = safeDistSplines  > np.min(np.sqrt(np.sum((A[:,:2,None]-B[None,:2,:])**2, axis=1)), axis=1)
+                    # no buckets
+                else:
+                    distmask = np.zeros(A.shape[0], dtype=bool)
+
+                # Do placeable checks:
+                if C is not None:
+                    cdistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-C[None,:2,:])**2, axis=1)), axis=1)
+                    distmask = np.vstack([distmask, cdistmask])
+                if D is not None:
+                    ddistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-D[None,:2,:])**2, axis=1)), axis=1)
+                    distmask = np.vstack([distmask, ddistmask])
+                if E is not None:
+                    edistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-E[None,:2,:])**2, axis=1)), axis=1)
+                    distmask = np.vstack([distmask, edistmask])
+
+                if distmask.ndim > 1:
+                    distmask = distmask.any(0)
+
+                A = A[distmask,:]
+
+                print(f"After bucket stack: {A.shape}")
                 # Add originally cut trees back
-                A = np.vstack([C, A])
+                A = np.vstack([T, R, A]) # I, N, S
 
+                print(f"After reset: {A.shape}")
+                print(repr(A))
+                print([struct.pack('<f', v) for v in A[0]])
                 # Save to gvas (might be unnecessary but let's make sure it's done)
-                removedTreesProp._data = A
+                removedTreesProp._data = A.astype(np.float32)
 
                 t1 = time.perf_counter()
-                print(f"The trees have been reset. Computation took {t1-t0:f} ns.")
+                print(f"The trees have been reset. Computation took {t1-t0:f} s.")
                 print("(Press any key to go back to previous menu)")
                 getKey()
                 print("\033[{}A\033[J".format(10), end='')
