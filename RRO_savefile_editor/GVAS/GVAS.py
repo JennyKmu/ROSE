@@ -53,6 +53,9 @@ class GVASData(object):
         return self
 
     def find(self, property_name):
+        """
+            Look for property_name and returns it, or None if it is not found.
+        """
         for p in self._properties:
             if p.name == property_name:
                 return p
