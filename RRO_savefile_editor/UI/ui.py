@@ -110,6 +110,7 @@ def mainEnvMenu(gvas):
     options = [
         #("Edit Industry Contents", editindustries),
         ("Edit Utility Contents", editplacables),
+        ("Smart tree reset", resetTreesSmart),
         ("Reset trees to new game state (EXPERIMENTAL)", resetTreesToNewGame),
     ]
     current = 0
@@ -139,7 +140,7 @@ def resetTreesToNewGame(gvas):
     print("Risks include in particular:")
     print(" * Trees in the middle of the track (obviously)")
     print(" * Rolling stock being yeeted through the air at hypersonic speeds...")
-    print(" * Or worse, through the ground. But for that there's another experimental feature.")
+    print(" * Or worse, through the ground. But for that you can use the respawn tool.")
 
     removedTreesProp = gvas.data.find("RemovedVegetationAssetsArray")
 
@@ -172,6 +173,288 @@ def resetTreesToNewGame(gvas):
 
         if k == b'ESCAPE':
             print("\033[{}A\033[J".format(6), end='')
+            return None
+
+        print("\033[{}A\033[J".format(1), end='')
+
+
+def resetTreesSmart(gvas):
+    # NOTE:
+    # - 500. for safe dist with norm1 gives a not to bad result, could be used
+    #   to make a "network for rehab after long time unused"
+    import numpy as np
+    from .defaultRemovedTrees import default_removed_trees
+    from .betterDefaultRemovedTrees import better_default_removed_trees
+    print("This is an \033[1;31mEXPERIMENTAL\033[0m feature. Use at your own risks.")
+    print("Risks include in particular:")
+    print(" * Trees in the middle of the track (obviously)")
+    print(" * Rolling stock being yeeted through the air at hypersonic speeds...")
+    print(" * Or worse, through the ground. But for that you can use the respawn tool.")
+    print("This tool will attempt to reset trees avoiding tracks and other assets.")
+    print("Expect some computing time after launching the tool.")
+
+
+    # Distance from placed elements where trees aren't respawned
+    safeDistSplines= 800.
+    safeDistWater= 700.
+    safeDistFirewood = 1500.
+    safeDistSand = 1200.
+
+    removedTreesProp = gvas.data.find("RemovedVegetationAssetsArray")
+    splinepoints = gvas.data.find("SplineControlPointsArray")
+    waterpos = gvas.data.find("WatertowerLocationArray")
+    industrytype = gvas.data.find("IndustryTypeArray")
+    industrypos = gvas.data.find("IndustryLocationArray")
+    firewoodpos = industrypos.data[industrytype.data == firewoodDepot["type"], :]
+    sandpos = gvas.data.find("SandhouseTypeArray")
+    switchpos = gvas.data.find("SwitchLocationArray")
+    # switchtype = gvas.data.find("SwitchTypeArray")
+
+    if firewoodpos.size == 0:       firewoodpos = None
+    if switchpos is not None:
+        if switchpos.data.size == 0: switchpos == None
+    # others are returned as None if not found in the savefile
+
+
+    cursor = 0
+    choices = ["Cancel", "Proceed at your own risks"]
+    while True:
+        if cursor == 0:
+            print(" " * 5 + selectfmt + "{:^29s}".format(choices[0]) + "\033[0m"
+                  + " " * 5 + "{:^29s}".format(choices[1]))
+        else:
+            print(" " * 5 + "{:^29s}".format(choices[0])
+                  + " " * 5 + selectfmt + "{:^29s}".format(choices[1]) + "\033[0m")
+        k = getKey()
+
+        if k == b'KEY_RIGHT':
+            cursor = min(1, cursor + 1)
+        if k == b'KEY_LEFT':
+            cursor = max(0, cursor - 1)
+
+        if k == b'RETURN':
+            if cursor == 0:
+                k = b'ESCAPE'
+            elif cursor == 1:
+                print("\033[{}A\033[J".format(1), end='')
+                print("Please Wait...")
+                import time
+                import struct
+                t0 = time.perf_counter()
+
+                A = removedTreesProp.data
+                B = splinepoints.data
+                C = waterpos.data if waterpos is not None else None
+                D = firewoodpos
+                E = sandpos.data if sandpos is not None else None
+
+                # print(f"Before reset: {A.shape}")
+                # print(repr(A))
+                # print([struct.pack('<f', v) for v in A[0]])
+                T = np.asarray(default_removed_trees, dtype=np.float32)
+                R = np.asarray(better_default_removed_trees, dtype=np.float32)
+                # Remove originnally cut trees from the list
+                A = A[~((A[:,None,:] == T).all(-1)).any(1)]
+                A = A[~((A[:,None,:] == R).all(-1)).any(1)]
+
+                # print(f"After removing origin: {A.shape}")
+                check_comp_data = (
+                    B.size > 0 or
+                    C is not None or
+                    D.size > 0 or
+                    E is not None
+                    )
+                # Check if there's enough data for comparison else give rose default trees
+                if A.size == 0 or not check_comp_data:
+                    A = np.vstack([T, R])
+                    removedTreesProp._data = A.astype(np.float32)
+                    t0 = time.perf_counter()
+                    print(f"There is no tree to reset. Computation took {t1-t0:f} s.")
+                    print("(Press any key to go back to previous menu)")
+                    getKey()
+                    print("\033[{}A\033[J".format(10), end='')
+                    return None
+                A_size_before = A.shape[0]
+
+                #--- Remove hidden control points from B ---
+                start = gvas.data.find("SplineControlPointsIndexStartArray").data
+                end = gvas.data.find("SplineControlPointsIndexEndArray").data
+                ctrl = gvas.data.find("SplineControlPointsArray").data
+                def mkslice(row):
+                    s = slice(row[0], row[1]+1) # end index is included
+                    return np.arange(s.stop)[s]
+                indexes = [mkslice(r) for r in np.vstack([start, end]).T]
+                splines = [ctrl[i,:] for i in indexes]
+
+                vstart = gvas.data.find("SplineVisibilityStartArray").data
+                vend = gvas.data.find("SplineVisibilityEndArray").data
+                vis = gvas.data.find("SplineSegmentsVisibilityArray").data
+
+                vindexes = [mkslice(r) for r in np.vstack([vstart, vend]).T]
+                vsplines = [vis[i] for i in vindexes]
+                cleanedsplines = []
+                for i, spline in enumerate(splines):
+                    vspline = vsplines[i]
+                    # remove control points which are not visible
+                    # non visible control points appear in those cases:
+                    #   - first segment non visible -> first ctrl not visible
+                    #   - last segment non visible -> last ctrl not visible
+                    #   - two successive non visible segments -> ctrl between them not visible
+                    cleanspline = []
+                    if vspline[0] :
+                        cleanspline.append(spline[0])
+                    if vspline[-1]:
+                        cleanspline.append(spline[-1])
+                    for j in range(1,spline.shape[0]-1):
+                        if vspline[j-1] or vspline[j]:
+                            cleanspline.append(spline[j])
+                    cleanspline = np.asarray(cleanspline)
+                    cleanedsplines.append(cleanspline)
+                cleanedsplines = np.vstack(cleanedsplines)
+                B = cleanedsplines
+                #--- End of spline cleanup ---
+
+                # Adding switch locations
+                if switchpos is not None:
+                    B = np.vstack([B, switchpos.data])
+
+                #--- Spline distance check ---
+                # Build buckets to reduce computation load if necessary/avoid empty buckets
+                # Might need tuning
+                setting_bucket_size_limit = 100 # number of ctrl pts over which we make buckets
+                if B.size > setting_bucket_size_limit*3:
+                    # Generate buckets
+                    avx = np.mean(A[:,0])
+                    avy = np.mean(A[:,1])
+                    # avx = 0.  # worse load balance
+                    # avy = 0.
+                    nbuckets = 4
+                    Distbuckets = [None]*nbuckets
+                    Abuckets = [
+                        A[np.logical_and(A[:,0]<avx  , A[:,1]<avy), :],
+                        A[np.logical_and(A[:,0]<avx  , A[:,1]>=avy), :],
+                        A[np.logical_and(A[:,0]>=avx , A[:,1]<avy),  :],
+                        A[np.logical_and(A[:,0]>=avx , A[:,1]>=avy), :]
+                    ]
+                    ds=safeDistSplines
+                    Bbuckets = [
+                        B[np.logical_and(B[:,0]<ds+avx   , B[:,1]<ds+avy  ), :].T,
+                        B[np.logical_and(B[:,0]<ds+avx   , B[:,1]>=-ds+avy), :].T,
+                        B[np.logical_and(B[:,0]>=-ds+avx , B[:,1]<ds+avy  ), :].T,
+                        B[np.logical_and(B[:,0]>=-ds+avx , B[:,1]>=-ds+avy), :].T
+                    ]
+                    # utilities might not need buckets
+                    # if C is not None:
+                    #     ds=safeDistWater
+                    #     Cbuckets = [
+                    #         C[np.logical_and(C[:,0]<ds+avx   , C[:,1]<ds+avy  ), :].T,
+                    #         C[np.logical_and(C[:,0]<ds+avx   , C[:,1]>=-ds+avy), :].T,
+                    #         C[np.logical_and(C[:,0]>=-ds+avx , C[:,1]<ds+avy  ), :].T,
+                    #         C[np.logical_and(C[:,0]>=-ds+avx , C[:,1]>=-ds+avy), :].T
+                    #     ]
+                    # if D is not None:
+                    #     ds = safeDistFirewood
+                    #     Dbuckets = [
+                    #         D[np.logical_and(D[:,0]<ds+avx   , D[:,1]<ds+avy  ), :].T,
+                    #         D[np.logical_and(D[:,0]<ds+avx   , D[:,1]>=-ds+avy), :].T,
+                    #         D[np.logical_and(D[:,0]>=-ds+avx , D[:,1]<ds+avy  ), :].T,
+                    #         D[np.logical_and(D[:,0]>=-ds+avx , D[:,1]>=-ds+avy), :].T
+                    #     ]
+                    # if E is not None:
+                    #     ds = safeDistSand
+                    #     Ebuckets = [
+                    #         E[np.logical_and(E[:,0]<ds+avx   , E[:,1]<ds+avy  ), :].T,
+                    #         E[np.logical_and(E[:,0]<ds+avx   , E[:,1]>=-ds+avy), :].T,
+                    #         E[np.logical_and(E[:,0]>=-ds+avx , E[:,1]<ds+avy  ), :].T,
+                    #         E[np.logical_and(E[:,0]>=-ds+avx , E[:,1]>=-ds+avy), :].T
+                    #     ]
+                    # TODO: add safe distance to buildings
+                    # Performance indicators
+                    # stat_A = [a.shape[0] for a in Abuckets]
+                    # stat_B = [b.shape[1] for b in Bbuckets]
+                    # print(f"A balance: {stat_A} over {A.shape[0]} - indicator = {(np.max(stat_A)-np.min(stat_A))/np.mean(stat_A)}")
+                    # print(f"B balance: {stat_B} over {B.shape[0]} - indicator = {(np.max(stat_B)-np.min(stat_B))/np.mean(stat_B)}")
+                    for i in range(nbuckets):
+                        a = Abuckets[i]
+                        b = Bbuckets[i]
+                        if a.size == 0:
+                            Distbuckets[i] = np.zeros(0, dtype=bool)
+                            continue
+                        if b.size == 0:
+                            Distbuckets[i] = np.zeros(a.shape[0], dtype=bool)
+                            continue
+                        # buckets might not be needed for utilities
+                        # c = Cbuckets[i]
+                        # d = Dbuckets[i]
+                        # e = Ebuckets[i]
+                        # Compute distance mask
+                        # norm2
+                        bdistmask = safeDistSplines  > np.min(np.sqrt(np.sum((a[:,:2,None]-b[None,:2,:])**2, axis=1)), axis=1)
+                        # buckets might not be needed for utilites
+                        # cdistmask = safeDistWater    > np.min(np.sqrt(np.sum((a[:,:2,None]-c[None,:2,:])**2, axis=1)), axis=1)
+                        # ddistmask = safeDistFirewood > np.min(np.sqrt(np.sum((a[:,:2,None]-d[None,:2,:])**2, axis=1)), axis=1)
+                        # edistmask = safeDistFirewood > np.min(np.sqrt(np.sum((a[:,:2,None]-e[None,:2,:])**2, axis=1)), axis=1)
+                        # norm1 (slightly faster but maybe lower quality)
+                        # bdistmask = safeDistSplines  > np.min(np.sum(np.abs(a[:,:2,None]-b[None,:2,:]), axis=1), axis=1)
+                        # cdistmask = safeDistWater    > np.min(np.sum(np.abs(a[:,:2,None]-c[None,:2,:]), axis=1), axis=1)
+                        # ddistmask = safeDistFirewood > np.min(np.sum(np.abs(a[:,:2,None]-d[None,:2,:]), axis=1), axis=1)
+                        # edistmask = safeDistSand     > np.min(np.sum(np.abs(a[:,:2,None]-e[None,:2,:]), axis=1), axis=1)
+
+                        # merge masks
+                        Distbuckets[i] = bdistmask
+                        # Distbuckets[i] = np.any(
+                        #         np.vstack([bdistmask, cdistmask, ddistmask, edistmask]),
+                        #         axis = 1)
+
+                        # Keep only cut trees that are close to the tracks
+                        # Abuckets[i] = a[distmask,:]
+                    A = np.vstack(Abuckets) # vstack since 2D (and want to keep axis 1 size)
+                    distmask = np.hstack(Distbuckets) # hstack since 1D (and want to concatenate the arrays)
+                elif B.size > 0:
+                    distmask = safeDistSplines  > np.min(np.sqrt(np.sum((A[:,:2,None]-B[None,:2,:])**2, axis=1)), axis=1)
+                    # no buckets
+                else:
+                    # unlikely case where there is no ctrl pts at all
+                    distmask = np.zeros(A.shape[0], dtype=bool)
+                #--- End of spline dist check ---
+
+                #--- Placeable dist checks ---
+                if C is not None:
+                    cdistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-C[None,:2,:])**2, axis=1)), axis=1)
+                    distmask = np.vstack([distmask, cdistmask])
+                if D is not None:
+                    ddistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-D[None,:2,:])**2, axis=1)), axis=1)
+                    distmask = np.vstack([distmask, ddistmask])
+                if E is not None:
+                    edistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-E[None,:2,:])**2, axis=1)), axis=1)
+                    distmask = np.vstack([distmask, edistmask])
+                #--- End of Placeable checks ---
+
+                # Combine checks into one mask
+                if distmask.ndim > 1:
+                    distmask = distmask.any(0)
+
+                A = A[distmask,:]
+
+                A_size_after = A.shape[0]
+
+                # Add originally cut trees back
+                A = np.vstack([T, R, A]) # I, N, S
+
+
+                # Save to gvas property
+                removedTreesProp._data = A.astype(np.float32)
+
+                t1 = time.perf_counter()
+                print("\033[{}A\033[J".format(1), end='')
+                print(f"{A_size_after-A_size_before} trees have been replanted. Computation took {t1-t0:f} s.")
+                print("(Press any key to go back to previous menu)")
+                getKey()
+                print("\033[{}A\033[J".format(9), end='')
+                return None
+
+        if k == b'ESCAPE':
+            print("\033[{}A\033[J".format(8), end='')
             return None
 
         print("\033[{}A\033[J".format(1), end='')

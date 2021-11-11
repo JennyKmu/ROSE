@@ -43,3 +43,7 @@ waterTower = {
     "type": 0,
     "output": 360
 }
+
+sandHouse = {
+    "type": 0
+}
