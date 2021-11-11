@@ -195,7 +195,7 @@ def resetTreesSmart(gvas):
 
 
     # Distance from placed elements where trees aren't respawned
-    safeDistSplines= 700.
+    safeDistSplines= 800.
     safeDistWater= 700.
     safeDistFirewood = 1500.
     safeDistSand = 1200.
@@ -207,8 +207,12 @@ def resetTreesSmart(gvas):
     industrypos = gvas.data.find("IndustryLocationArray")
     firewoodpos = industrypos.data[industrytype.data == firewoodDepot["type"], :]
     sandpos = gvas.data.find("SandhouseTypeArray")
+    switchpos = gvas.data.find("SwitchLocationArray")
+    # switchtype = gvas.data.find("SwitchTypeArray")
 
     if firewoodpos.size == 0:       firewoodpos = None
+    if switchpos is not None:
+        if switchpos.size == 0: switchpos == None
     # others are returned as None if not found in the savefile
 
 
@@ -306,6 +310,10 @@ def resetTreesSmart(gvas):
                 cleanedsplines = np.vstack(cleanedsplines)
                 B = cleanedsplines
                 #--- End of spline cleanup ---
+
+                # Adding switch locations
+                if switchpos is not None:
+                    B = np.vstack([B, switchpos.data])
 
                 #--- Spline distance check ---
                 # Build buckets to reduce computation load if necessary/avoid empty buckets
