@@ -195,7 +195,7 @@ def resetTreesSmart(gvas):
 
 
     # Distance from placed elements where trees aren't respawned
-    safeDistSplines= 1000.
+    safeDistSplines= 700.
     safeDistWater= 700.
     safeDistFirewood = 1500.
     safeDistSand = 1200.
@@ -269,8 +269,49 @@ def resetTreesSmart(gvas):
                     print("\033[{}A\033[J".format(10), end='')
                     return None
 
-                # spline_size_limit_for_buckets
-                if B.size > 100*3:
+                #--- Remove hidden control points from B ---
+                start = gvas.data.find("SplineControlPointsIndexStartArray").data
+                end = gvas.data.find("SplineControlPointsIndexEndArray").data
+                ctrl = gvas.data.find("SplineControlPointsArray").data
+                def mkslice(row):
+                    s = slice(row[0], row[1]+1) # end index is included
+                    return np.arange(s.stop)[s]
+                indexes = [mkslice(r) for r in np.vstack([start, end]).T]
+                splines = [ctrl[i,:] for i in indexes]
+
+                vstart = gvas.data.find("SplineVisibilityStartArray").data
+                vend = gvas.data.find("SplineVisibilityEndArray").data
+                vis = gvas.data.find("SplineSegmentsVisibilityArray").data
+
+                vindexes = [mkslice(r) for r in np.vstack([vstart, vend]).T]
+                vsplines = [vis[i] for i in vindexes]
+                cleanedsplines = []
+                for i, spline in enumerate(splines):
+                    vspline = vsplines[i]
+                    # remove control points which are not visible
+                    # non visible control points appear in those cases:
+                    #   - first segment non visible -> first ctrl not visible
+                    #   - last segment non visible -> last ctrl not visible
+                    #   - two successive non visible segments -> ctrl between them not visible
+                    cleanspline = []
+                    if vspline[0] :
+                        cleanspline.append(spline[0])
+                    if vspline[-1]:
+                        cleanspline.append(spline[-1])
+                    for j in range(1,spline.shape[0]-1):
+                        if vspline[j-1] or vspline[j]:
+                            cleanspline.append(spline[j])
+                    cleanspline = np.asarray(cleanspline)
+                    cleanedsplines.append(cleanspline)
+                cleanedsplines = np.vstack(cleanedsplines)
+                B = cleanedsplines
+                #--- End of spline cleanup ---
+
+                #--- Spline distance check ---
+                # Build buckets to reduce computation load if necessary/avoid empty buckets
+                # Might need tuning
+                setting_bucket_size_limit = 100 # number of ctrl pts over which we make buckets
+                if B.size > setting_bucket_size_limit*3:
                     # Generate buckets
                     avx = np.mean(A[:,0])
                     avy = np.mean(A[:,1])
@@ -362,9 +403,11 @@ def resetTreesSmart(gvas):
                     distmask = safeDistSplines  > np.min(np.sqrt(np.sum((A[:,:2,None]-B[None,:2,:])**2, axis=1)), axis=1)
                     # no buckets
                 else:
+                    # unlikely case where there is no ctrl pts at all
                     distmask = np.zeros(A.shape[0], dtype=bool)
+                #--- End of spline dist check ---
 
-                # Do placeable checks:
+                #--- Placeable dist checks ---
                 if C is not None:
                     cdistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-C[None,:2,:])**2, axis=1)), axis=1)
                     distmask = np.vstack([distmask, cdistmask])
@@ -374,7 +417,9 @@ def resetTreesSmart(gvas):
                 if E is not None:
                     edistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-E[None,:2,:])**2, axis=1)), axis=1)
                     distmask = np.vstack([distmask, edistmask])
+                #--- End of Placeable checks ---
 
+                # Combine checks into one mask
                 if distmask.ndim > 1:
                     distmask = distmask.any(0)
 
