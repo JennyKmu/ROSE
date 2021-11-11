@@ -212,7 +212,7 @@ def resetTreesSmart(gvas):
 
     if firewoodpos.size == 0:       firewoodpos = None
     if switchpos is not None:
-        if switchpos.size == 0: switchpos == None
+        if switchpos.data.size == 0: switchpos == None
     # others are returned as None if not found in the savefile
 
 
@@ -236,6 +236,8 @@ def resetTreesSmart(gvas):
             if cursor == 0:
                 k = b'ESCAPE'
             elif cursor == 1:
+                print("\033[{}A\033[J".format(1), end='')
+                print("Please Wait...")
                 import time
                 import struct
                 t0 = time.perf_counter()
@@ -246,16 +248,16 @@ def resetTreesSmart(gvas):
                 D = firewoodpos
                 E = sandpos.data if sandpos is not None else None
 
-                print(f"Before reset: {A.shape}")
-                print(repr(A))
-                print([struct.pack('<f', v) for v in A[0]])
+                # print(f"Before reset: {A.shape}")
+                # print(repr(A))
+                # print([struct.pack('<f', v) for v in A[0]])
                 T = np.asarray(default_removed_trees, dtype=np.float32)
                 R = np.asarray(better_default_removed_trees, dtype=np.float32)
                 # Remove originnally cut trees from the list
                 A = A[~((A[:,None,:] == T).all(-1)).any(1)]
                 A = A[~((A[:,None,:] == R).all(-1)).any(1)]
 
-                print(f"After removing origin: {A.shape}")
+                # print(f"After removing origin: {A.shape}")
                 check_comp_data = (
                     B.size > 0 or
                     C is not None or
@@ -272,6 +274,7 @@ def resetTreesSmart(gvas):
                     getKey()
                     print("\033[{}A\033[J".format(10), end='')
                     return None
+                A_size_before = A.shape[0]
 
                 #--- Remove hidden control points from B ---
                 start = gvas.data.find("SplineControlPointsIndexStartArray").data
@@ -433,28 +436,28 @@ def resetTreesSmart(gvas):
 
                 A = A[distmask,:]
 
-                print(f"After bucket stack: {A.shape}")
+                A_size_after = A.shape[0]
+
                 # Add originally cut trees back
                 A = np.vstack([T, R, A]) # I, N, S
 
-                print(f"After reset: {A.shape}")
-                print(repr(A))
-                print([struct.pack('<f', v) for v in A[0]])
-                # Save to gvas (might be unnecessary but let's make sure it's done)
+
+                # Save to gvas property
                 removedTreesProp._data = A.astype(np.float32)
 
                 t1 = time.perf_counter()
-                print(f"The trees have been reset. Computation took {t1-t0:f} s.")
+                print("\033[{}A\033[J".format(1), end='')
+                print(f"{A_size_after-A_size_before} trees have been replanted. Computation took {t1-t0:f} s.")
                 print("(Press any key to go back to previous menu)")
                 getKey()
-                print("\033[{}A\033[J".format(10), end='')
+                print("\033[{}A\033[J".format(9), end='')
                 return None
 
         if k == b'ESCAPE':
             print("\033[{}A\033[J".format(8), end='')
             return None
 
-        print("\033[{}A\033[J".format(3), end='')
+        print("\033[{}A\033[J".format(1), end='')
 
 
 #def editindustries(gvas):
