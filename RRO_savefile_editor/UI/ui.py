@@ -448,7 +448,7 @@ def resetTreesSmart(gvas):
 
                 t1 = time.perf_counter()
                 print("\033[{}A\033[J".format(1), end='')
-                print(f"{A_size_after-A_size_before} trees have been replanted. Computation took {t1-t0:f} s.")
+                print(f"{A_size_before-A_size_after} trees have been replanted. Computation took {t1-t0:f} s.")
                 print("(Press any key to go back to previous menu)")
                 getKey()
                 print("\033[{}A\033[J".format(9), end='')
