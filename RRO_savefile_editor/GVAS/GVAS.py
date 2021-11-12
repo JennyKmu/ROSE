@@ -53,6 +53,9 @@ class GVASData(object):
         return self
 
     def find(self, property_name):
+        """
+            Look for property_name and returns it, or None if it is not found.
+        """
         for p in self._properties:
             if p.name == property_name:
                 return p
@@ -152,7 +155,7 @@ class GVASData(object):
         nbool = readInt32(fstream)
         buffer = fstream.read(nbool)
         # print(repr(buffer))
-        data = np.frombuffer(buffer, dtype=np.bool).copy()
+        data = np.frombuffer(buffer, dtype=bool).copy()
         prop._data = data
 
     def _readIntPropertyArray(self, fstream, prop, plen):
@@ -308,13 +311,13 @@ class GVASData(object):
         writeInt32(fstream, len(prop.data))
         sz = 0
         for w in prop.data:
-            # print(repr(w))
             if w is None or w == '':
                 sz += 4
             elif isUTF8(w) :
                 sz += 4 + len(w) + 1
             else:
-                sz += 4 + 2*len(w) + 2
+                sz += 4 + len(w.encode('utf-16')) # is two bytes too long
+                # so no need to add 2 bytes for the trailing 0x0000
             writeUEString(fstream, w)
         sz += 4
         # print(prop.name, sz)
@@ -586,12 +589,12 @@ def writeUEString(fstream, s):
     if s == '':
         writeInt32(fstream, 1)
         return
-    buffer = s.encode('utf8')
-    if len(buffer) > len(s):
+    if not isUTF8(s):
         buffer = s.encode('utf16')[2:]
-        writeInt32(fstream, -len(s)-1)
+        writeInt32(fstream, -int(len(buffer)/2)-1)
         writeStr(fstream, buffer, end=b'\x00\x00')
     else:
+        buffer = s.encode('utf8')
         writeInt32(fstream, len(buffer)+1)
         writeStr(fstream, buffer)
 
@@ -611,8 +614,9 @@ if __name__ == "__main__":
     import glob
     print("{:-^72s}".format(" Running unit tests for file `GVAS.py` "))
     # test_files = ["../../slot{}.sav".format(i) for i in range(1,11)]
-    test_files = glob.glob('../../slot*.sav')
-    # test_files = ["../../slot7.sav"]
+    # test_files = glob.glob('../../slot*.sav')
+    # test_files = glob.glob('../../sav_test_cases/*.sav')
+    test_files = ["../../slot3.sav"]
     total_passed_count = 0
     total_failed_count = 0
     import os.path
@@ -704,7 +708,7 @@ if __name__ == "__main__":
         print("{:-^72s}".format('-'))
 
 
-        DEBUG = True
+        DEBUG = False
         if DEBUG:
             # For debugging, put whatever you want to do there
             print("> Advanced debug:")
