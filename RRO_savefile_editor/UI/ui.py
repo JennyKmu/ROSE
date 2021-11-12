@@ -2,7 +2,7 @@ import glob
 import os
 import shutil
 import sys
-import numpy
+import numpy as np
 from pathlib import Path
 from .industryPlacables import *
 from .rollingStock import *
@@ -472,8 +472,8 @@ def editindustries(gvas):
     industryout3 = gvas.data.find("IndustryStorageProduct3Array").data
     industryout4 = gvas.data.find("IndustryStorageProduct4Array").data
 
-    industryins = numpy.stack([industryin1, industryin2, industryin3, industryin4], axis=1)
-    industryouts = numpy.stack([industryout1, industryout2, industryout3, industryout4], axis=1)
+    industryins = np.stack([industryin1, industryin2, industryin3, industryin4], axis=1)
+    industryouts = np.stack([industryout1, industryout2, industryout3, industryout4], axis=1)
 
     ind = []
     for i in range(len(industrytypes)):
