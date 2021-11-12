@@ -2,6 +2,7 @@ import glob
 import os
 import shutil
 import sys
+import numpy as np
 from pathlib import Path
 from .industryPlacables import *
 from .rollingStock import *
@@ -108,7 +109,7 @@ def noSaveAndExit(gvas):
 
 def mainEnvMenu(gvas):
     options = [
-        #("Edit Industry Contents", editindustries),
+        ("Edit Industry Contents", editindustries),
         ("Edit Utility Contents", editplacables),
         ("Smart tree reset", resetTreesSmart),
         ("Reset trees to new game state (EXPERIMENTAL)", resetTreesToNewGame),
@@ -268,7 +269,7 @@ def resetTreesSmart(gvas):
                 if A.size == 0 or not check_comp_data:
                     A = np.vstack([T, R])
                     removedTreesProp._data = A.astype(np.float32)
-                    t0 = time.perf_counter()
+                    t1 = time.perf_counter()
                     print(f"There is no tree to reset. Computation took {t1-t0:f} s.")
                     print("(Press any key to go back to previous menu)")
                     getKey()
@@ -460,189 +461,166 @@ def resetTreesSmart(gvas):
         print("\033[{}A\033[J".format(1), end='')
 
 
-#def editindustries(gvas):
-    # industrytypes = gvas.data.find("IndustryTypeArray").data
-    # industryinputs1 = gvas.data.find("IndustryStorageEduct1Array").data
-    # industryinputs2 = gvas.data.find("IndustryStorageEduct2Array").data
-    # industryinputs3 = gvas.data.find("IndustryStorageEduct3Array").data
-    # industryinputs4 = gvas.data.find("IndustryStorageEduct4Array").data
-    # industryoutputs1 = gvas.data.find("IndustryStorageProduct1Array").data
-    # industryoutputs2 = gvas.data.find("IndustryStorageProduct2Array").data
-    # industryoutputs3 = gvas.data.find("IndustryStorageProduct3Array").data
-    # industryoutputs4 = gvas.data.find("IndustryStorageProduct4Array").data
-    #
-    # ind = []
-    # for i in range(len(industrytypes)):
-    #     if industrytypes[i] in industryNames.keys():
-    #         ind.append(i)
-    #
-    # cur_col = 0
-    # cur_line = 0
-    # formatters = [
-    #     "{:<12s}",
-    #     "{:30}",
-    #     "{:30}",
-    # ]
-    # dashline = ''
-    # for i in formatters:
-    #     dashline += "---" + len(i.format('')) * "-"
-    # offset = 0
-    # ltot = len(ind)
-    # if ltot > 10:
-    #     split_data = True
-    #     n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
-    # else:
-    #     split_data = False
-    # while True:
-    #     print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
-    #     print("")
-    #     cur_page = int(offset / 10)
-    #     if split_data:
-    #         print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
-    #     print(" | ".join(formatters).format(
-    #         "Industry",
-    #         "Input 1",
-    #         "Input 2",
-    #         "Input 3",
-    #         "Input 4",
-    #         "Outputs",
-    #     ))
-    #     print(dashline)
-    #     n_line = 0
-    #     for i in range(len(ind)):
-    #         if i not in range(offset, offset + 10) and split_data:
-    #             continue
-    #         n_line += 1
-    #         if i == cur_line:
-    #             line_format = formatters[0]
-    #             for j in range(3):
-    #                 line_format += " | "
-    #                 if j == cur_col:
-    #                     line_format += selectfmt + formatters[j + 1] + "\033[0m"
-    #                 else:
-    #                     line_format += formatters[j + 1]
-    #         else:
-    #             line_format = " | ".join(formatters)
-    #
-    #         industry = industrytypes[ind[i]]
-    #         namestr = industryNames[industry]
-    #
-    #         if industry in industryInputs.keys():
-    #             inputstr = "{.1f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
-    #         else:
-    #             inputstr = ''
-    #
-    #         if industry in industryOutputs.keys():
-    #             outputstr = "{.1f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
-    #         else:
-    #             outputstr = ''
-    #
-    #         print(line_format.format(
-    #             namestr,
-    #             inputstr,
-    #             outputstr,
-    #         ))
-    #     k = getKey()
-    #
-    #     if k == b'KEY_RIGHT':
-    #         cur_col = min(2, cur_col + 1)
-    #     if k == b'KEY_LEFT':
-    #         cur_col = max(0, cur_col - 1)
-    #     if k == b'KEY_UP':
-    #         cur_line = max(0, cur_line - 1)
-    #         if cur_line < offset:
-    #             k = b'PAGE_UP'
-    #     if k == b'KEY_DOWN':
-    #         cur_line = min(ltot - 1, cur_line + 1)
-    #         if cur_line >= offset + 10:
-    #             k = b'PAGE_DOWN'
-    #     if k == b'PAGE_UP':
-    #         offset = max(0, offset - 10)
-    #         if cur_line not in range(offset, offset + 10):
-    #             cur_line = offset + 10 - 1
-    #     if k == b'PAGE_DOWN':
-    #         max_offset = ltot - ltot % 10
-    #         offset = min(offset + 10, max_offset)
-    #         if cur_line not in range(offset, offset + 10):
-    #             cur_line = offset
-    #     # if k == b'RETURN':
-    #     #     curframetype = frametypes[ind[cur_line]]
-    #     #     if cur_col == 0 and curframetype in waterBoiler.keys():
-    #     #         prompt_text = "> Enter new value or leave blank for max: "
-    #     #         while True:
-    #     #             val = input(prompt_text)
-    #     #             try:
-    #     #                 if val == '':
-    #     #                     val = waterBoiler[curframetype]
-    #     #                 else:
-    #     #                     val = float(val)
-    #     #             except ValueError:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid input! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             if val < 0 or val > waterBoiler[curframetype]:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid amount! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             frameboilerwater[ind[cur_line]] = val
-    #     #             print("\033[{}A\033[J".format(1), end='')
-    #     #             break
-    #     #
-    #     #     elif cur_col == 1 and curframetype in waterReserves.keys():
-    #     #         prompt_text = "> Enter new value or leave blank for max: "
-    #     #         while True:
-    #     #             val = input(prompt_text)
-    #     #             try:
-    #     #                 if val == '':
-    #     #                     val = waterReserves[curframetype]
-    #     #                 else:
-    #     #                     val = int(val)
-    #     #             except ValueError:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid input! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             if val < 0 or val > waterReserves[curframetype]:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid amount! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             frametenderwater[ind[cur_line]] = val
-    #     #             print("\033[{}A\033[J".format(1), end='')
-    #     #             break
-    #     #
-    #     #     elif cur_col == 2 and curframetype in firewoodReserves.keys():
-    #     #         prompt_text = "> Enter new value or leave blank for max: "
-    #     #         while True:
-    #     #             val = input(prompt_text)
-    #     #             try:
-    #     #                 if val == '':
-    #     #                     val = firewoodReserves[curframetype]
-    #     #                 else:
-    #     #                     val = int(val)
-    #     #             except ValueError:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid input! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             if val < 0 or val > firewoodReserves[curframetype]:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid amount! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             frametenderfuel[ind[cur_line]] = val
-    #     #             print("\033[{}A\033[J".format(1), end='')
-    #     #             break
-    #
-    #     if ltot <= 10:
-    #         print("\033[{}A\033[J".format(ltot + 4), end='')
-    #     else:
-    #         print("\033[{}A\033[J".format(n_line + 5), end='')
-    #
-    #     if k == b'ESCAPE':
-    #         return None
+def editindustries(gvas):
+    industrytypes = gvas.data.find("IndustryTypeArray").data
+    industryin1 = gvas.data.find("IndustryStorageEduct1Array").data
+    industryin2 = gvas.data.find("IndustryStorageEduct2Array").data
+    industryin3 = gvas.data.find("IndustryStorageEduct3Array").data
+    industryin4 = gvas.data.find("IndustryStorageEduct4Array").data
+    industryout1 = gvas.data.find("IndustryStorageProduct1Array").data
+    industryout2 = gvas.data.find("IndustryStorageProduct2Array").data
+    industryout3 = gvas.data.find("IndustryStorageProduct3Array").data
+    industryout4 = gvas.data.find("IndustryStorageProduct4Array").data
+
+    industryins = np.stack([industryin1, industryin2, industryin3, industryin4], axis=1)
+    industryouts = np.stack([industryout1, industryout2, industryout3, industryout4], axis=1)
+
+    ind = []
+    for i in range(len(industrytypes)):
+        if industrytypes[i] in industryNames.keys():
+            ind.append(i)
+
+    cur_col = 0
+    cur_line = 0
+    formatters = [
+        "{:12s}",
+        "{:22}",
+        "{:22}",
+        "{:22}",
+        "{:22}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    n_page = len(ind)
+    cur_page = 0
+    while True:
+        print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
+        print("Use PAGE_UP and PAGE_DOWN to switch industries ({}/{})".format(cur_page + 1, n_page))
+        print("")
+
+        cur_ind = ind[cur_page]
+        cur_indtype = industrytypes[cur_ind]
+        print(" | ".join(formatters).format(
+            industryNames[cur_indtype],
+            "1",
+            "2",
+            "3",
+            "4",
+        ))
+        print(dashline)
+
+        inputstrs = []
+        outputstrs = []
+
+        for p in range(4):
+            ingood = industryInputs[cur_indtype][p]
+            if ingood[0] is not None:
+                goodname = cargotypeTranslator[ingood[0]]
+                inputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryins[cur_ind][p], ingood[1]))
+            else:
+                inputstrs.append("")
+            outgood = industryOutputs[cur_indtype][p]
+            if outgood[0] is not None:
+                goodname = cargotypeTranslator[outgood[0]]
+                outputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryouts[cur_ind][p], outgood[1]))
+            else:
+                outputstrs.append("")
+
+        if 0 == cur_line:
+            line_format = formatters[0]
+            for j in range(4):
+                line_format += " | "
+                if j == cur_col:
+                    line_format += selectfmt + formatters[j+1] + "\033[0m"
+                else:
+                    line_format += formatters[j+1]
+        else:
+            line_format = " | ".join(formatters)
+        print(line_format.format(
+            "Inputs:",
+            inputstrs[0],
+            inputstrs[1],
+            inputstrs[2],
+            inputstrs[3],
+        ))
+        if 1 == cur_line:
+            line_format = formatters[0]
+            for j in range(4):
+                line_format += " | "
+                if j == cur_col:
+                    line_format += selectfmt + formatters[j + 1] + "\033[0m"
+                else:
+                    line_format += formatters[j + 1]
+        else:
+            line_format = " | ".join(formatters)
+        print(line_format.format(
+            "Outputs:",
+            outputstrs[0],
+            outputstrs[1],
+            outputstrs[2],
+            outputstrs[3],
+        ))
+
+        k = getKey()
+        if k == b'KEY_RIGHT':
+            cur_col = min(3, cur_col + 1)
+        if k == b'KEY_LEFT':
+            cur_col = max(0, cur_col - 1)
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+        if k == b'KEY_DOWN':
+            cur_line = min(1, cur_line + 1)
+        if k == b'PAGE_UP':
+            cur_page = max(0, cur_page - 1)
+        if k == b'PAGE_DOWN':
+            cur_page = min(n_page - 1, cur_page + 1)
+        if k == b'RETURN':
+            if cur_line == 0:
+                cur_good = industryInputs[cur_indtype][cur_col]
+            else:
+                cur_good = industryOutputs[cur_indtype][cur_col]
+            if cur_good[0] is not None:
+                prompt_text = "> Enter new value or leave blank for max: "
+                while True:
+                    val = input(prompt_text)
+                    try:
+                        if val == '':
+                            val = cur_good[1]
+                        else:
+                            val = int(val)
+                    except ValueError:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid input! Enter new value: "
+                        continue
+
+                    if val < 0 or val > cur_good[1]:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid amount! Enter new value: "
+                        continue
+
+                    print("\033[{}A\033[J".format(1), end='')
+                    break
+                if cur_line == 0:
+                    industryins[cur_ind][cur_col] = val
+                else:
+                    industryouts[cur_ind][cur_col] = val
+
+        print("\033[{}A\033[J".format(7), end='')
+
+        if k == b'ESCAPE':
+            break
+
+    for i in range(len(industryins)):
+        industryin1[i] = industryins[i][0]
+        industryin2[i] = industryins[i][1]
+        industryin3[i] = industryins[i][2]
+        industryin4[i] = industryins[i][3]
+        industryout1[i] = industryouts[i][0]
+        industryout2[i] = industryouts[i][1]
+        industryout3[i] = industryouts[i][2]
+        industryout4[i] = industryouts[i][3]
+    return None
 
 
 def editplacables(gvas):
