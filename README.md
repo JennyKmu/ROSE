@@ -59,8 +59,8 @@ Currently, functionnalities are limited to:
   * Refill firewood, water, but not sand as it is not yet saved by the game.
 * Editing Utility contents:
   * Can refill water towers
-  * Cannot refill sand towers as it is not yet saved by the game.
   * Can refill firewood depots
+  * Cannot refill sand towers as it is not yet saved by the game.
 * Rolling stock respawn :
   * Allows to respawn rolling stock at one of the six spawn points. The rolling stock should be re-railed when respawning at one of the spawn points.
   * If all the points are occupied, an option is available to teleport rolling stock close to the spawn points (behind the deck at the end of the tracks).
