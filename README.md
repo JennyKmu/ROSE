@@ -1,6 +1,8 @@
-﻿# RROSE - v0.3.7
+﻿# RROSE - v0.3.8 - Beta release
 
 This program is intended to be used as an external tool to Railroads Online server hosts. It will read save files, allow to modify entries within it, and then save the file (creating a backup file in the process).
+
+This is a **Beta release**, please report any issue on this project's issue page.
 
 There are two ways to use the program. You can either:
 * Have a python installation, with required modules, and use the released .pyz files.
@@ -46,7 +48,7 @@ Setting up pip so that you can easily install python modules is recommended. Mor
 
 ## Functionalities
 
-Currently, functionnalities are limited to:
+Currently, available features are:
 * Editing xp value for each player;
 * Editing money value for each player;
 * Editing rolling stock names and numbers;
@@ -61,19 +63,24 @@ Currently, functionnalities are limited to:
   * Can refill water towers
   * Can refill firewood depots
   * Cannot refill sand towers as it is not yet saved by the game.
-* Rolling stock respawn :
+* Editing industries contents
+* Rolling stock respawn:
   * Allows to respawn rolling stock at one of the six spawn points. The rolling stock should be re-railed when respawning at one of the spawn points.
   * If all the points are occupied, an option is available to teleport rolling stock close to the spawn points (behind the deck at the end of the tracks).
   * Detects most cars that fell through the ground and indicates them in the menu.
+* Smart tree reset feature, replants trees avoiding:
+  * Tracks/Groundwork/Bridges
+  * Switches
+  * Player placed buildings
+  * Also cut some (17) ill positioned trees if they're not already cut
+  * This feature might take a bit of computation time, but unless the program crashes (and tells you it crashed), it is running. Tested on a save with around 17000 trees for 20000 spline control points, and ran in under 3 seconds.
 * Reset trees (**EXPERIMENTAL**) back to the state they are in when starting a new game.
 
 ## In the work
 
 * Plotting a map of the network
 * Build new tracks
-* Better tree reset feature (avoid existing tracks)
 * Exporting SVG files of the network
-* Editing industries contents
 * Teleportation of players
 * Better teleportation of rolling stock, as well as rerailing
 * Deletion of rolling stock, tracks, or players
