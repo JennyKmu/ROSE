@@ -269,8 +269,8 @@ def resetTreesSmart(gvas):
                 if A.size == 0 or not check_comp_data:
                     A = np.vstack([T, R])
                     removedTreesProp._data = A.astype(np.float32)
-                    t0 = time.perf_counter()
-                    print(f"There is no tree to reset. Computation took {0:f} s.")
+                    t1 = time.perf_counter()
+                    print(f"There is no tree to reset. Computation took {t1-t0:f} s.")
                     print("(Press any key to go back to previous menu)")
                     getKey()
                     print("\033[{}A\033[J".format(10), end='')
