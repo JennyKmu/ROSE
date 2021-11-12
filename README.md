@@ -49,43 +49,50 @@ Setting up pip so that you can easily install python modules is recommended. Mor
 ## Functionalities
 
 Currently, available features are:
-* Editing xp value for each player;
-* Editing money value for each player;
-* Editing rolling stock names and numbers;
-  * Editing is limited to what can be displayed on each rolling stock. Override by starting with  `\i` when entering a new value.
-* Editing cargo on wagons:
-  * Changing cargo type (within allowed types and empty)
-    * Upon switching to 'Empty', the wagon is emptied. If switching to any cargo, the wagon is filled.
-  * Changing cargo amount
-* Editing Engine and Tender contents:
-  * Refill firewood, water, but not sand as it is not yet saved by the game.
-* Editing Utility contents:
-  * Can refill water towers
-  * Can refill firewood depots
-  * Cannot refill sand towers as it is not yet saved by the game.
-* Editing industries contents
-* Rolling stock respawn:
-  * Allows to respawn rolling stock at one of the six spawn points. The rolling stock should be re-railed when respawning at one of the spawn points.
-  * If all the points are occupied, an option is available to teleport rolling stock close to the spawn points (behind the deck at the end of the tracks).
-  * Detects most cars that fell through the ground and indicates them in the menu.
-* Smart tree reset feature, replants trees avoiding:
-  * Tracks/Groundwork/Bridges
-  * Switches
-  * Player placed buildings
-  * Also cut some (17) ill positioned trees if they're not already cut
-  * This feature might take a bit of computation time, but unless the program crashes (and tells you it crashed), it is running. Tested on a save with around 17000 trees for 20000 spline control points, and ran in under 3 seconds.
-* Reset trees (**EXPERIMENTAL**) back to the state they are in when starting a new game.
+* **Players Menu**
+    * Editing xp value for each player;
+    * Editing money value for each player;
+* **Rolling Stock Menu**
+    * **Rename**: Editing rolling stock names and numbers;
+      * Editing is limited to what can be displayed on each rolling stock. Override by starting with  `\i` when entering a new value.
+    * **Respawn**: Rolling stock respawn:
+      * Allows to respawn rolling stock at one of the six spawn points. The rolling stock should be re-railed when respawning at one of the spawn points.
+      * If all the points are occupied, an option is available to teleport rolling stock close to the spawn points (behind the deck at the end of the tracks).
+      * Detects most cars that fell through the ground and indicates them in the menu.
+    * **Cargo**: Editing cargo on wagons:
+      * Changing cargo type (within allowed types and empty)
+        * Upon switching to 'Empty', the wagon is emptied. If switching to any cargo, the wagon is filled.
+      * Changing cargo amount
+    * **Locomotive Restock**: Editing Engine and Tender contents:
+      * Refill firewood, water, but not sand as it is not yet saved by the game.
+    * **Change Attachments**: Editing attachments for locomotives
+* **Environment Menu**
+    * **Edit Industry Contents**
+    * **Edit Utility Contents**:
+      * Can refill water towers
+      * Can refill firewood depots
+      * Cannot refill sand towers as it is not yet saved by the game.
+    * **Smart tree reset**: replants trees avoiding:
+      * Tracks/Groundwork/Bridges
+      * Switches
+      * Player placed buildings
+      * Also cut some (17) ill positioned trees if they're not already cut
+      * This feature might take a bit of computation time, but unless the program crashes (and tells you it crashed), it is running. Tested on a save with around 17000 trees for 20000 spline control points, and ran in under 3 seconds.
+    * **Reset trees to new game state (EXPERIMENTAL)**: resets trees back to the state they are in when starting a new game, without any check of any sort. Use at your own risks.
 
 ## In the work
 
-* Plotting a map of the network
-* Build new tracks
-* Exporting SVG files of the network
+### Ongoing
 * Teleportation of players
+* Plotting a map of the network
+* Exporting SVG files of the network
+* Improvements of the UI
+
+### Coming later
 * Better teleportation of rolling stock, as well as rerailing
+* Build new tracks
 * Deletion of rolling stock, tracks, or players
 * A "No cheat" mode, which will allow to take loans, sell unused rolling stock (at a lower price), order refills for water, sand or firewood...
-* Improvements of the UI
 * GUI (or JUI as Leif likes to call it)
 
 ## Q&A
