@@ -66,6 +66,7 @@ Currently, available features are:
     * **Locomotive Restock**: Editing Engine and Tender contents:
       * Refill firewood, water, but not sand as it is not yet saved by the game.
     * **Change Attachments**: Editing attachments for locomotives
+      * Note: Mogul Tender Headlight 2 only persists once, loading the game. The game saves it wrongly as 0 (which you can see in the editor), this bug is known to the game devs.
 * **Environment Menu**
     * **Edit Industry Contents**
     * **Edit Utility Contents**:
