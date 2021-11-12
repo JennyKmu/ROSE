@@ -29,11 +29,18 @@ NeedSecondByteUnix = [
     b'\x1b',
 ]
 
+NeedFourthByteUnix = [
+    b'\x1b[5',
+    b'\x1b[6',
+]
+
 KeyTranslatorUnix = {
     b"\x1b[A":b"KEY_UP",
     b"\x1b[B":b"KEY_DOWN",
     b"\x1b[C":b"KEY_RIGHT",
     b"\x1b[D":b"KEY_LEFT",
+    b"\x1b[6~":b"PAGE_DOWN",
+    b"\x1b[5~":b"PAGE_UP",
     b"\x1b":b"ESCAPE",
     b"\r":b"RETURN",
     b"\x03":b"CTRL_C",
@@ -76,10 +83,18 @@ class _GetchUnix:
             tty.setraw(sys.stdin.fileno())
             ch = sys.stdin.read(1)
             if ch in NeedSecondByteUnix and _chekmorebytes:
+                #~ while True:
+                  #~ chb = self(_chekmorebytes=False)
+                  #~ print(repr(chb))
+                  #~ if chb != '' and chb is not None:
+                    #~ ch += chb
                 ch2 = self(_chekmorebytes=False)
                 if ch2 != '':
                     ch3 = self(_chekmorebytes=False)
                     ch = ch + ch2 + ch3
+                    if ch in NeedFourthByteUnix:
+                      ch4 = self(_chekmorebytes=False)
+                      ch += ch4
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch

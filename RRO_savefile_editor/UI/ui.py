@@ -16,7 +16,8 @@ selectfmt = "\033[1;32;42m"
 
 
 def selectSaveFile(loc):
-    filelist = glob.glob(loc + '/' + "slot*.sav")
+    # filelist = glob.glob(loc + '/' + "slot*.sav")
+    filelist = glob.glob(loc + '/' + "*.sav")
     current = 0
     if len(filelist) == 0:
         return None
