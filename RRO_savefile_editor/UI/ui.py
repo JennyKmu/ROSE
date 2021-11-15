@@ -2,6 +2,7 @@ import glob
 import os
 import shutil
 import sys
+import numpy as np
 from pathlib import Path
 from .industryPlacables import *
 from .rollingStock import *
@@ -108,8 +109,9 @@ def noSaveAndExit(gvas):
 
 def mainEnvMenu(gvas):
     options = [
-        #("Edit Industry Contents", editindustries),
+        ("Edit Industry Contents", editindustries),
         ("Edit Utility Contents", editplacables),
+        ("Smart tree reset", resetTreesSmart),
         ("Reset trees to new game state (EXPERIMENTAL)", resetTreesToNewGame),
     ]
     current = 0
@@ -139,7 +141,7 @@ def resetTreesToNewGame(gvas):
     print("Risks include in particular:")
     print(" * Trees in the middle of the track (obviously)")
     print(" * Rolling stock being yeeted through the air at hypersonic speeds...")
-    print(" * Or worse, through the ground. But for that there's another experimental feature.")
+    print(" * Or worse, through the ground. But for that you can use the respawn tool.")
 
     removedTreesProp = gvas.data.find("RemovedVegetationAssetsArray")
 
@@ -177,189 +179,448 @@ def resetTreesToNewGame(gvas):
         print("\033[{}A\033[J".format(1), end='')
 
 
-#def editindustries(gvas):
-    # industrytypes = gvas.data.find("IndustryTypeArray").data
-    # industryinputs1 = gvas.data.find("IndustryStorageEduct1Array").data
-    # industryinputs2 = gvas.data.find("IndustryStorageEduct2Array").data
-    # industryinputs3 = gvas.data.find("IndustryStorageEduct3Array").data
-    # industryinputs4 = gvas.data.find("IndustryStorageEduct4Array").data
-    # industryoutputs1 = gvas.data.find("IndustryStorageProduct1Array").data
-    # industryoutputs2 = gvas.data.find("IndustryStorageProduct2Array").data
-    # industryoutputs3 = gvas.data.find("IndustryStorageProduct3Array").data
-    # industryoutputs4 = gvas.data.find("IndustryStorageProduct4Array").data
-    #
-    # ind = []
-    # for i in range(len(industrytypes)):
-    #     if industrytypes[i] in industryNames.keys():
-    #         ind.append(i)
-    #
-    # cur_col = 0
-    # cur_line = 0
-    # formatters = [
-    #     "{:<12s}",
-    #     "{:30}",
-    #     "{:30}",
-    # ]
-    # dashline = ''
-    # for i in formatters:
-    #     dashline += "---" + len(i.format('')) * "-"
-    # offset = 0
-    # ltot = len(ind)
-    # if ltot > 10:
-    #     split_data = True
-    #     n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
-    # else:
-    #     split_data = False
-    # while True:
-    #     print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
-    #     print("")
-    #     cur_page = int(offset / 10)
-    #     if split_data:
-    #         print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
-    #     print(" | ".join(formatters).format(
-    #         "Industry",
-    #         "Input 1",
-    #         "Input 2",
-    #         "Input 3",
-    #         "Input 4",
-    #         "Outputs",
-    #     ))
-    #     print(dashline)
-    #     n_line = 0
-    #     for i in range(len(ind)):
-    #         if i not in range(offset, offset + 10) and split_data:
-    #             continue
-    #         n_line += 1
-    #         if i == cur_line:
-    #             line_format = formatters[0]
-    #             for j in range(3):
-    #                 line_format += " | "
-    #                 if j == cur_col:
-    #                     line_format += selectfmt + formatters[j + 1] + "\033[0m"
-    #                 else:
-    #                     line_format += formatters[j + 1]
-    #         else:
-    #             line_format = " | ".join(formatters)
-    #
-    #         industry = industrytypes[ind[i]]
-    #         namestr = industryNames[industry]
-    #
-    #         if industry in industryInputs.keys():
-    #             inputstr = "{.1f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
-    #         else:
-    #             inputstr = ''
-    #
-    #         if industry in industryOutputs.keys():
-    #             outputstr = "{.1f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
-    #         else:
-    #             outputstr = ''
-    #
-    #         print(line_format.format(
-    #             namestr,
-    #             inputstr,
-    #             outputstr,
-    #         ))
-    #     k = getKey()
-    #
-    #     if k == b'KEY_RIGHT':
-    #         cur_col = min(2, cur_col + 1)
-    #     if k == b'KEY_LEFT':
-    #         cur_col = max(0, cur_col - 1)
-    #     if k == b'KEY_UP':
-    #         cur_line = max(0, cur_line - 1)
-    #         if cur_line < offset:
-    #             k = b'PAGE_UP'
-    #     if k == b'KEY_DOWN':
-    #         cur_line = min(ltot - 1, cur_line + 1)
-    #         if cur_line >= offset + 10:
-    #             k = b'PAGE_DOWN'
-    #     if k == b'PAGE_UP':
-    #         offset = max(0, offset - 10)
-    #         if cur_line not in range(offset, offset + 10):
-    #             cur_line = offset + 10 - 1
-    #     if k == b'PAGE_DOWN':
-    #         max_offset = ltot - ltot % 10
-    #         offset = min(offset + 10, max_offset)
-    #         if cur_line not in range(offset, offset + 10):
-    #             cur_line = offset
-    #     # if k == b'RETURN':
-    #     #     curframetype = frametypes[ind[cur_line]]
-    #     #     if cur_col == 0 and curframetype in waterBoiler.keys():
-    #     #         prompt_text = "> Enter new value or leave blank for max: "
-    #     #         while True:
-    #     #             val = input(prompt_text)
-    #     #             try:
-    #     #                 if val == '':
-    #     #                     val = waterBoiler[curframetype]
-    #     #                 else:
-    #     #                     val = float(val)
-    #     #             except ValueError:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid input! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             if val < 0 or val > waterBoiler[curframetype]:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid amount! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             frameboilerwater[ind[cur_line]] = val
-    #     #             print("\033[{}A\033[J".format(1), end='')
-    #     #             break
-    #     #
-    #     #     elif cur_col == 1 and curframetype in waterReserves.keys():
-    #     #         prompt_text = "> Enter new value or leave blank for max: "
-    #     #         while True:
-    #     #             val = input(prompt_text)
-    #     #             try:
-    #     #                 if val == '':
-    #     #                     val = waterReserves[curframetype]
-    #     #                 else:
-    #     #                     val = int(val)
-    #     #             except ValueError:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid input! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             if val < 0 or val > waterReserves[curframetype]:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid amount! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             frametenderwater[ind[cur_line]] = val
-    #     #             print("\033[{}A\033[J".format(1), end='')
-    #     #             break
-    #     #
-    #     #     elif cur_col == 2 and curframetype in firewoodReserves.keys():
-    #     #         prompt_text = "> Enter new value or leave blank for max: "
-    #     #         while True:
-    #     #             val = input(prompt_text)
-    #     #             try:
-    #     #                 if val == '':
-    #     #                     val = firewoodReserves[curframetype]
-    #     #                 else:
-    #     #                     val = int(val)
-    #     #             except ValueError:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid input! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             if val < 0 or val > firewoodReserves[curframetype]:
-    #     #                 print("\033[{}A\033[J".format(1), end='')
-    #     #                 prompt_text = "> Invalid amount! Enter new value: "
-    #     #                 continue
-    #     #
-    #     #             frametenderfuel[ind[cur_line]] = val
-    #     #             print("\033[{}A\033[J".format(1), end='')
-    #     #             break
-    #
-    #     if ltot <= 10:
-    #         print("\033[{}A\033[J".format(ltot + 4), end='')
-    #     else:
-    #         print("\033[{}A\033[J".format(n_line + 5), end='')
-    #
-    #     if k == b'ESCAPE':
-    #         return None
+def resetTreesSmart(gvas):
+    # NOTE:
+    # - 500. for safe dist with norm1 gives a not to bad result, could be used
+    #   to make a "network for rehab after long time unused"
+    import numpy as np
+    from .defaultRemovedTrees import default_removed_trees
+    from .betterDefaultRemovedTrees import better_default_removed_trees
+    print("This is an \033[1;31mEXPERIMENTAL\033[0m feature. Use at your own risks.")
+    print("Risks include in particular:")
+    print(" * Trees in the middle of the track (obviously)")
+    print(" * Rolling stock being yeeted through the air at hypersonic speeds...")
+    print(" * Or worse, through the ground. But for that you can use the respawn tool.")
+    print("This tool will attempt to reset trees avoiding tracks and other assets.")
+    print("Expect some computing time after launching the tool.")
+
+
+    # Distance from placed elements where trees aren't respawned
+    safeDistSplines= 800.
+    safeDistWater= 700.
+    safeDistFirewood = 1500.
+    safeDistSand = 1200.
+
+    removedTreesProp = gvas.data.find("RemovedVegetationAssetsArray")
+    splinepoints = gvas.data.find("SplineControlPointsArray")
+    waterpos = gvas.data.find("WatertowerLocationArray")
+    industrytype = gvas.data.find("IndustryTypeArray")
+    industrypos = gvas.data.find("IndustryLocationArray")
+    firewoodpos = industrypos.data[industrytype.data == firewoodDepot["type"], :]
+    sandpos = gvas.data.find("SandhouseLocationArray")
+    switchpos = gvas.data.find("SwitchLocationArray")
+    # switchtype = gvas.data.find("SwitchTypeArray")
+
+    if firewoodpos.size == 0:       firewoodpos = None
+    if switchpos is not None:
+        if switchpos.data.size == 0: switchpos == None
+    # others are returned as None if not found in the savefile
+
+
+    cursor = 0
+    choices = ["Cancel", "Proceed at your own risks"]
+    while True:
+        if cursor == 0:
+            print(" " * 5 + selectfmt + "{:^29s}".format(choices[0]) + "\033[0m"
+                  + " " * 5 + "{:^29s}".format(choices[1]))
+        else:
+            print(" " * 5 + "{:^29s}".format(choices[0])
+                  + " " * 5 + selectfmt + "{:^29s}".format(choices[1]) + "\033[0m")
+        k = getKey()
+
+        if k == b'KEY_RIGHT':
+            cursor = min(1, cursor + 1)
+        if k == b'KEY_LEFT':
+            cursor = max(0, cursor - 1)
+
+        if k == b'RETURN':
+            if cursor == 0:
+                k = b'ESCAPE'
+            elif cursor == 1:
+                print("\033[{}A\033[J".format(1), end='')
+                print("Please Wait...")
+                import time
+                import struct
+                t0 = time.perf_counter()
+
+                A = removedTreesProp.data
+                B = splinepoints.data
+                C = waterpos.data if waterpos is not None else None
+                D = firewoodpos
+                E = sandpos.data if sandpos is not None else None
+
+                # print(f"Before reset: {A.shape}")
+                # print(repr(A))
+                # print([struct.pack('<f', v) for v in A[0]])
+                T = np.asarray(default_removed_trees, dtype=np.float32)
+                R = np.asarray(better_default_removed_trees, dtype=np.float32)
+                # Remove originnally cut trees from the list
+                A = A[~((A[:,None,:] == T).all(-1)).any(1)]
+                A = A[~((A[:,None,:] == R).all(-1)).any(1)]
+
+                # print(f"After removing origin: {A.shape}")
+                check_comp_data = (
+                    B.size > 0 or
+                    C is not None or
+                    D.size > 0 or
+                    E is not None
+                    )
+                # Check if there's enough data for comparison else give rose default trees
+                if A.size == 0 or not check_comp_data:
+                    A = np.vstack([T, R])
+                    removedTreesProp._data = A.astype(np.float32)
+                    t1 = time.perf_counter()
+                    print(f"There is no tree to reset. Computation took {t1-t0:f} s.")
+                    print("(Press any key to go back to previous menu)")
+                    getKey()
+                    print("\033[{}A\033[J".format(10), end='')
+                    return None
+                A_size_before = A.shape[0]
+
+                #--- Remove hidden control points from B ---
+                start = gvas.data.find("SplineControlPointsIndexStartArray").data
+                end = gvas.data.find("SplineControlPointsIndexEndArray").data
+                ctrl = gvas.data.find("SplineControlPointsArray").data
+                def mkslice(row):
+                    s = slice(row[0], row[1]+1) # end index is included
+                    return np.arange(s.stop)[s]
+                indexes = [mkslice(r) for r in np.vstack([start, end]).T]
+                splines = [ctrl[i,:] for i in indexes]
+
+                vstart = gvas.data.find("SplineVisibilityStartArray").data
+                vend = gvas.data.find("SplineVisibilityEndArray").data
+                vis = gvas.data.find("SplineSegmentsVisibilityArray").data
+
+                vindexes = [mkslice(r) for r in np.vstack([vstart, vend]).T]
+                vsplines = [vis[i] for i in vindexes]
+                cleanedsplines = []
+                for i, spline in enumerate(splines):
+                    vspline = vsplines[i]
+                    # remove control points which are not visible
+                    # non visible control points appear in those cases:
+                    #   - first segment non visible -> first ctrl not visible
+                    #   - last segment non visible -> last ctrl not visible
+                    #   - two successive non visible segments -> ctrl between them not visible
+                    cleanspline = []
+                    if vspline[0] :
+                        cleanspline.append(spline[0])
+                    if vspline[-1]:
+                        cleanspline.append(spline[-1])
+                    for j in range(1,spline.shape[0]-1):
+                        if vspline[j-1] or vspline[j]:
+                            cleanspline.append(spline[j])
+                    cleanspline = np.asarray(cleanspline)
+                    cleanedsplines.append(cleanspline)
+                cleanedsplines = np.vstack(cleanedsplines)
+                B = cleanedsplines
+                #--- End of spline cleanup ---
+
+                # Adding switch locations
+                if switchpos is not None:
+                    B = np.vstack([B, switchpos.data])
+
+                #--- Spline distance check ---
+                # Build buckets to reduce computation load if necessary/avoid empty buckets
+                # Might need tuning
+                setting_bucket_size_limit = 100 # number of ctrl pts over which we make buckets
+                if B.size > setting_bucket_size_limit*3:
+                    # Generate buckets
+                    avx = np.mean(A[:,0])
+                    avy = np.mean(A[:,1])
+                    # avx = 0.  # worse load balance
+                    # avy = 0.
+                    nbuckets = 4
+                    Distbuckets = [None]*nbuckets
+                    Abuckets = [
+                        A[np.logical_and(A[:,0]<avx  , A[:,1]<avy), :],
+                        A[np.logical_and(A[:,0]<avx  , A[:,1]>=avy), :],
+                        A[np.logical_and(A[:,0]>=avx , A[:,1]<avy),  :],
+                        A[np.logical_and(A[:,0]>=avx , A[:,1]>=avy), :]
+                    ]
+                    ds=safeDistSplines
+                    Bbuckets = [
+                        B[np.logical_and(B[:,0]<ds+avx   , B[:,1]<ds+avy  ), :].T,
+                        B[np.logical_and(B[:,0]<ds+avx   , B[:,1]>=-ds+avy), :].T,
+                        B[np.logical_and(B[:,0]>=-ds+avx , B[:,1]<ds+avy  ), :].T,
+                        B[np.logical_and(B[:,0]>=-ds+avx , B[:,1]>=-ds+avy), :].T
+                    ]
+                    # utilities might not need buckets
+                    # if C is not None:
+                    #     ds=safeDistWater
+                    #     Cbuckets = [
+                    #         C[np.logical_and(C[:,0]<ds+avx   , C[:,1]<ds+avy  ), :].T,
+                    #         C[np.logical_and(C[:,0]<ds+avx   , C[:,1]>=-ds+avy), :].T,
+                    #         C[np.logical_and(C[:,0]>=-ds+avx , C[:,1]<ds+avy  ), :].T,
+                    #         C[np.logical_and(C[:,0]>=-ds+avx , C[:,1]>=-ds+avy), :].T
+                    #     ]
+                    # if D is not None:
+                    #     ds = safeDistFirewood
+                    #     Dbuckets = [
+                    #         D[np.logical_and(D[:,0]<ds+avx   , D[:,1]<ds+avy  ), :].T,
+                    #         D[np.logical_and(D[:,0]<ds+avx   , D[:,1]>=-ds+avy), :].T,
+                    #         D[np.logical_and(D[:,0]>=-ds+avx , D[:,1]<ds+avy  ), :].T,
+                    #         D[np.logical_and(D[:,0]>=-ds+avx , D[:,1]>=-ds+avy), :].T
+                    #     ]
+                    # if E is not None:
+                    #     ds = safeDistSand
+                    #     Ebuckets = [
+                    #         E[np.logical_and(E[:,0]<ds+avx   , E[:,1]<ds+avy  ), :].T,
+                    #         E[np.logical_and(E[:,0]<ds+avx   , E[:,1]>=-ds+avy), :].T,
+                    #         E[np.logical_and(E[:,0]>=-ds+avx , E[:,1]<ds+avy  ), :].T,
+                    #         E[np.logical_and(E[:,0]>=-ds+avx , E[:,1]>=-ds+avy), :].T
+                    #     ]
+                    # TODO: add safe distance to buildings
+                    # Performance indicators
+                    # stat_A = [a.shape[0] for a in Abuckets]
+                    # stat_B = [b.shape[1] for b in Bbuckets]
+                    # print(f"A balance: {stat_A} over {A.shape[0]} - indicator = {(np.max(stat_A)-np.min(stat_A))/np.mean(stat_A)}")
+                    # print(f"B balance: {stat_B} over {B.shape[0]} - indicator = {(np.max(stat_B)-np.min(stat_B))/np.mean(stat_B)}")
+                    for i in range(nbuckets):
+                        a = Abuckets[i]
+                        b = Bbuckets[i]
+                        if a.size == 0:
+                            Distbuckets[i] = np.zeros(0, dtype=bool)
+                            continue
+                        if b.size == 0:
+                            Distbuckets[i] = np.zeros(a.shape[0], dtype=bool)
+                            continue
+                        # buckets might not be needed for utilities
+                        # c = Cbuckets[i]
+                        # d = Dbuckets[i]
+                        # e = Ebuckets[i]
+                        # Compute distance mask
+                        # norm2
+                        bdistmask = safeDistSplines  > np.min(np.sqrt(np.sum((a[:,:2,None]-b[None,:2,:])**2, axis=1)), axis=1)
+                        # buckets might not be needed for utilites
+                        # cdistmask = safeDistWater    > np.min(np.sqrt(np.sum((a[:,:2,None]-c[None,:2,:])**2, axis=1)), axis=1)
+                        # ddistmask = safeDistFirewood > np.min(np.sqrt(np.sum((a[:,:2,None]-d[None,:2,:])**2, axis=1)), axis=1)
+                        # edistmask = safeDistFirewood > np.min(np.sqrt(np.sum((a[:,:2,None]-e[None,:2,:])**2, axis=1)), axis=1)
+                        # norm1 (slightly faster but maybe lower quality)
+                        # bdistmask = safeDistSplines  > np.min(np.sum(np.abs(a[:,:2,None]-b[None,:2,:]), axis=1), axis=1)
+                        # cdistmask = safeDistWater    > np.min(np.sum(np.abs(a[:,:2,None]-c[None,:2,:]), axis=1), axis=1)
+                        # ddistmask = safeDistFirewood > np.min(np.sum(np.abs(a[:,:2,None]-d[None,:2,:]), axis=1), axis=1)
+                        # edistmask = safeDistSand     > np.min(np.sum(np.abs(a[:,:2,None]-e[None,:2,:]), axis=1), axis=1)
+
+                        # merge masks
+                        Distbuckets[i] = bdistmask
+                        # Distbuckets[i] = np.any(
+                        #         np.vstack([bdistmask, cdistmask, ddistmask, edistmask]),
+                        #         axis = 1)
+
+                        # Keep only cut trees that are close to the tracks
+                        # Abuckets[i] = a[distmask,:]
+                    A = np.vstack(Abuckets) # vstack since 2D (and want to keep axis 1 size)
+                    distmask = np.hstack(Distbuckets) # hstack since 1D (and want to concatenate the arrays)
+                elif B.size > 0:
+                    distmask = safeDistSplines  > np.min(np.sqrt(np.sum((A[:,:2,None]-B[None,:2,:])**2, axis=1)), axis=1)
+                    # no buckets
+                else:
+                    # unlikely case where there is no ctrl pts at all
+                    distmask = np.zeros(A.shape[0], dtype=bool)
+                #--- End of spline dist check ---
+
+                #--- Placeable dist checks ---
+                if C is not None:
+                    cdistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-C[None,:2,:])**2, axis=1)), axis=1)
+                    distmask = np.vstack([distmask, cdistmask])
+                if D is not None:
+                    ddistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-D[None,:2,:])**2, axis=1)), axis=1)
+                    distmask = np.vstack([distmask, ddistmask])
+                if E is not None:
+                    edistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-E[None,:2,:])**2, axis=1)), axis=1)
+                    distmask = np.vstack([distmask, edistmask])
+                #--- End of Placeable checks ---
+
+                # Combine checks into one mask
+                if distmask.ndim > 1:
+                    distmask = distmask.any(0)
+
+                A = A[distmask,:]
+
+                A_size_after = A.shape[0]
+
+                # Add originally cut trees back
+                A = np.vstack([T, R, A]) # I, N, S
+
+
+                # Save to gvas property
+                removedTreesProp._data = A.astype(np.float32)
+
+                t1 = time.perf_counter()
+                print("\033[{}A\033[J".format(1), end='')
+                print(f"{A_size_before-A_size_after} trees have been replanted. Computation took {t1-t0:f} s.")
+                print("(Press any key to go back to previous menu)")
+                getKey()
+                print("\033[{}A\033[J".format(9), end='')
+                return None
+
+        if k == b'ESCAPE':
+            print("\033[{}A\033[J".format(8), end='')
+            return None
+
+        print("\033[{}A\033[J".format(1), end='')
+
+
+def editindustries(gvas):
+    industrytypes = gvas.data.find("IndustryTypeArray").data
+    industryin1 = gvas.data.find("IndustryStorageEduct1Array").data
+    industryin2 = gvas.data.find("IndustryStorageEduct2Array").data
+    industryin3 = gvas.data.find("IndustryStorageEduct3Array").data
+    industryin4 = gvas.data.find("IndustryStorageEduct4Array").data
+    industryout1 = gvas.data.find("IndustryStorageProduct1Array").data
+    industryout2 = gvas.data.find("IndustryStorageProduct2Array").data
+    industryout3 = gvas.data.find("IndustryStorageProduct3Array").data
+    industryout4 = gvas.data.find("IndustryStorageProduct4Array").data
+
+    industryins = np.stack([industryin1, industryin2, industryin3, industryin4], axis=1)
+    industryouts = np.stack([industryout1, industryout2, industryout3, industryout4], axis=1)
+
+    ind = []
+    for i in range(len(industrytypes)):
+        if industrytypes[i] in industryNames.keys():
+            ind.append(i)
+
+    cur_col = 0
+    cur_line = 0
+    formatters = [
+        "{:12s}",
+        "{:22}",
+        "{:22}",
+        "{:22}",
+        "{:22}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    n_page = len(ind)
+    cur_page = 0
+    while True:
+        print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
+        print("Use PAGE_UP and PAGE_DOWN to switch industries ({}/{})".format(cur_page + 1, n_page))
+        print("")
+
+        cur_ind = ind[cur_page]
+        cur_indtype = industrytypes[cur_ind]
+        print(" | ".join(formatters).format(
+            industryNames[cur_indtype],
+            "1",
+            "2",
+            "3",
+            "4",
+        ))
+        print(dashline)
+
+        inputstrs = []
+        outputstrs = []
+
+        for p in range(4):
+            ingood = industryInputs[cur_indtype][p]
+            if ingood[0] is not None:
+                goodname = cargotypeTranslator[ingood[0]]
+                inputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryins[cur_ind][p], ingood[1]))
+            else:
+                inputstrs.append("")
+            outgood = industryOutputs[cur_indtype][p]
+            if outgood[0] is not None:
+                goodname = cargotypeTranslator[outgood[0]]
+                outputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryouts[cur_ind][p], outgood[1]))
+            else:
+                outputstrs.append("")
+
+        if 0 == cur_line:
+            line_format = formatters[0]
+            for j in range(4):
+                line_format += " | "
+                if j == cur_col:
+                    line_format += selectfmt + formatters[j+1] + "\033[0m"
+                else:
+                    line_format += formatters[j+1]
+        else:
+            line_format = " | ".join(formatters)
+        print(line_format.format(
+            "Inputs:",
+            inputstrs[0],
+            inputstrs[1],
+            inputstrs[2],
+            inputstrs[3],
+        ))
+        if 1 == cur_line:
+            line_format = formatters[0]
+            for j in range(4):
+                line_format += " | "
+                if j == cur_col:
+                    line_format += selectfmt + formatters[j + 1] + "\033[0m"
+                else:
+                    line_format += formatters[j + 1]
+        else:
+            line_format = " | ".join(formatters)
+        print(line_format.format(
+            "Outputs:",
+            outputstrs[0],
+            outputstrs[1],
+            outputstrs[2],
+            outputstrs[3],
+        ))
+
+        k = getKey()
+        if k == b'KEY_RIGHT':
+            cur_col = min(3, cur_col + 1)
+        if k == b'KEY_LEFT':
+            cur_col = max(0, cur_col - 1)
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+        if k == b'KEY_DOWN':
+            cur_line = min(1, cur_line + 1)
+        if k == b'PAGE_UP':
+            cur_page = max(0, cur_page - 1)
+        if k == b'PAGE_DOWN':
+            cur_page = min(n_page - 1, cur_page + 1)
+        if k == b'RETURN':
+            if cur_line == 0:
+                cur_good = industryInputs[cur_indtype][cur_col]
+            else:
+                cur_good = industryOutputs[cur_indtype][cur_col]
+            if cur_good[0] is not None:
+                prompt_text = "> Enter new value or leave blank for max: "
+                while True:
+                    val = input(prompt_text)
+                    try:
+                        if val == '':
+                            val = cur_good[1]
+                        else:
+                            val = int(val)
+                    except ValueError:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid input! Enter new value: "
+                        continue
+
+                    if val < 0 or val > cur_good[1]:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid amount! Enter new value: "
+                        continue
+
+                    print("\033[{}A\033[J".format(1), end='')
+                    break
+                if cur_line == 0:
+                    industryins[cur_ind][cur_col] = val
+                else:
+                    industryouts[cur_ind][cur_col] = val
+
+        print("\033[{}A\033[J".format(7), end='')
+
+        if k == b'ESCAPE':
+            break
+
+    for i in range(len(industryins)):
+        industryin1[i] = industryins[i][0]
+        industryin2[i] = industryins[i][1]
+        industryin3[i] = industryins[i][2]
+        industryin4[i] = industryins[i][3]
+        industryout1[i] = industryouts[i][0]
+        industryout2[i] = industryouts[i][1]
+        industryout3[i] = industryouts[i][2]
+        industryout4[i] = industryouts[i][3]
+    return None
 
 
 def editplacables(gvas):
@@ -1194,6 +1455,195 @@ def engineStockMenu(gvas):
             return None
 
 
+def editattachmentmenu(gvas):
+    framenumbers = gvas.data.find("FrameNumberArray").data
+    framenames = gvas.data.find("FrameNameArray").data
+    frametypes = gvas.data.find("FrameTypeArray").data
+    framestacks = gvas.data.find("SmokestackTypeArray").data
+    framelights = gvas.data.find("HeadlightTypeArray").data
+
+    ind = []
+    for i in range(len(frametypes)):
+        if frametypes[i] in availableHeadlights.keys() or frametypes[i] in availableSmokestacks.keys():
+            ind.append(i)
+
+    cur_col = 0
+    cur_line = 0
+    formatters = [
+        "{:<50s}",
+        "{:>10}",
+        "{:>10}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    offset = 0
+    ltot = len(ind)
+    if ltot > 10:
+        split_data = True
+        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+    else:
+        split_data = False
+        n_page = 1
+    while True:
+        print("Select field to edit (ESCAPE to quit, ENTER to valid selection)")
+        print("")
+        cur_page = int(offset / 10)
+        if split_data:
+            print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
+        print(" | ".join(formatters).format(
+            "Engine/Tender",
+            "Smokestack",
+            "Headlight"
+        ))
+        print(dashline)
+        n_line = 0
+        for i in range(len(ind)):
+            if i not in range(offset, offset + 10) and split_data:
+                continue
+            n_line += 1
+            if i == cur_line:
+                line_format = formatters[0]
+                for j in range(2):
+                    line_format += " | "
+                    if j == cur_col:
+                        line_format += selectfmt + formatters[j + 1] + "\033[0m"
+                    else:
+                        line_format += formatters[j + 1]
+            else:
+                line_format = " | ".join(formatters)
+
+            frametype = frametypes[ind[i]]
+            num = framenumbers[ind[i]]
+            nam = framenames[ind[i]]
+            stack = framestacks[ind[i]]
+            light = framelights[ind[i]]
+
+            num = '' if num is None else num
+            nam = '' if nam is None else nam
+
+            namestr = "{:<10s}:".format(frametypeTranslatorShort[frametype])
+            if not num == '':
+                namestr += " " + num.split("<br>")[0].strip()
+            if not nam == '':
+                namestr += " " + nam.split("<br>")[0].strip()
+            namestr = namestr[:48]
+
+            if frametype in availableSmokestacks.keys():
+                if availableSmokestacks[frametype] > 1:
+                    stackstr = "{}  ( {} )".format(stack, availableSmokestacks[frametype])
+                else:
+                    stackstr = "{}  (fix)".format(stack)
+            else:
+                stackstr = ''
+
+            if frametype in availableHeadlights.keys():
+                if availableHeadlights[frametype] > 1:
+                    lightstr = "{}  ( {} )".format(light, availableHeadlights[frametype])
+                else:
+                    lightstr = "{}  (fix)".format(light)
+            else:
+                lightstr = ''
+
+            print(line_format.format(
+                namestr,
+                stackstr,
+                lightstr
+            ))
+        k = getKey()
+
+        if k == b'KEY_RIGHT':
+            cur_col = min(1, cur_col + 1)
+        if k == b'KEY_LEFT':
+            cur_col = max(0, cur_col - 1)
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+            if cur_line < offset:
+                k = b'PAGE_UP'
+        if k == b'KEY_DOWN':
+            cur_line = min(ltot - 1, cur_line + 1)
+            if cur_line >= offset + 10:
+                k = b'PAGE_DOWN'
+        if k == b'PAGE_UP':
+            offset = max(0, offset - 10)
+            if cur_line not in range(offset, offset + 10):
+                cur_line = offset + 10 - 1
+        if k == b'PAGE_DOWN':
+            max_offset = ltot - ltot % 10
+            offset = min(offset + 10, max_offset)
+            if cur_line not in range(offset, offset + 10):
+                cur_line = offset
+        if k == b'RETURN':
+            curtype = frametypes[ind[cur_line]]
+            if cur_col == 0 and curtype in availableSmokestacks.keys():
+                choices = []
+                for option in range(1, availableSmokestacks[curtype] + 1):
+                    choices.append(option)
+                curstack = framestacks[ind[cur_line]] - 1
+                cursor = curstack if curstack + 1 in choices else 0
+                while True:
+                    typeselection = "> Choose new Smokestack:"
+                    for option in range(len(choices)):
+                        if option == cursor:
+                            typeselection += "  " + selectfmt + " {} \033[0m".format(choices[option])
+                        else:
+                            typeselection += "   {} ".format(choices[option])
+                    print(typeselection)
+
+                    k = getKey()
+                    print("\033[{}A\033[J".format(1), end='')
+
+                    if k == b'KEY_RIGHT':
+                        cursor = min(len(choices) - 1, cursor + 1)
+                    if k == b'KEY_LEFT':
+                        cursor = max(0, cursor - 1)
+
+                    if k == b'RETURN':
+                        framestacks[ind[cur_line]] = choices[cursor]
+                        break
+
+                    if k == b'ESCAPE':
+                        break
+
+            elif cur_col == 1 and curtype in availableHeadlights.keys():
+                choices = []
+                for option in range(1, availableHeadlights[curtype] + 1):
+                    choices.append(option)
+                curlight = framelights[ind[cur_line]] - 1
+                cursor = curlight if curlight + 1 in choices else 0
+                while True:
+                    typeselection = "> Choose new Headlight:"
+                    for option in range(len(choices)):
+                        if option == cursor:
+                            typeselection += "  " + selectfmt + " {} \033[0m".format(choices[option])
+                        else:
+                            typeselection += "   {} ".format(choices[option])
+                    print(typeselection)
+
+                    k = getKey()
+                    print("\033[{}A\033[J".format(1), end='')
+
+                    if k == b'KEY_RIGHT':
+                        cursor = min(len(choices) - 1, cursor + 1)
+                    if k == b'KEY_LEFT':
+                        cursor = max(0, cursor - 1)
+
+                    if k == b'RETURN':
+                        framelights[ind[cur_line]] = choices[cursor]
+                        break
+
+                    if k == b'ESCAPE':
+                        break
+
+        if ltot <= 10:
+            print("\033[{}A\033[J".format(ltot + 4), end='')
+        else:
+            print("\033[{}A\033[J".format(n_line + 5), end='')
+
+        if k == b'ESCAPE':
+            return None
+
+
 def cargoStockMenu(gvas):
     framenumbers = gvas.data.find("FrameNumberArray").data
     framenames = gvas.data.find("FrameNameArray").data
@@ -1381,6 +1831,7 @@ def mainStockMenu(gvas):
         ("Respawn", teleportStockMenu),
         ("Cargo", cargoStockMenu),
         ("Locomotive Restock", engineStockMenu),
+        ("Change Attachments", editattachmentmenu),
     ]
     current = 0
     while True:

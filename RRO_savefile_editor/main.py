@@ -42,9 +42,9 @@ def inner_main():
         "Leif_The_Head",
     ]
 
-    version = (0, 3, 7)
+    version = (0, 3, 8)
     dev_version = False
-    beta_version = True
+    beta_version = False
 
     def header():
         print("=" * 72)
@@ -66,8 +66,6 @@ def inner_main():
         print("--- How to use ---")
         print(
             "> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program, even though it should create a backup!")
-        print("> Have a working Python installation (the program should work with any Python 3 version)")
-        print("> Install required python modules (numpy)")
         print("> Have the program inside the folder containing saved games")
         print("  (Should be located in C:\\Users\\Username\\AppData\\Local\\arr\\Saved\\SaveGames)")
         print("> \033[1mBACK-UP YOUR SAVEFILES\033[0m before using this program !")

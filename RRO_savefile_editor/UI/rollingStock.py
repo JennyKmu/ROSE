@@ -128,6 +128,31 @@ waterBoiler = {
 }
 
 
+availableSmokestacks = {
+    # Count of available smokestacks. Should be >=1
+    "porter_040": 1,
+    "porter_042": 1,
+    "climax": 3,
+    "heisler": 2,
+    "cooke260": 3,
+    "class70": 3,
+    "eureka": 1,
+}
+
+
+availableHeadlights = {
+    # Count of available headlights. Should be >=1
+    "porter_040": 2,
+    "porter_042": 2,
+    "climax": 1,
+    "heisler": 1,
+    "cooke260": 2,
+    "cooke260_tender": 2,
+    "class70": 2,
+    "eureka": 3,
+}
+
+
 def getnaminglimits(frametype, field) -> tuple[int, int]:
     # Returns the limits of that field. 0 = Number, 1 = Name
     if frametype not in frametypeNamingLimiter:
