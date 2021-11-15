@@ -44,7 +44,7 @@ def inner_main():
 
     version = (0, 3, 8)
     dev_version = False
-    beta_version = True
+    beta_version = False
 
     def header():
         print("=" * 72)
