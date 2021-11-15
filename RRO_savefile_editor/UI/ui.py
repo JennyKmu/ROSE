@@ -207,7 +207,7 @@ def resetTreesSmart(gvas):
     industrytype = gvas.data.find("IndustryTypeArray")
     industrypos = gvas.data.find("IndustryLocationArray")
     firewoodpos = industrypos.data[industrytype.data == firewoodDepot["type"], :]
-    sandpos = gvas.data.find("SandhouseTypeArray")
+    sandpos = gvas.data.find("SandhouseLocationArray")
     switchpos = gvas.data.find("SwitchLocationArray")
     # switchtype = gvas.data.find("SwitchTypeArray")
 
