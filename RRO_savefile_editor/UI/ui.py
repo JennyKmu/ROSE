@@ -478,7 +478,7 @@ def editindustries(gvas):
 
     ind = []
     for i in range(len(industrytypes)):
-        if industrytypes[i] in industryNames.keys():
+        if industrytypes[i] in industryInputs.keys() or industrytypes[i] in industryOutputs.keys():
             ind.append(i)
 
     cur_col = 0
@@ -515,16 +515,22 @@ def editindustries(gvas):
         outputstrs = []
 
         for p in range(4):
-            ingood = industryInputs[cur_indtype][p]
-            if ingood[0] is not None:
-                goodname = cargotypeTranslator[ingood[0]]
-                inputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryins[cur_ind][p], ingood[1]))
+            if cur_indtype in industryInputs.keys():
+                ingood = industryInputs[cur_indtype][p]
+                if ingood[0] is not None:
+                    goodname = cargotypeTranslator[ingood[0]]
+                    inputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryins[cur_ind][p], ingood[1]))
+                else:
+                    inputstrs.append("")
             else:
                 inputstrs.append("")
-            outgood = industryOutputs[cur_indtype][p]
-            if outgood[0] is not None:
-                goodname = cargotypeTranslator[outgood[0]]
-                outputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryouts[cur_ind][p], outgood[1]))
+            if cur_indtype in industryOutputs.keys():
+                outgood = industryOutputs[cur_indtype][p]
+                if outgood[0] is not None:
+                    goodname = cargotypeTranslator[outgood[0]]
+                    outputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryouts[cur_ind][p], outgood[1]))
+                else:
+                    outputstrs.append("")
             else:
                 outputstrs.append("")
 
@@ -577,10 +583,12 @@ def editindustries(gvas):
         if k == b'PAGE_DOWN':
             cur_page = min(n_page - 1, cur_page + 1)
         if k == b'RETURN':
-            if cur_line == 0:
+            if cur_line == 0 and cur_indtype in industryInputs.keys():
                 cur_good = industryInputs[cur_indtype][cur_col]
-            else:
+            elif cur_line == 1 and cur_indtype in industryOutputs.keys():
                 cur_good = industryOutputs[cur_indtype][cur_col]
+            else:
+                cur_good = [None, 0]
             if cur_good[0] is not None:
                 prompt_text = "> Enter new value or leave blank for max: "
                 while True:
@@ -651,6 +659,7 @@ def editplacables(gvas):
     dashline = ''
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
     offset = 0
     ltot = len(ind) + len(watertowers)
     if ltot > 10:
@@ -658,6 +667,7 @@ def editplacables(gvas):
         n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
     else:
         split_data = False
+        n_page = 0
     while True:
         print("Select Utility to fill (ESCAPE to quit, ENTER to fill)")
         print("")
@@ -686,7 +696,7 @@ def editplacables(gvas):
             else:
                 line_format = " | ".join(formatters)
 
-            namestr = "Firewood Depot"
+            namestr = industrytypes[ind[i]]
             curlocation = industrylocations[ind[i]]
             curx = round(curlocation[0] / 100)
             cury = round(curlocation[1] / 100)
@@ -778,6 +788,97 @@ def editplacables(gvas):
 
         if k == b'ESCAPE':
             return None
+
+
+def playerteleport(gvas):
+    playernames = gvas.data.find("PlayerNameArray").data
+    playerlocs = gvas.data.find("PlayerLocationArray").data
+    playerrots = gvas.data.find("PlayerRotationArray").data
+
+    cur_line = 0
+    offset = 0
+    ltot = len(playernames)
+    if ltot > 10:
+        split_data = True
+        n_page = np.ceil(ltot / 10)
+    else:
+        split_data = False
+        n_page = 1
+    formatters = [
+        "{:35}",
+        "{:18}",
+        "{:15}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
+
+    while True:
+        print("Select a player to teleport (ESCAPE to quit, ENTER to select)")
+        cur_page = np.floor(offset / 10)
+        n_line = 3
+        if split_data:
+            print("Use PAGE UP and PAGE DOWN to scroll pages ({}/{})".format(cur_page + 1, n_page))
+            n_line += 1
+        print(" | ".join(formatters).format(
+            "Player",
+            "Location",
+            "Near",
+        ))
+        print(dashline)
+
+        for i in range(ltot):
+            if np.floor(i / 10) == cur_page:
+                if i == cur_line:
+                    line_format = selectfmt + formatters[0] + "\033[0m"
+                    for j in range(len(formatters) - 1):
+                        line_format += " | " + formatters[j + 1]
+                else:
+                    line_format = " | ".join(formatters)
+                cur_name = playernames[i]
+                cur_loc = playerlocs[i]
+
+                cur_x = int(round(cur_loc[0] / 100))
+                cur_y = int(round(cur_loc[1] / 100))
+                cur_z = int(round(cur_loc[2] / 100))
+                locstr = "{:.0f}/{:.0f}/{:.0f}".format(cur_x, cur_y, cur_z)
+
+                n_line += 1
+
+                print(line_format.format(
+                    cur_name,
+                    locstr,
+                    "later feature"
+                ))
+
+        k = getKey()
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+            if np.floor(cur_line / 10) < cur_page:
+                k = b'PAGE_UP'
+        if k == b'KEY_DOWN':
+            cur_line = min(cur_line + 1, ltot - 1)
+            if np.floor(cur_line / 10) > cur_page:
+                k = b'PAGE_DOWN'
+        if k == b'PAGE_UP' and split_data:
+            if cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+        if k == b'PAGE_DOWN' and split_data:
+            if cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10
+        if k == b'ESCAPE':
+            print("\033[{}A\033[J".format(n_line))
+            break
+
+        if k == b'ENTER':
+            pass
+
+
+    # TODO: continue
+
 
 
 def playerMenu(gvas):

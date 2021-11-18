@@ -7,6 +7,8 @@ industryNames = {
     4: "Ironworks",
     5: "Oilfield",
     6: "Refinery",
+    9: "Freight Depot",
+    10: "Firewood Depot",
 }
 
 
@@ -42,9 +44,10 @@ firewoodDepot = {
 
 waterTower = {
     "type": 0,
-    "output": 360
+    "output": 360,
 }
 
 sandHouse = {
-    "type": 0
+    "type": 0,
+    "output": 50,
 }
