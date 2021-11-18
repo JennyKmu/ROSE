@@ -43,7 +43,7 @@ def inner_main():
     ]
 
     version = (0, 3, 8)
-    dev_version = False
+    dev_version = True
     beta_version = False
 
     def header():

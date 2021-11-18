@@ -7,6 +7,7 @@ from pathlib import Path
 from .industryPlacables import *
 from .rollingStock import *
 from .trackData import *
+from .playerTeleportReferences import *
 
 try:
     from uiutils import getKey
@@ -50,13 +51,10 @@ def mainMenu(gvas, dev_version = False):
         ("Exit", noSaveAndExit)
     ]
     if dev_version:
-        from .uidev import devslotA, devslotB, devslotC, devslotD, devslotE
         dev_options = [
-            ("DEV A", devslotA),
-            ("DEV B", devslotB),
-            ("DEV C", devslotC),
-            ("DEV D", devslotD),
-            ("DEV E", devslotE)
+            ("Move Industries", moveindustries),
+            ("Change Flatcar Types", changestockmenu),
+            ("Teleport Players", playerteleport),
         ]
         options = dev_options + options
     current = 0
@@ -184,7 +182,6 @@ def resetTreesSmart(gvas):
     # NOTE:
     # - 500. for safe dist with norm1 gives a not to bad result, could be used
     #   to make a "network for rehab after long time unused"
-    import numpy as np
     from .defaultRemovedTrees import default_removed_trees
     from .betterDefaultRemovedTrees import better_default_removed_trees
     print("This is an \033[1;31mEXPERIMENTAL\033[0m feature. Use at your own risks.")
@@ -212,9 +209,11 @@ def resetTreesSmart(gvas):
     switchpos = gvas.data.find("SwitchLocationArray")
     # switchtype = gvas.data.find("SwitchTypeArray")
 
-    if firewoodpos.size == 0:       firewoodpos = None
+    if firewoodpos.size == 0:
+        firewoodpos = None
     if switchpos is not None:
-        if switchpos.data.size == 0: switchpos == None
+        if switchpos.data.size == 0:
+            switchpos = None
     # others are returned as None if not found in the savefile
 
 
@@ -795,6 +794,17 @@ def playerteleport(gvas):
     playerlocs = gvas.data.find("PlayerLocationArray").data
     playerrots = gvas.data.find("PlayerRotationArray").data
 
+    industrytypes = gvas.data.find("IndustryTypeArray").data
+    industrylocs = gvas.data.find("IndustryLocationArray").data
+    industryrots = gvas.data.find("IndustryRotationArray").data
+
+    standardinds = []
+    for i in range(len(industrytypes)):
+        if industrytypes[i] in mapIndustries:
+            standardinds.append(i)
+    standardindtypes = industrytypes[standardinds]
+    standardindlocs = industrylocs[standardinds]
+
     cur_line = 0
     offset = 0
     ltot = len(playernames)
@@ -808,6 +818,11 @@ def playerteleport(gvas):
         "{:35}",
         "{:18}",
         "{:15}",
+        "{:>10}",
+        "{}",
+        "{}",
+        "{}",
+        "{}",
     ]
     dashline = ''
     for i in formatters:
@@ -823,8 +838,13 @@ def playerteleport(gvas):
             n_line += 1
         print(" | ".join(formatters).format(
             "Player",
-            "Location",
+            "Location in m",
             "Near",
+            "Distance  ",
+            "Precise",
+            "Rotation",
+            "Relative Pos",
+            "Relative Rot"
         ))
         print(dashline)
 
@@ -838,18 +858,35 @@ def playerteleport(gvas):
                     line_format = " | ".join(formatters)
                 cur_name = playernames[i]
                 cur_loc = playerlocs[i]
+                cur_rot = playerrots[i]
 
                 cur_x = int(round(cur_loc[0] / 100))
                 cur_y = int(round(cur_loc[1] / 100))
                 cur_z = int(round(cur_loc[2] / 100))
                 locstr = "{:.0f}/{:.0f}/{:.0f}".format(cur_x, cur_y, cur_z)
 
+                closest = getclosest(cur_loc, standardindlocs)
+                print(closest)
+                clostr = industryNames[standardindtypes[closest[0]]]
+                diststr = "{:.2f}m".format(closest[1]/100)
+
+                # TODO: REMOVE FINDING VALUES
+                closestpos = industrylocs[standardinds[closest[0]]]
+                closestrot = industryrots[standardinds[closest[0]]]
+                print(closestpos, closestrot)
+                relative = getrelative(cur_loc, cur_rot, closestpos, closestrot)
+
                 n_line += 1
 
                 print(line_format.format(
                     cur_name,
                     locstr,
-                    "later feature"
+                    clostr,
+                    diststr,
+                    cur_loc,
+                    cur_rot,
+                    relative[:-1],
+                    relative[3],
                 ))
 
         k = getKey()
@@ -869,16 +906,14 @@ def playerteleport(gvas):
             if cur_page > 0:
                 cur_page -= 1
                 cur_line = cur_page * 10
-        if k == b'ESCAPE':
-            print("\033[{}A\033[J".format(n_line))
-            break
 
         if k == b'ENTER':
             pass
+            # TODO: continue this code
 
-
-    # TODO: continue
-
+        print("\033[{}A\033[J".format(n_line), end='')
+        if k == b'ESCAPE':
+            break
 
 
 def playerMenu(gvas):
@@ -1110,6 +1145,155 @@ def renameStockMenu(gvas):
             print("\033[{}A\033[J".format(ltot + 5), end='')
         else:
             print("\033[{}A\033[J".format(n_line + 6), end='')
+
+        if k == b'ESCAPE':
+            return None
+
+
+def moveindustries(gvas):
+    industrytypes = gvas.data.find("IndustryTypeArray").data
+    industrylocations = gvas.data.find("IndustryLocationArray").data
+    industryrotations = gvas.data.find("IndustryRotationArray").data
+
+    ind = []
+    for i in range(len(industrytypes)):
+        if industrytypes[i] in industryNames.keys():
+            ind.append(i)
+
+    cur_col = 0
+    cur_line = 0
+    formatters = [
+        "{:15}",
+        "{:>10}",
+        "{:>10}",
+        "{:>10}",
+        "{:>10}",
+        "{:7}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    offset = 0
+    ltot = len(ind)
+    if ltot > 10:
+        split_data = True
+        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+    else:
+        split_data = False
+        n_page = 1
+    while True:
+        print("Select Industry to move (ESCAPE to quit, ENTER to select)")
+        print("West +X .. -X East | North +Y .. -Y South | High +Z .. +z Low")
+        cur_page = int(offset / 10)
+        if split_data:
+            print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
+        print(" | ".join(formatters).format(
+            "Industry",
+            "X",
+            "Y",
+            "Z",
+            "Rot",
+            ""
+        ))
+        print(dashline)
+        n_line = 0
+        for i in range(len(ind)):
+            if i not in range(offset, offset + 10) and split_data:
+                continue
+            n_line += 1
+            if i == cur_line:
+                line_format = formatters[0]
+                for j in range(5):
+                    line_format += " | "
+                    if j == cur_col:
+                        line_format += selectfmt + formatters[j + 1] + "\033[0m"
+                    else:
+                        line_format += formatters[j + 1]
+            else:
+                line_format = " | ".join(formatters)
+
+            namestr = industryNames[industrytypes[ind[i]]]
+            curlocation = industrylocations[ind[i]]
+            curx = curlocation[0]
+            cury = curlocation[1]
+            curz = curlocation[2]
+            curr = industryrotations[ind[i]][1]
+            if industrytypes[ind[i]] in mapIndustries:
+                resetStr = "[RESET]"
+            else:
+                resetStr = ""
+
+            print(line_format.format(
+                namestr,
+                "{:.1f}".format(curx),
+                "{:.1f}".format(cury),
+                "{:.1f}".format(curz),
+                "{:.1f}".format(curr),
+                resetStr,
+            ))
+
+        k = getKey()
+
+        if k == b'KEY_RIGHT':
+            cur_col = min(4, cur_col + 1)
+        if k == b'KEY_LEFT':
+            cur_col = max(0, cur_col - 1)
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+            if cur_line < offset:
+                k = b'PAGE_UP'
+        if k == b'KEY_DOWN':
+            cur_line = min(ltot - 1, cur_line + 1)
+            if cur_line >= offset + 10:
+                k = b'PAGE_DOWN'
+        if k == b'PAGE_UP':
+            offset = max(0, offset - 10)
+            if cur_line not in range(offset, offset + 10):
+                cur_line = offset + 10 - 1
+        if k == b'PAGE_DOWN':
+            max_offset = ltot - ltot % 10
+            offset = min(offset + 10, max_offset)
+            if cur_line not in range(offset, offset + 10):
+                cur_line = offset
+        if k == b'RETURN':
+            if cur_col == 4 and industrytypes[ind[cur_line]] in mapIndustries:
+                industrylocations[ind[cur_line]][0] = industryStandardLocations[industrytypes[ind[cur_line]]][0]
+                industrylocations[ind[cur_line]][1] = industryStandardLocations[industrytypes[ind[cur_line]]][1]
+                industrylocations[ind[cur_line]][2] = industryStandardLocations[industrytypes[ind[cur_line]]][2]
+                industryrotations[ind[cur_line]][1] = industryStandardLocations[industrytypes[ind[cur_line]]][3]
+            else:
+                switcher = {0: "X", 1: "Y", 2: "Z", 3: "R"}[cur_col]
+                limitlower = placingLimits[switcher][0]
+                limitupper = placingLimits[switcher][1]
+                if limitlower > limitupper:
+                    limitlower, limitupper = limitupper, limitlower
+
+                prompt_text = "> Enter new value: "
+                while True:
+                    n_rline = 0
+                    val = input(prompt_text)
+                    n_rline += 1
+                    print("\033[{}A\033[J".format(n_rline), end='')
+                    try:
+                        val = float(val)
+
+                        if not limitlower <= val <= limitupper:
+                            prompt_text = "> Out of placement limits! Enter value: "
+                            continue
+                    except ValueError:
+                        prompt_text = "> Invalid input! Enter new value: "
+                        continue
+
+                    if cur_col == 3:
+                        industryrotations[ind[cur_line]][1] = val
+                    else:
+                        industrylocations[ind[cur_line]][cur_col] = val
+                    break
+
+        if ltot <= 10:
+            print("\033[{}A\033[J".format(ltot + 4), end='')
+        else:
+            print("\033[{}A\033[J".format(n_line + 5), end='')
 
         if k == b'ESCAPE':
             return None
@@ -1579,6 +1763,7 @@ def editattachmentmenu(gvas):
     dashline = ''
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
     offset = 0
     ltot = len(ind)
     if ltot > 10:
@@ -1922,6 +2107,165 @@ def cargoStockMenu(gvas):
             print("\033[{}A\033[J".format(ltot + 4), end='')
         else:
             print("\033[{}A\033[J".format(n_line + 5), end='')
+
+        if k == b'ESCAPE':
+            return None
+
+
+def changestockmenu(gvas):
+    framenumbers = gvas.data.find("FrameNumberArray").data
+    framenames = gvas.data.find("FrameNameArray").data
+    frametypes = gvas.data.find("FrameTypeArray").data
+    framebrakes = gvas.data.find("BrakeValueArray").data
+    framelocs = gvas.data.find("FrameLocationArray").data
+    framecouplingfront = gvas.data.find("CouplerFrontStateArray").data
+    framecouplingrear = gvas.data.find("CouplerRearStateArray").data
+    framecargotypes = gvas.data.find("FreightTypeArray").data
+    framecargoamounts = gvas.data.find("FreightAmountArray").data
+
+    cur_line = 0
+    formatters = [
+        "{:>10}",
+        "{:<48}",
+        "{:^13}",
+        "{:<18}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
+
+    ind = []
+    for i in range(len(frametypes)):
+        if frametypes[i] in frametypeExchangeable:
+            ind.append(i)
+
+    ltot = len(ind)
+    if ltot > 10:
+        split_data = True
+        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+    else:
+        split_data = False
+        n_page = 0
+    offset = 0
+    while True:
+        n_line = 0
+        print("Select method (ESCAPE to quit, ENTER to valid selection)")
+        n_line += 1
+        cur_page = int(offset / 10)
+        if split_data:
+            print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
+            n_line += 1
+        print(" | ".join(formatters).format(
+            "Frametype",
+            "Number / Name",
+            "Location",
+            "Cargo"
+        ))
+        print(dashline)
+        n_line += 2
+
+        for i in range(ltot):
+            if i not in range(offset, offset + 10) and split_data:
+                continue
+
+            if i == cur_line:
+                line_format = selectfmt + formatters[0] + "\033[0m | "
+                line_format += " | ".join(formatters[1:])
+            else:
+                line_format = " | ".join(formatters)
+
+            frametype = frametypes[ind[i]]
+
+            num = '' if framenumbers[ind[i]] is None else framenumbers[ind[i]]
+            nam = '' if framenames[ind[i]] is None else framenames[ind[i]]
+
+            namestr = ""
+            if not num == '':
+                namestr += " " + num.split("<br>")[0].strip()
+            if not nam == '':
+                namestr += " " + nam.split("<br>")[0].strip()
+            namestr = namestr[:48]
+
+            curloc = framelocs[ind[i]]
+            locstr = "{:>5} | {:>5}".format(round(curloc[0] / 100), round(curloc[1] / 100))
+
+            curcargotype = framecargotypes[ind[i]]
+            if curcargotype is None:
+                cargostr = cargotypeTranslator[None]
+            else:
+                curcargoamount = framecargoamounts[ind[i]]
+                if curcargoamount == 0:
+                    cargostr = "Last: " + cargotypeTranslator[curcargotype]
+                else:
+                    cargostr = "{:2}/{:2} ".format(curcargoamount, frametypeCargoLimits[frametype][curcargotype]) + \
+                        cargotypeTranslator[curcargotype]
+
+
+            print(line_format.format(
+                frametypeTranslatorShort[frametype],
+                namestr,
+                locstr,
+                cargostr
+            ))
+            n_line += 1
+        k = getKey()
+
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+            if cur_line < offset:
+                k = b'PAGE_UP'
+        if k == b'KEY_DOWN':
+            cur_line = min(ltot - 1, cur_line + 1)
+            if cur_line >= offset + 10:
+                k = b'PAGE_DOWN'
+        if k == b'PAGE_UP' and split_data:
+            offset = max(0, offset - 10)
+            if cur_line not in range(offset, offset + 10):
+                cur_line = offset + 10 - 1
+        if k == b'PAGE_DOWN' and split_data:
+            max_offset = ltot - ltot % 10
+            offset = min(offset + 10, max_offset)
+            if cur_line not in range(offset, offset + 10):
+                cur_line = offset
+        if k == b'RETURN':
+            curframetype = frametypes[ind[cur_line]]
+            cursor = 0
+            choices = []
+            for frametype in frametypeExchangeable:
+                choices.append(frametype)
+            while True:
+                typeselection = "> Choose new type:"
+                for option in range(len(choices)):
+                    if option == cursor:
+                        typeselection += "  " + selectfmt + frametypeTranslatorShort[choices[option]] + "\033[0m"
+                    else:
+                        typeselection += "  " + frametypeTranslatorShort[choices[option]]
+                print(typeselection)
+
+                k = getKey()
+                print("\033[{}A\033[J".format(1), end='')
+
+                if k == b'KEY_RIGHT':
+                    cursor = min(len(choices)-1, cursor + 1)
+                if k == b'KEY_LEFT':
+                    cursor = max(0, cursor - 1)
+
+                if k == b'RETURN':
+                    newtype = choices[cursor]
+                    if not curframetype == newtype:
+                        frametypes[ind[cur_line]] = newtype
+                        framecargotypes[ind[cur_line]] = None
+                        framecargoamounts[ind[cur_line]] = 0
+                    break
+
+                if k == b'ESCAPE':
+                    break
+
+        if ltot <= 10:
+            print("\033[{}A\033[J".format(n_line), end='')
+        else:
+            print("\033[{}A\033[J".format(n_line), end='')
 
         if k == b'ESCAPE':
             return None

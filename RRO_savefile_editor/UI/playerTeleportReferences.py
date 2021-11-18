@@ -32,35 +32,73 @@ location_names = {
 }
 
 player_teleport_pts = {  # keys referring to industry types
-    0: {[False, np.array(0, 0, 0), [0, 0, 0]]},  # Spawn point, absolute position
-    1: {[True, [0, 0, 0], [0, 0, 0]]},  # Logging Camp
-    2: {[True, [0, 0, 0], [0, 0, 0]]},  # Sawmill
-    3: {[True, [0, 0, 0], [0, 0, 0]]},  # Smelter
-    4: {[True, [0, 0, 0], [0, 0, 0]]},  # Ironworks
-    5: {[True, [0, 0, 0], [0, 0, 0]]},  # Oilfield
-    6: {[True, [0, 0, 0], [0, 0, 0]]},  # Refinery
-    7: {[True, [0, 0, 0], [0, 0, 0]]},  # Coal mine
-    8: {[True, [0, 0, 0], [0, 0, 0]]},  # Iron mine
-    9: {[True, [0, 0, 0], [0, 0, 0]]},  # Freight Depot
-    10: {[True, [0, 0, 0], [0, 0, 0]]},  # Firewood Depot
+    # Absolute positions: [False, [x, y, z], r]
+    # Relative positions: [True, [rel dir, rel dist, rel z], rel r]
+    0: [False, [338.8, -3430.9, 10182.3], 0],  # Spawn point
+    1: [True, [0, 0, 0], 0],  # Logging Camp
+    2: [True, [0, 0, 0], 0],  # Sawmill
+    3: [True, [0, 0, 0], 0],  # Smelter
+    4: [True, [0, 0, 0], 0],  # Ironworks
+    5: [True, [0, 0, 0], 0],  # Oilfield
+    6: [True, [0, 0, 0], 0],  # Refinery
+    7: [True, [0, 0, 0], 0],  # Coal mine
+    8: [True, [0, 0, 0], 0],  # Iron mine
+    9: [True, [-107.8, 2895.7, 206.7], 40],  # Freight Depot
+    10: [True, [0, 0, 0], 0],  # Firewood Depot
 }
+
 
 def getplayertppos(indtype, indpos, indrot):
     tpdata = player_teleport_pts[indtype]
 
     if tpdata[0]:
-        newpos = indpos + np.array(tpdata[1])
-        newrot = indrot + np.array(tpdata[2])
-        if newrot[1] > 180:
-            newrot[1] -= 360
-        if newrot[1] < -180:
-            newrot[1] += 360
+        reldir, reldist, relz = tpdata[1]
+        newpos = [0, 0, 0]
+        newpos[0] = indpos[0] + np.sin(np.radians(reldir+indrot)) * reldist
+        newpos[1] = indpos[1] + np.cos(np.radians(reldir+indrot)) * reldist
+        newpos[2] = indpos[2] + relz
+        newrot = indrot[1] + tpdata[2]
+        if newrot > 180:
+            newrot -= 360
+        if newrot < -180:
+            newrot += 360
     else:
         newpos = tpdata[1]
         newrot = tpdata[2]
     return newpos, newrot
 
 
+def getdistfast(pos1, pos2):
+    dist = np.sum((pos2-pos1)**2)
+    return dist
+
+
 def getdistance(pos1, pos2):
-    pass
+    dist = np.linalg.norm(pos2 - pos1)
+    return dist
+
+
+def getclosest(pos, poslist):
+    # Compares a point to a list of points and returns index and distance of closest
+    dist = []
+    for target in poslist:
+        dist.append(getdistance(pos, target))
+    closestind = np.argmin(dist)
+    closestdist = np.min(dist)
+
+    return closestind, closestdist
+
+
+def getrelative(pos, rot, compos, comrot):
+    relpos = pos - compos
+    reldist = getdistance(pos[:-1], compos[:-1])
+    print(getdistance(pos[:-1], compos[:-1]))
+    print(getdistance(pos, compos) / 100)
+    reldir = np.degrees(np.arctan(relpos[0]/relpos[1])) + comrot[1]
+    print(reldir)
+    print(relpos)
+    relrot = rot - comrot[1]  # viewing angle
+    print(relrot)
+
+    return reldir, reldist, relpos[2], relrot
 
