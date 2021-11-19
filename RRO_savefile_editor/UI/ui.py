@@ -1076,6 +1076,7 @@ def playerMenu(gvas):
         n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
     else:
         split_data = False
+        n_page = 1
     while True:
         print("Select a field to edit (ESCAPE to quit, ENTER to valid selection)")
         cur_page = int(offset / 10)
@@ -1185,6 +1186,7 @@ def renameStockMenu(gvas):
         n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
     else:
         split_data = False
+        n_page = 1
     while True:
         print("Select field to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Use <br> to create multiple line values where applicable.")
@@ -1485,6 +1487,7 @@ def teleportStockMenu(gvas):
         n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
     else:
         split_data = False
+        n_page = 1
     while True:
         n_line = 0
         print("Select method (ESCAPE to quit, ENTER to valid selection)")
@@ -1721,6 +1724,7 @@ def engineStockMenu(gvas):
         n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
     else:
         split_data = False
+        n_page = 1
     while True:
         print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Enter nothing to fill up, or type in an amount.")
@@ -2104,6 +2108,7 @@ def cargoStockMenu(gvas):
         n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
     else:
         split_data = False
+        n_page = 1
     while True:
         print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Empty fields mean this wagon hasn't been used yet")
@@ -2447,7 +2452,7 @@ def mainStockMenu(gvas):
 
 
 if __name__ == "__main__":
-    filename = selectSaveFile()
+    filename = selectSaveFile('')
     print(filename)
     submenu = mainMenu()
     print(submenu)
