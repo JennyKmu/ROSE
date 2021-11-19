@@ -48,7 +48,7 @@ player_teleport_pts = {  # keys referring to industry types
 }
 
 
-def getplayertppos(indtype, indpos, indrot):
+def getplayertppos(indtype, indpos=[0, 0, 0], indrot=[0, 0, 0]):
     tpdata = player_teleport_pts[indtype]
 
     if tpdata[0]:
@@ -101,4 +101,3 @@ def getrelative(pos, rot, compos, comrot):
     print(relrot)
 
     return reldir, reldist, relpos[2], relrot
-

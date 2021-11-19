@@ -819,10 +819,6 @@ def playerteleport(gvas):
         "{:18}",
         "{:15}",
         "{:>10}",
-        "{}",
-        "{}",
-        "{}",
-        "{}",
     ]
     dashline = ''
     for i in formatters:
@@ -841,10 +837,6 @@ def playerteleport(gvas):
             "Location in m",
             "Near",
             "Distance  ",
-            "Precise",
-            "Rotation",
-            "Relative Pos",
-            "Relative Rot"
         ))
         print(dashline)
 
@@ -866,15 +858,15 @@ def playerteleport(gvas):
                 locstr = "{:.0f}/{:.0f}/{:.0f}".format(cur_x, cur_y, cur_z)
 
                 closest = getclosest(cur_loc, standardindlocs)
-                print(closest)
                 clostr = industryNames[standardindtypes[closest[0]]]
                 diststr = "{:.2f}m".format(closest[1]/100)
 
-                # TODO: REMOVE FINDING VALUES
-                closestpos = industrylocs[standardinds[closest[0]]]
-                closestrot = industryrots[standardinds[closest[0]]]
-                print(closestpos, closestrot)
-                relative = getrelative(cur_loc, cur_rot, closestpos, closestrot)
+                if dev_version and cur_line == 0:  # DEV Tool to find relative positions
+                    closestpos = industrylocs[standardinds[closest[0]]]
+                    closestrot = industryrots[standardinds[closest[0]]]
+                    print(closest)
+                    print(closestpos, closestrot)
+                    print(getrelative(cur_loc, cur_rot, closestpos, closestrot))
 
                 n_line += 1
 
@@ -883,10 +875,6 @@ def playerteleport(gvas):
                     locstr,
                     clostr,
                     diststr,
-                    cur_loc,
-                    cur_rot,
-                    relative[:-1],
-                    relative[3],
                 ))
 
         k = getKey()
@@ -908,12 +896,171 @@ def playerteleport(gvas):
                 cur_line = cur_page * 10
 
         if k == b'ENTER':
-            pass
-            # TODO: continue this code
+            cursor = 0
+            options = [
+                "Spawn.",
+                "Industry...",
+                "Firewood Depot...",
+                "other Player..."
+            ]
+            while True:
+                prompt_line = "Teleport to: "
+                for c in range(len(options)):
+                    if c == cursor:
+                        prompt_line += selectfmt + " " + options[c]
+                    else:
+                        prompt_line += " \033[0m" + options[c]
+                print(prompt_line)
+
+                k2 = getKey()
+                print("\033[1A\033[J", end='')
+                if k2 == b'KEY_RIGHT':
+                    cursor = min(cursor + 1, len(options) - 1)
+                if k2 == b'KEY_LEFT':
+                    cursor = max(0, cursor - 1)
+                if k2 == b'ENTER':
+                    if cursor == 0:
+                        playerlocs[cur_line], playerrots[cur_line] = getplayertppos(0)
+                        break  # move player to start and exit destination type sel
+                    else:
+                        list = []
+                        listloc = []
+                        listrot = []
+                        if cursor == 1:
+                            listname = "Industry"
+                            for i in range(len(industrytypes)):
+                                if i in mapIndustries:
+                                    list.append(industrytypes[i])
+                                    listloc.append(industrylocs[i])
+                                    listrot.append(industryrots[i])
+                        elif cursor == 2:
+                            listname = "Firewood Depot"
+                            for i in range(len(industrytypes)):
+                                if i == firewoodDepot["type"]:
+                                    list.append(industrytypes[i])
+                                    listloc.append(industrylocs[i])
+                                    listrot.append(industryrots[i])
+                        elif cursor == 3:
+                            listname = "Player"
+                            for i in range(len(playernames)):
+                                if playernames[i] != playernames[cur_line]:
+                                    list.append(playernames[i])
+                                    listloc.append(playerlocs[i])
+                                    listrot.append(playerrots[i])
+                        else:
+                            break  # to make the IDE happy and prevent anything weird
+                        if len(list) == 0:  # if there is nothing to choose from, abort
+                            break
+
+                        namelist = []
+                        loclist = []
+                        nearlist = []
+                        distlist = []
+                        for j in range(len(list)):
+                            cur_x = int(round(listloc[j][0] / 100))
+                            cur_y = int(round(listloc[j][1] / 100))
+                            cur_z = int(round(listloc[j][2] / 100))
+                            loclist.append("{:.0f}/{:.0f}/{:.0f}".format(cur_x, cur_y, cur_z))
+                            if cursor != 2:  # Name is an Industry or Firewood Depot
+                                namelist.append(industryNames[list[j]])
+                            else:            # Name is player
+                                namelist.append(list[j])
+                            if cursor == 1:  # Is industry, no need to find nearest
+                                nearlist.append("")
+                                distlist.append("")
+                            else:            # Nearest Industry to Firewood Depot or Player
+                                closest = getclosest(listloc[j], standardindlocs)
+                                nearlist.append(industryNames[standardindtypes[closest[0]]])
+                                distlist.append("{:.2f}m".format(closest[1] / 100))
+
+                        cur_line2 = 0
+                        ltot2 = len(list)
+                        if ltot2 > 10:
+                            split_data2 = True
+                            n_page2 = np.ceil(ltot2/10)
+                        else:
+                            split_data2 = False
+                            n_page2 = 1
+                        print("\033[{}A\033[J".format(n_line-1), end='')
+                        formatters2 = [
+                            "{:20}",
+                            "{:20}",
+                            "{:20}",
+                            "{:20}",
+                        ]
+                        dashline2 = ''
+                        for i in formatters:
+                            dashline2 += "---" + len(i.format('')) * "-"
+                        dashline2 = dashline2[2:]
+                        while True:
+                            n_line = 3
+                            print("Teleport {} to ...".format(playernames[cur_line]))
+                            cur_page2 = np.floor(cur_line2/10)
+                            if split_data:
+                                print("Use PAGE UP and PAGE DOWN to scroll pages ({}/{})".format(cur_page + 1, n_page))
+                                n_line += 1
+                            print(" | ".join(formatters2).format(
+                                listname,
+                                "Location",
+                                "Near",
+                                "Distance",
+                            ))
+                            print(dashline2)
+                            for i in range(len(list)):
+                                if np.floor(i/10) == cur_page2:
+                                    if i == cur_line2:
+                                        line_format = selectfmt + formatters2[0] + "\033[0m | "
+                                        line_format += " | ".join(formatters2[1:])
+                                    else:
+                                        line_format = " | ".join(formatters2)
+                                    print(line_format.format(
+                                        namelist[i],
+                                        loclist[i],
+                                        nearlist[i],
+                                        distlist[i],
+                                    ))
+                                    n_line += 1
+
+                            k3 = getKey()
+                            print("\033[{}A\033[J".format(n_line))
+                            n_line = 1
+                            if k3 == b'KEY_UP':
+                                cur_line2 = max(0, cur_line2 - 1)
+                                if np.floor(cur_line2 / 10) < cur_page2:
+                                    k3 = b'PAGE_UP'
+                            if k3 == b'KEY_DOWN':
+                                cur_line = min(cur_line2 + 1, ltot - 1)
+                                if np.floor(cur_line2 / 10) > cur_page2:
+                                    k3 = b'PAGE_DOWN'
+                            if k3 == b'PAGE_UP' and split_data2:
+                                if cur_page2 < n_page2 - 1:
+                                    cur_page2 += 1
+                                    cur_line2 = cur_page2 * 10
+                            if k3 == b'PAGE_DOWN' and split_data2:
+                                if cur_page2 > 0:
+                                    cur_page2 -= 1
+                                    cur_line2 = cur_page2 * 10
+                            if k3 == b'ESCAPE':
+                                break
+                            if k3 == b'ENTER':
+                                if cursor == 2:  # if it's a player, just copy values
+                                    playerlocs[cur_line] = listloc[cur_line2]
+                                    playerrots[cur_line] = listrot[cur_line2]
+                                else:            # else get the absolute position that's relative to the target
+                                    newposrot = getplayertppos(list[cur_line2], listloc[cur_line2], listrot[cur_line2])
+                                    playerlocs[cur_line] = newposrot[0]
+                                    playerrots[cur_line] = newposrot[1]
+                                # TODO: check if all tp positions are correct, else
+                                # playerlocs[cur_line][2] += 20.  # add height just in case
+                                break  # exit destination sel
+                        break  # exit destination type sel, always happens after leaving destination sel
+
+                if k2 == b'ESCAPE':
+                    break  # exit destination type sel
 
         print("\033[{}A\033[J".format(n_line), end='')
         if k == b'ESCAPE':
-            break
+            break  # exit menu
 
 
 def playerMenu(gvas):
