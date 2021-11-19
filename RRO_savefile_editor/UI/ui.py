@@ -8,6 +8,7 @@ from .industryPlacables import *
 from .rollingStock import *
 from .trackData import *
 from .playerTeleportReferences import *
+dev_version = True
 
 try:
     from uiutils import getKey
@@ -861,12 +862,15 @@ def playerteleport(gvas):
                 clostr = industryNames[standardindtypes[closest[0]]]
                 diststr = "{:.2f}m".format(closest[1]/100)
 
-                if dev_version and cur_line == 0:  # DEV Tool to find relative positions
+                if dev_version and cur_line == 0 and i == 0:  # DEV Tool to find relative positions
                     closestpos = industrylocs[standardinds[closest[0]]]
                     closestrot = industryrots[standardinds[closest[0]]]
-                    print(closest)
-                    print(closestpos, closestrot)
-                    print(getrelative(cur_loc, cur_rot, closestpos, closestrot))
+                    print("Closest: {} in {:.0f}cm".format(standardindtypes[closest[0]],closest[1]))
+                    print("Player vals: {} {}".format(cur_loc, cur_rot))
+                    print("Target vals: {} {}".format(closestpos, closestrot))
+                    print("Relative:    [Dir {:.1f}, Dist {:.1f}, Height {:.1f}], Rot {:.1f}".format(
+                        *getrelative(cur_loc, cur_rot, closestpos, closestrot)))
+                    n_line += 4
 
                 n_line += 1
 
@@ -895,7 +899,7 @@ def playerteleport(gvas):
                 cur_page -= 1
                 cur_line = cur_page * 10
 
-        if k == b'ENTER':
+        if k == b'RETURN':
             cursor = 0
             options = [
                 "Spawn.",
@@ -910,6 +914,7 @@ def playerteleport(gvas):
                         prompt_line += selectfmt + " " + options[c]
                     else:
                         prompt_line += " \033[0m" + options[c]
+                prompt_line += " \033[0m"
                 print(prompt_line)
 
                 k2 = getKey()
@@ -918,7 +923,7 @@ def playerteleport(gvas):
                     cursor = min(cursor + 1, len(options) - 1)
                 if k2 == b'KEY_LEFT':
                     cursor = max(0, cursor - 1)
-                if k2 == b'ENTER':
+                if k2 == b'RETURN':
                     if cursor == 0:
                         playerlocs[cur_line], playerrots[cur_line] = getplayertppos(0)
                         break  # move player to start and exit destination type sel
@@ -929,14 +934,14 @@ def playerteleport(gvas):
                         if cursor == 1:
                             listname = "Industry"
                             for i in range(len(industrytypes)):
-                                if i in mapIndustries:
+                                if industrytypes[i] in mapIndustries:
                                     list.append(industrytypes[i])
                                     listloc.append(industrylocs[i])
                                     listrot.append(industryrots[i])
                         elif cursor == 2:
                             listname = "Firewood Depot"
                             for i in range(len(industrytypes)):
-                                if i == firewoodDepot["type"]:
+                                if industrytypes[i] == firewoodDepot["type"]:
                                     list.append(industrytypes[i])
                                     listloc.append(industrylocs[i])
                                     listrot.append(industryrots[i])
@@ -961,7 +966,7 @@ def playerteleport(gvas):
                             cur_y = int(round(listloc[j][1] / 100))
                             cur_z = int(round(listloc[j][2] / 100))
                             loclist.append("{:.0f}/{:.0f}/{:.0f}".format(cur_x, cur_y, cur_z))
-                            if cursor != 2:  # Name is an Industry or Firewood Depot
+                            if cursor != 3:  # Name is an Industry or Firewood Depot
                                 namelist.append(industryNames[list[j]])
                             else:            # Name is player
                                 namelist.append(list[j])
@@ -981,7 +986,7 @@ def playerteleport(gvas):
                         else:
                             split_data2 = False
                             n_page2 = 1
-                        print("\033[{}A\033[J".format(n_line-1), end='')
+                        print("\033[{}A\033[J".format(n_line), end='')
                         formatters2 = [
                             "{:20}",
                             "{:20}",
@@ -993,8 +998,9 @@ def playerteleport(gvas):
                             dashline2 += "---" + len(i.format('')) * "-"
                         dashline2 = dashline2[2:]
                         while True:
-                            n_line = 3
-                            print("Teleport {} to ...".format(playernames[cur_line]))
+                            n_line = 4
+                            print("Teleport " + selectfmt + playernames[cur_line] + "\033[0m to ...")
+                            print("Select destination (ESCAPE to quit, ENTER to select)")
                             cur_page2 = np.floor(cur_line2/10)
                             if split_data:
                                 print("Use PAGE UP and PAGE DOWN to scroll pages ({}/{})".format(cur_page + 1, n_page))
@@ -1022,14 +1028,14 @@ def playerteleport(gvas):
                                     n_line += 1
 
                             k3 = getKey()
-                            print("\033[{}A\033[J".format(n_line))
+                            print("\033[{}A\033[J".format(n_line), end='')
                             n_line = 1
                             if k3 == b'KEY_UP':
                                 cur_line2 = max(0, cur_line2 - 1)
                                 if np.floor(cur_line2 / 10) < cur_page2:
                                     k3 = b'PAGE_UP'
                             if k3 == b'KEY_DOWN':
-                                cur_line = min(cur_line2 + 1, ltot - 1)
+                                cur_line2 = min(cur_line2 + 1, ltot2 - 1)
                                 if np.floor(cur_line2 / 10) > cur_page2:
                                     k3 = b'PAGE_DOWN'
                             if k3 == b'PAGE_UP' and split_data2:
@@ -1042,7 +1048,7 @@ def playerteleport(gvas):
                                     cur_line2 = cur_page2 * 10
                             if k3 == b'ESCAPE':
                                 break
-                            if k3 == b'ENTER':
+                            if k3 == b'RETURN':
                                 if cursor == 2:  # if it's a player, just copy values
                                     playerlocs[cur_line] = listloc[cur_line2]
                                     playerrots[cur_line] = listrot[cur_line2]
@@ -1053,6 +1059,7 @@ def playerteleport(gvas):
                                 # TODO: check if all tp positions are correct, else
                                 # playerlocs[cur_line][2] += 20.  # add height just in case
                                 break  # exit destination sel
+                        n_line -= 2
                         break  # exit destination type sel, always happens after leaving destination sel
 
                 if k2 == b'ESCAPE':

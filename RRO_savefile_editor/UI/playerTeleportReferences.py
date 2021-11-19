@@ -35,27 +35,27 @@ player_teleport_pts = {  # keys referring to industry types
     # Absolute positions: [False, [x, y, z], r]
     # Relative positions: [True, [rel dir, rel dist, rel z], rel r]
     0: [False, [338.8, -3430.9, 10182.3], 0],  # Spawn point
-    1: [True, [0, 0, 0], 0],  # Logging Camp
-    2: [True, [0, 0, 0], 0],  # Sawmill
-    3: [True, [0, 0, 0], 0],  # Smelter
-    4: [True, [0, 0, 0], 0],  # Ironworks
-    5: [True, [0, 0, 0], 0],  # Oilfield
-    6: [True, [0, 0, 0], 0],  # Refinery
-    7: [True, [0, 0, 0], 0],  # Coal mine
-    8: [True, [0, 0, 0], 0],  # Iron mine
+    1: [True, [21.9, 4361.4, 196.7], -90.0],  # Logging Camp
+    2: [True, [-137.6, 5443.3, -11.1], 45.9],  # Sawmill
+    3: [True, [78.8, 3638.3, 192.0], -146.0],  # Smelter
+    4: [True, [-157.3, 1429.1, 220.2], -90],  # Ironworks
+    5: [True, [47.8, 953.2, 341.2], 122.1],  # Oilfield
+    6: [True, [-219.4, 3003.9, 272.7], 122.9],  # Refinery
+    7: [True, [2.5, 2768.4, -232.6], 120],  # Coal mine
+    8: [True, [-182.3, 2352.2, 230.2], 228],  # Iron mine
     9: [True, [-107.8, 2895.7, 206.7], 40],  # Freight Depot
     10: [True, [0, 0, 0], 0],  # Firewood Depot
 }
 
 
-def getplayertppos(indtype, indpos=[0, 0, 0], indrot=[0, 0, 0]):
+def getplayertppos(indtype, indpos=None, indrot=None):
     tpdata = player_teleport_pts[indtype]
 
     if tpdata[0]:
         reldir, reldist, relz = tpdata[1]
         newpos = [0, 0, 0]
-        newpos[0] = indpos[0] + np.sin(np.radians(reldir+indrot)) * reldist
-        newpos[1] = indpos[1] + np.cos(np.radians(reldir+indrot)) * reldist
+        newpos[0] = indpos[0] + np.sin(np.radians(reldir+indrot[1])) * reldist
+        newpos[1] = indpos[1] + np.cos(np.radians(reldir+indrot[1])) * reldist
         newpos[2] = indpos[2] + relz
         newrot = indrot[1] + tpdata[2]
         if newrot > 180:
@@ -92,12 +92,7 @@ def getclosest(pos, poslist):
 def getrelative(pos, rot, compos, comrot):
     relpos = pos - compos
     reldist = getdistance(pos[:-1], compos[:-1])
-    print(getdistance(pos[:-1], compos[:-1]))
-    print(getdistance(pos, compos) / 100)
     reldir = np.degrees(np.arctan(relpos[0]/relpos[1])) + comrot[1]
-    print(reldir)
-    print(relpos)
     relrot = rot - comrot[1]  # viewing angle
-    print(relrot)
 
     return reldir, reldist, relpos[2], relrot
