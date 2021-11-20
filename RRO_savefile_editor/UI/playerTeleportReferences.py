@@ -34,17 +34,17 @@ location_names = {
 player_teleport_pts = {  # keys referring to industry types
     # Absolute positions: [False, [x, y, z], r]
     # Relative positions: [True, [rel dir, rel dist, rel z], rel r]
-    0: [False, [338.8, -3430.9, 10182.3], 0],  # Spawn point
-    1: [True, [21.9, 4361.4, 196.7], -90.0],  # Logging Camp
-    2: [True, [-137.6, 5443.3, -11.1], 45.9],  # Sawmill
-    3: [True, [78.8, 3638.3, 192.0], -146.0],  # Smelter
-    4: [True, [-157.3, 1429.1, 220.2], -90],  # Ironworks
-    5: [True, [47.8, 953.2, 341.2], 122.1],  # Oilfield
-    6: [True, [-219.4, 3003.9, 272.7], 122.9],  # Refinery
-    7: [True, [2.5, 2768.4, -232.6], 120],  # Coal mine
-    8: [True, [-182.3, 2352.2, 230.2], 228],  # Iron mine
-    9: [True, [-107.8, 2895.7, 206.7], 40],  # Freight Depot
-    10: [True, [0, 0, 0], 0],  # Firewood Depot
+    0: [False, [338.8, -3430.9, 10182.3], 0.0],  # Spawn point
+    1: [True, [68.5, 4385.4, 196.7], -90.0],  # Logging Camp
+    2: [True, [228.2, 5497.6, -11.2], 45.0],  # Sawmill
+    3: [True, [8.8, 3622.8, 191.9], -145.0],  # Smelter
+    4: [True, [296.4, 3312.7, 220.2], 155.0],  # Ironworks
+    5: [True, [226.1, 893.9, 340.2], 120.0],  # Oilfield
+    6: [True, [309.9, 2969.6, 272.7], 135.0],  # Refinery
+    7: [True, [267.7, 2931.5, -233.6], 135.0],  # Coal mine
+    8: [True, [92.5, 1885.9, 220.2], 255.0],  # Iron mine
+    9: [True, [-163.2, 3160.8, 206.7], 30.0],  # Freight Depot
+    10: [True, [-62.3, 531.1, 178.9], 56.0],  # Firewood Depot
 }
 
 
@@ -54,13 +54,16 @@ def getplayertppos(indtype, indpos=None, indrot=None):
     if tpdata[0]:
         reldir, reldist, relz = tpdata[1]
         newpos = [0, 0, 0]
-        newpos[0] = indpos[0] + np.sin(np.radians(reldir+indrot[1])) * reldist
-        newpos[1] = indpos[1] + np.cos(np.radians(reldir+indrot[1])) * reldist
-        newpos[2] = indpos[2] + relz
+        alpha = reldir + indrot[1]
+        deltax = np.cos(np.radians(alpha)) * reldist
+        deltay = np.sin(np.radians(alpha)) * reldist
+        newpos[0] = indpos[0] + deltax
+        newpos[1] = indpos[1] + deltay
+        newpos[2] = indpos[2] + relz + 1.0  # just add a cm to avoid rdg errors sticking you into ground
         newrot = indrot[1] + tpdata[2]
-        if newrot > 180:
+        while newrot > 180:
             newrot -= 360
-        if newrot < -180:
+        while newrot < -180:
             newrot += 360
     else:
         newpos = tpdata[1]
@@ -92,7 +95,16 @@ def getclosest(pos, poslist):
 def getrelative(pos, rot, compos, comrot):
     relpos = pos - compos
     reldist = getdistance(pos[:-1], compos[:-1])
-    reldir = np.degrees(np.arctan(relpos[0]/relpos[1])) + comrot[1]
+    if relpos[0] > 0:
+        alpha = np.degrees(np.arctan(relpos[1]/relpos[0]))
+    elif relpos[0] == 0:
+        if relpos[1] > 0:
+            alpha = 90
+        else:
+            alpha = -90
+    else:
+        alpha = np.degrees(np.arctan(relpos[1]/relpos[0])) + 180
+    reldir = alpha - comrot[1]
     relrot = rot - comrot[1]  # viewing angle
 
     return reldir, reldist, relpos[2], relrot

@@ -46,6 +46,7 @@ def selectSaveFile(loc):
 def mainMenu(gvas, dev_version = False):
     options = [
         ("Players", playerMenu),
+        ("Teleport", playerteleport),
         ("Rolling stock", mainStockMenu),
         ("Environment", mainEnvMenu),
         ("Save & Exit", saveAndExit),
@@ -54,8 +55,6 @@ def mainMenu(gvas, dev_version = False):
     if dev_version:
         dev_options = [
             ("Move Industries", moveindustries),
-            ("Change Flatcar Types", changestockmenu),
-            ("Teleport Players", playerteleport),
         ]
         options = dev_options + options
     current = 0
@@ -863,9 +862,12 @@ def playerteleport(gvas):
                 diststr = "{:.2f}m".format(closest[1]/100)
 
                 if dev_version and cur_line == 0 and i == 0:  # DEV Tool to find relative positions
-                    closestpos = industrylocs[standardinds[closest[0]]]
-                    closestrot = industryrots[standardinds[closest[0]]]
-                    print("Closest: {} in {:.0f}cm".format(standardindtypes[closest[0]],closest[1]))
+                    closest = getclosest(cur_loc, industrylocs)
+                    clostr = industryNames[industrytypes[closest[0]]]
+                    diststr = "{:.2f}m".format(closest[1]/100)
+                    closestpos = industrylocs[closest[0]]
+                    closestrot = industryrots[closest[0]]
+                    print("Closest: {} in {:.0f}cm".format(industrytypes[closest[0]], closest[1]))
                     print("Player vals: {} {}".format(cur_loc, cur_rot))
                     print("Target vals: {} {}".format(closestpos, closestrot))
                     print("Relative:    [Dir {:.1f}, Dist {:.1f}, Height {:.1f}], Rot {:.1f}".format(
@@ -988,10 +990,10 @@ def playerteleport(gvas):
                             n_page2 = 1
                         print("\033[{}A\033[J".format(n_line), end='')
                         formatters2 = [
-                            "{:20}",
-                            "{:20}",
-                            "{:20}",
-                            "{:20}",
+                            "{:35}",
+                            "{:18}",
+                            "{:15}",
+                            "{:>10}",
                         ]
                         dashline2 = ''
                         for i in formatters:
@@ -1049,7 +1051,7 @@ def playerteleport(gvas):
                             if k3 == b'ESCAPE':
                                 break
                             if k3 == b'RETURN':
-                                if cursor == 2:  # if it's a player, just copy values
+                                if cursor == 3:  # if it's a player, just copy values
                                     playerlocs[cur_line] = listloc[cur_line2]
                                     playerrots[cur_line] = listrot[cur_line2]
                                 else:            # else get the absolute position that's relative to the target
@@ -1412,11 +1414,12 @@ def moveindustries(gvas):
             if cur_line not in range(offset, offset + 10):
                 cur_line = offset
         if k == b'RETURN':
-            if cur_col == 4 and industrytypes[ind[cur_line]] in mapIndustries:
-                industrylocations[ind[cur_line]][0] = industryStandardLocations[industrytypes[ind[cur_line]]][0]
-                industrylocations[ind[cur_line]][1] = industryStandardLocations[industrytypes[ind[cur_line]]][1]
-                industrylocations[ind[cur_line]][2] = industryStandardLocations[industrytypes[ind[cur_line]]][2]
-                industryrotations[ind[cur_line]][1] = industryStandardLocations[industrytypes[ind[cur_line]]][3]
+            if cur_col == 4:
+                if industrytypes[ind[cur_line]] in mapIndustries:
+                    industrylocations[ind[cur_line]][0] = industryStandardLocations[industrytypes[ind[cur_line]]][0]
+                    industrylocations[ind[cur_line]][1] = industryStandardLocations[industrytypes[ind[cur_line]]][1]
+                    industrylocations[ind[cur_line]][2] = industryStandardLocations[industrytypes[ind[cur_line]]][2]
+                    industryrotations[ind[cur_line]][1] = industryStandardLocations[industrytypes[ind[cur_line]]][3]
             else:
                 switcher = {0: "X", 1: "Y", 2: "Z", 3: "R"}[cur_col]
                 limitlower = placingLimits[switcher][0]
@@ -1433,9 +1436,15 @@ def moveindustries(gvas):
                     try:
                         val = float(val)
 
-                        if not limitlower <= val <= limitupper:
-                            prompt_text = "> Out of placement limits! Enter value: "
-                            continue
+                        if cur_col == 3:
+                            while val > limitupper:
+                                val -= 360
+                            while val < limitlower:
+                                val += 360
+                        else:
+                            if not limitlower <= val <= limitupper:
+                                prompt_text = "> Out of placement limits! Enter value: "
+                                continue
                     except ValueError:
                         prompt_text = "> Invalid input! Enter new value: "
                         continue
@@ -2308,9 +2317,12 @@ def changestockmenu(gvas):
         n_page = 0
     offset = 0
     while True:
-        n_line = 0
-        print("Select method (ESCAPE to quit, ENTER to valid selection)")
-        n_line += 1
+        print("Select flatcar (ESCAPE to quit, ENTER to valid selection)")
+        supported_names = "Only supported types are: "
+        for flatcar in frametypeExchangeable:
+            supported_names += gettypedescription(flatcar, 1) + ", "
+        print(supported_names[:-2])
+        n_line = 2
         cur_page = int(offset / 10)
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
@@ -2437,6 +2449,7 @@ def mainStockMenu(gvas):
         ("Cargo", cargoStockMenu),
         ("Locomotive Restock", engineStockMenu),
         ("Change Attachments", editattachmentmenu),
+        ("Replace Flatcar Types", changestockmenu),
     ]
     current = 0
     while True:
