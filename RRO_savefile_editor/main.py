@@ -105,7 +105,7 @@ def inner_main():
     except ModuleNotFoundError:
         from .UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
 
-    def loop(loc="./sav_respawn_players/shop/."):
+    def loop(loc="."):
         from pathlib import Path
         if __name__ == "__main__":
             loc = ".."
