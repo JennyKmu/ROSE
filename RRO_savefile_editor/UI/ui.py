@@ -704,11 +704,11 @@ def editplacables(gvas):
             else:
                 line_format = " | ".join(formatters)
 
-            namestr = industrytypes[ind[i]]
+            namestr = industryNames[industrytypes[ind[i]]]
             curlocation = industrylocations[ind[i]]
             curx = round(curlocation[0] / 100)
             cury = round(curlocation[1] / 100)
-            namestr += " @ {:.0f}/ {:.0f}".format(curx, cury)
+            namestr += " {:.0f}/ {:.0f}".format(curx, cury)
 
             inputstr = "{:3} / {:3} Wood".format(industryinputs1[ind[i]], firewoodDepot["input"][0])
             outputstr = ''
