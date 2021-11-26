@@ -10,7 +10,7 @@ def inner_main():
     if not sys.version_info > (3, 9):
         print("------------------")
         print("> \033[1;31mERROR: Python version not officially supported.\033[0m")
-        print("> Please use/install Python version 3.9 or above (3.10+ recomended).")
+        print("> Please use/install Python version 3.9 or above (3.10+ recommended).")
         # if sys.version_info > (3,):
         #     print("> You can input 'continue' if you're sure your python install meets requirements.")
         #     c = input("> ")
@@ -42,8 +42,8 @@ def inner_main():
         "Leif_The_Head",
     ]
 
-    version = (0, 3, 8)
-    dev_version = False
+    version = (0, 3, 9)
+    dev_version = True
     beta_version = False
 
     def header():

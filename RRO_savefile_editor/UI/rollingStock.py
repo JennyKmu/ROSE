@@ -95,6 +95,15 @@ cargotypeTranslator = {
 }
 
 
+frametypeExchangeable = [
+    "flatcar_logs",
+    "flatcar_stakes",
+    "flatcar_cordwood",
+    "flatcar_hopper",
+    "flatcar_tanker",
+]
+
+
 firewoodReserves = {
     "porter_040": 66,
     "porter_042": 164,
