@@ -554,10 +554,7 @@ def editindustries(gvas):
             line_format = " | ".join(formatters)
         print(line_format.format(
             "Inputs:",
-            inputstrs[0],
-            inputstrs[1],
-            inputstrs[2],
-            inputstrs[3],
+            *inputstrs
         ))
         if 1 == cur_line:
             line_format = formatters[0]
@@ -571,10 +568,7 @@ def editindustries(gvas):
             line_format = " | ".join(formatters)
         print(line_format.format(
             "Outputs:",
-            outputstrs[0],
-            outputstrs[1],
-            outputstrs[2],
-            outputstrs[3],
+            *outputstrs
         ))
 
         k = getKey()
@@ -668,18 +662,17 @@ def editplacables(gvas):
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
     dashline = dashline[2:]
-    offset = 0
     ltot = len(ind) + len(watertowers)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
-        n_page = 0
+        n_page = 1
     while True:
         print("Select Utility to fill (ESCAPE to quit, ENTER to fill)")
         print("")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -690,7 +683,7 @@ def editplacables(gvas):
         print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
@@ -723,7 +716,7 @@ def editplacables(gvas):
                 outputstr,
             ))
         for i in range(len(watertowers)):
-            if i + len(ind) not in range(offset, offset + 10) and split_data:
+            if np.floor((i+len(ind)) / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i + len(ind) == cur_line:
@@ -760,21 +753,20 @@ def editplacables(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
         if k == b'RETURN':
             if cur_line in range(len(ind)):
                 depotindex = ind[cur_line]
@@ -815,7 +807,6 @@ def playerteleport(gvas, dev_version=False):
     standardindlocs = industrylocs[standardinds]
 
     cur_line = 0
-    offset = 0
     ltot = len(playernames)
     if ltot > 10:
         split_data = True
@@ -895,19 +886,15 @@ def playerteleport(gvas, dev_version=False):
         k = getKey()
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if np.floor(cur_line / 10) < cur_page:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
             cur_line = min(cur_line + 1, ltot - 1)
-            if np.floor(cur_line / 10) > cur_page:
-                k = b'PAGE_DOWN'
         if k == b'PAGE_UP':
             if split_data and cur_page > 0:
                 cur_page -= 1
                 cur_line = cur_page * 10 + 9
             else:
                 cur_line = 0
-        if k == b'PAGE_DOWN':  # and split_data:
+        if k == b'PAGE_DOWN':
             if split_data and cur_page < n_page - 1:
                 cur_page += 1
                 cur_line = cur_page * 10
@@ -1047,12 +1034,8 @@ def playerteleport(gvas, dev_version=False):
                             n_line = 1
                             if k3 == b'KEY_UP':
                                 cur_line2 = max(0, cur_line2 - 1)
-                                if np.floor(cur_line2 / 10) < cur_page2:
-                                    k3 = b'PAGE_UP'
                             if k3 == b'KEY_DOWN':
                                 cur_line2 = min(cur_line2 + 1, ltot2 - 1)
-                                if np.floor(cur_line2 / 10) > cur_page2:
-                                    k3 = b'PAGE_DOWN'
                             if k3 == b'PAGE_UP' and split_data2:
                                 if cur_page2 < n_page2 - 1:
                                     cur_page2 += 1
@@ -1091,17 +1074,16 @@ def playerMenu(gvas):
     player_xp_prop = gvas.data.find("PlayerXPArray")
     cur_col = 0
     cur_line = 0
-    offset = 0
     ltot = len(player_names_prop.data)
-    if len(player_names_prop.data) > 10:
+    if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
     while True:
         print("Select a field to edit (ESCAPE to quit, ENTER to valid selection)")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print("{:<65s} | {:>9s} | {:>9s}".format(
@@ -1117,7 +1099,7 @@ def playerMenu(gvas):
         ]
         n_line = 0
         for i in range(len(player_names_prop.data)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             line_format = "{:<64s} "
@@ -1145,21 +1127,21 @@ def playerMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             prompt_text = "> Enter new value: "
             while True:
@@ -1199,11 +1181,10 @@ def renameStockMenu(gvas):
         "{:<32s}",
         "{:<32s}",
     ]
-    offset = 0
     ltot = len(frametypes)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
@@ -1211,7 +1192,7 @@ def renameStockMenu(gvas):
         print("Select field to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Use <br> to create multiple line values where applicable.")
         print("Sanity checks are enabled. To ignore limitation start your input with \i")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -1222,7 +1203,7 @@ def renameStockMenu(gvas):
         print("-" * (32 * 3 + 3 * 2))
         n_line = 0
         for i in range(len(frametypes)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
@@ -1242,10 +1223,6 @@ def renameStockMenu(gvas):
             num = '-' if num is None else num
             nam = '-' if nam is None else nam
 
-            # not necessary anymore (new line stored as <br>)
-            # num = num if '<br>' not in num else num.replace('\n', '<br>')
-            # nam = nam if '<br>' not in nam else nam.replace('\n', '<br>')
-
             print(line_format.format(
                 frametypeTranslatorLong[frametypes[i]],
                 num,
@@ -1259,21 +1236,21 @@ def renameStockMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             maximums = getnaminglimits(frametypes[cur_line], cur_col)
             if maximums[0] == 0 or maximums[1] == 0:
@@ -1360,11 +1337,10 @@ def teleportStockMenu(gvas):
     min_height = 1000.
     status_str = "⬤"
 
-    offset = 0
     ltot = len(frametypes)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
@@ -1372,7 +1348,7 @@ def teleportStockMenu(gvas):
         n_line = 0
         print("Select method (ESCAPE to quit, ENTER to valid selection)")
         n_line += 1
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
 
         print("\033[1;41m" + "      " + "\033[0m marks frames which are below ground.")
         n_line += 1
@@ -1402,7 +1378,7 @@ def teleportStockMenu(gvas):
         n_line += 2
 
         for i in range(len(frametypes)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
 
             if i == cur_line:
@@ -1439,21 +1415,21 @@ def teleportStockMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             moved_something = False
             if cur_col == 0:
@@ -1585,18 +1561,17 @@ def engineStockMenu(gvas):
     dashline = ''
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
-    offset = 0
     ltot = len(ind)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
     while True:
         print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Enter nothing to fill up, or type in an amount.")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -1608,7 +1583,7 @@ def engineStockMenu(gvas):
         print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
@@ -1665,21 +1640,21 @@ def engineStockMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             curframetype = frametypes[ind[cur_line]]
             if cur_col == 0 and curframetype in waterBoiler.keys():
@@ -1783,18 +1758,17 @@ def editattachmentmenu(gvas):
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
     dashline = dashline[2:]
-    offset = 0
     ltot = len(ind)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
     while True:
         print("Select field to edit (ESCAPE to quit, ENTER to valid selection)")
         print("")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -1805,7 +1779,7 @@ def editattachmentmenu(gvas):
         print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
@@ -1864,21 +1838,21 @@ def editattachmentmenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             curtype = frametypes[ind[cur_line]]
             if cur_col == 0 and curtype in availableSmokestacks.keys():
@@ -1987,18 +1961,17 @@ def cargoStockMenu(gvas):
         dashline += "---" + len(i.format('')) * "-"
     dashline = dashline[2:]
 
-    offset = 0
     ltot = len(ind)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
     while True:
         print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Empty fields mean this wagon hasn't been used yet")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -2011,7 +1984,7 @@ def cargoStockMenu(gvas):
         print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
@@ -2057,21 +2030,21 @@ def cargoStockMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             curframetype = frametypes[ind[cur_line]]
             curframecargo = framecargotypes[ind[cur_line]]
@@ -2184,11 +2157,10 @@ def changestockmenu(gvas):
     ltot = len(ind)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
-        n_page = 0
-    offset = 0
+        n_page = 1
     while True:
         print("Select flatcar (ESCAPE to quit, ENTER to valid selection)")
         supported_names = "Only supported types are: "
@@ -2196,7 +2168,7 @@ def changestockmenu(gvas):
             supported_names += gettypedescription(flatcar, 1) + ", "
         print(supported_names[:-2])
         n_line = 2
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
             n_line += 1
@@ -2210,7 +2182,7 @@ def changestockmenu(gvas):
         n_line += 2
 
         for i in range(ltot):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
 
             if i == cur_line:
@@ -2242,24 +2214,23 @@ def changestockmenu(gvas):
             ))
             n_line += 1
         k = getKey()
-
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
-        if k == b'PAGE_UP' and split_data:
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
-        if k == b'PAGE_DOWN' and split_data:
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            cur_line = min(cur_line + 1, ltot - 1)
+        if k == b'PAGE_UP':
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
+        if k == b'PAGE_DOWN':
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             curframetype = frametypes[ind[cur_line]]
             cursor = 0
