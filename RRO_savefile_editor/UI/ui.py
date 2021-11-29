@@ -1191,9 +1191,7 @@ def renameStockMenu(gvas):
     framenumbers = gvas.data.find("FrameNumberArray").data
     framenames = gvas.data.find("FrameNameArray").data
     frametypes = gvas.data.find("FrameTypeArray").data
-    # print(framenumbers)
-    # print(framenames)
-    # print(frametypes)
+
     cur_col = 0
     cur_line = 0
     formatters = [
@@ -1332,25 +1330,34 @@ def teleportStockMenu(gvas):
     framebrakes = gvas.data.find("BrakeValueArray").data
     framecouplingfront = gvas.data.find("CouplerFrontStateArray").data
     framecouplingrear = gvas.data.find("CouplerRearStateArray").data
-    # print(framenumbers)
-    # print(framenames)
-    # print(frametypes)
+
+    indtypes = gvas.data.find("IndustryTypeArray").data
+    indlocs = gvas.data.find("IndustryLocationArray").data
+
+    standardtypes = []
+    standardlocs = []
+    for index in range(len(indtypes)):
+        if indtypes[index] in mapIndustries:
+            standardtypes.append(indtypes[index])
+            standardlocs.append(indlocs[index])
+
     cur_col = 0
     cur_line = 0
     formatters = [
-        "{:^7s}",
-        "{:<12s}",
-        "{:<16s}",
-        "{:<32s}",
-        "{:^11s}",
-        "{:^11s}"
+        "{:^6s}",
+        "{:<10s}",
+        "{:<25s}",
+        "{:^17s}",
+        "{:>18s}",
+        "{:^9s}",
+        "{:^9s}"
     ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
 
     min_height = 1000.
-    indexes = framelocs[:, 2] < min_height
-    submapframes = framelocs[indexes, :]
-
-
     status_str = "⬤"
 
     offset = 0
@@ -1379,59 +1386,47 @@ def teleportStockMenu(gvas):
             n_line += 1
             print(f"\033[1;32m{nbelow}\033[0m frames were found below {int(min_height/100.):d} m in height.")
 
-
-
-
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
             n_line += 1
         print(" | ".join(formatters).format(
             "Status",
             "Frame type",
-            "Number",
-            "Name",
+            "Number/Name",
+            "Location",
+            "Near",
             "Respawn",
             "Yeet it"
         ))
-        print("-" * (32 * 3 + 3 * 2))
+        print(dashline)
         n_line += 2
-
 
         for i in range(len(frametypes)):
             if i not in range(offset, offset + 10) and split_data:
                 continue
 
             if i == cur_line:
-                line_format = " | ".join(formatters[0:4])
+                line_format = " | ".join(formatters[:5])
                 for j in range(2):
                     line_format += " | "
                     if j == cur_col:
-                        line_format += selectfmt + formatters[j + 4] + "\033[0m"
+                        line_format += selectfmt + formatters[j + 5] + "\033[0m"
                     else:
-                        line_format += formatters[j + 4]
+                        line_format += formatters[j + 5]
             else:
                 line_format = " | ".join(formatters)
 
-            num = framenumbers[i]
-            nam = framenames[i]
+            identifier = getidentifier(frametypes[i], framenames[i], framenumbers[i], framelocs[i], True, standardtypes,
+                                       standardlocs)
 
-            num = '-' if num is None else num
-            nam = '-' if nam is None else nam
-
-            # not necessary anymore (new line stored as <br>)
-            # num = num if '<br>' not in num else num.replace('\n', '<br>')
-            # nam = nam if '<br>' not in nam else nam.replace('\n', '<br>')
-
-            if framelocs[i,2] < min_height:
+            if framelocs[i, 2] < min_height:
                 line_format = line_format.split(" | ")
                 line_format[0] = "\033[1;41m" + line_format[0] + "\033[0m"
                 line_format = " | ".join(line_format)
 
             print(line_format.format(
-                " ",
-                frametypeTranslatorShort[frametypes[i]],
-                num,
-                nam,
+                status_str,
+                *identifier,
                 "[RESPAWN]",
                 "[YEET IT]"
             ))
@@ -1587,7 +1582,7 @@ def engineStockMenu(gvas):
         "{:>14}",
         "{:>12}",
     ]
-    dashline =''
+    dashline = ''
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
     offset = 0
@@ -1961,6 +1956,17 @@ def cargoStockMenu(gvas):
     frametypes = gvas.data.find("FrameTypeArray").data
     framecargotypes = gvas.data.find("FreightTypeArray").data
     framecargoamounts = gvas.data.find("FreightAmountArray").data
+    framelocations = gvas.data.find("FrameLocationArray").data
+
+    indtypes = gvas.data.find("IndustryTypeArray").data
+    indlocs = gvas.data.find("IndustryLocationArray").data
+
+    standardtypes = []
+    standardlocs = []
+    for index in range(len(indtypes)):
+        if indtypes[index] in mapIndustries:
+            standardtypes.append(indtypes[index])
+            standardlocs.append(indlocs[index])
 
     ind = []
     for i in range(len(frametypes)):
@@ -1970,10 +1976,17 @@ def cargoStockMenu(gvas):
     cur_col = 0
     cur_line = 0
     formatters = [
-        "{:<48s}",
+        "{:^8}",
+        "{:<40}",
+        "{:>18}",
         "{:<12}",
         "{:>6}",
     ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
+
     offset = 0
     ltot = len(ind)
     if ltot > 10:
@@ -1989,41 +2002,34 @@ def cargoStockMenu(gvas):
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
-            "Cargo Wagon",
             "Type",
+            "Number / Name",
+            "Near",
+            "Cargo",
             "Amount"
         ))
-        print("-" * (48 + 12 + 6 + 3 * 2))
+        print(dashline)
         n_line = 0
         for i in range(len(ind)):
             if i not in range(offset, offset + 10) and split_data:
                 continue
             n_line += 1
             if i == cur_line:
-                line_format = formatters[0]
+                line_format = " | ".join(formatters[:3])
                 for j in range(2):
                     line_format += " | "
                     if j == cur_col:
-                        line_format += selectfmt + formatters[j + 1] + "\033[0m"
+                        line_format += selectfmt + formatters[j + 3] + "\033[0m"
                     else:
-                        line_format += formatters[j + 1]
+                        line_format += formatters[j + 3]
             else:
                 line_format = " | ".join(formatters)
 
-            frametype = frametypes[ind[i]]
-            num = framenumbers[ind[i]]
-            nam = framenames[ind[i]]
-            cargo = framecargotypes[ind[i]]
+            j = ind[i]
+            cargo = framecargotypes[j]
 
-            num = '' if num is None else num
-            nam = '' if nam is None else nam
-
-            namestr = "{:<10s}:".format(frametypeTranslatorShort[frametype])
-            if not num == '':
-                namestr += " " + num.split("<br>")[0].strip()
-            if not nam == '':
-                namestr += " " + nam.split("<br>")[0].strip()
-            namestr = namestr[:48]
+            identifier = getidentifier(frametypes[j], framenames[j], framenumbers[j], framelocations[j], True,
+                                       standardtypes, standardlocs, True)
 
             if cargo in cargotypeTranslator.keys():
                 cargostr = cargotypeTranslator[cargo]
@@ -2033,13 +2039,13 @@ def cargoStockMenu(gvas):
                 cargostr = cargotypeTranslator["default"]
 
             if cargo is not None:
-                amount = framecargoamounts[ind[i]]
-                amountstr = "{}/{}".format(amount, frametypeCargoLimits[frametype][cargo])
+                amount = framecargoamounts[j]
+                amountstr = "{}/{}".format(amount, frametypeCargoLimits[frametypes[j]][cargo])
             else:
                 amountstr = ''
 
             print(line_format.format(
-                namestr,
+                *identifier,
                 cargostr,
                 amountstr
             ))
@@ -2148,12 +2154,22 @@ def changestockmenu(gvas):
     framecargotypes = gvas.data.find("FreightTypeArray").data
     framecargoamounts = gvas.data.find("FreightAmountArray").data
 
+    indtypes = gvas.data.find("IndustryTypeArray").data
+    indlocs = gvas.data.find("IndustryLocationArray").data
+
+    standardtypes = []
+    standardlocs = []
+    for index in range(len(indtypes)):
+        if indtypes[index] in mapIndustries:
+            standardtypes.append(indtypes[index])
+            standardlocs.append(indlocs[index])
+
     cur_line = 0
     formatters = [
-        "{:>10}",
-        "{:<48}",
-        "{:^13}",
-        "{:<18}",
+        "{:^10}",
+        "{:<40}",
+        "{:>18}",
+        "{:<16}",
     ]
     dashline = ''
     for i in formatters:
@@ -2185,9 +2201,9 @@ def changestockmenu(gvas):
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
             n_line += 1
         print(" | ".join(formatters).format(
-            "Frametype",
+            "Type",
             "Number / Name",
-            "Location",
+            "Near",
             "Cargo"
         ))
         print(dashline)
@@ -2203,20 +2219,11 @@ def changestockmenu(gvas):
             else:
                 line_format = " | ".join(formatters)
 
+            j = ind[i]
             frametype = frametypes[ind[i]]
 
-            num = '' if framenumbers[ind[i]] is None else framenumbers[ind[i]]
-            nam = '' if framenames[ind[i]] is None else framenames[ind[i]]
-
-            namestr = ""
-            if not num == '':
-                namestr += " " + num.split("<br>")[0].strip()
-            if not nam == '':
-                namestr += " " + nam.split("<br>")[0].strip()
-            namestr = namestr[:48]
-
-            curloc = framelocs[ind[i]]
-            locstr = "{:>5} | {:>5}".format(round(curloc[0] / 100), round(curloc[1] / 100))
+            identifier = getidentifier(frametype, framenames[j], framenumbers[j], framelocs[j], False,
+                                       standardtypes, standardlocs, True)
 
             curcargotype = framecargotypes[ind[i]]
             if curcargotype is None:
@@ -2229,11 +2236,8 @@ def changestockmenu(gvas):
                     cargostr = "{:2}/{:2} ".format(curcargoamount, frametypeCargoLimits[frametype][curcargotype]) + \
                         cargotypeTranslator[curcargotype]
 
-
             print(line_format.format(
-                frametypeTranslatorShort[frametype],
-                namestr,
-                locstr,
+                *identifier,
                 cargostr
             ))
             n_line += 1
