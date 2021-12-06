@@ -60,7 +60,7 @@ def mainMenu(gvas, dev_version_i=False):
         from .uidev import devslotA, devslotB, devslotC, devslotD, devslotE
         dev_options = [
             ("DEV A: move Industries", devslotA),
-            ("DEV B", devslotB),
+            ("DEV B: show removed Trees", devslotB),
             ("DEV C", devslotC),
             ("DEV D", devslotD),
             ("DEV E", devslotE)
@@ -1543,20 +1543,22 @@ def engineStockMenu(gvas):
     frameboilerwater = gvas.data.find("BoilerWaterLevelArray").data
     frametenderwater = gvas.data.find("TenderWaterAmountArray").data
     frametenderfuel = gvas.data.find("TenderFuelAmountArray").data
+    framesandamount = gvas.data.find("SanderAmountArray").data
 
     ind = []
     for i in range(len(frametypes)):
         if (frametypes[i] in waterBoiler.keys()) or (frametypes[i] in waterReserves.keys()) or \
-                (frametypes[i] in firewoodReserves.keys()):
+                (frametypes[i] in firewoodReserves.keys() or frametypes[i] in sandLevel.keys()):
             ind.append(i)
 
     cur_col = 0
     cur_line = 0
     formatters = [
         "{:<48s}",
-        "{:>14}",
-        "{:>14}",
         "{:>12}",
+        "{:>12}",
+        "{:>12}",
+        "{:>12}"
     ]
     dashline = ''
     for i in formatters:
@@ -1579,6 +1581,7 @@ def engineStockMenu(gvas):
             "Water Boiler",
             "Water Tank",
             "Firewood",
+            "Sand",
         ))
         print(dashline)
         n_line = 0
@@ -1588,7 +1591,7 @@ def engineStockMenu(gvas):
             n_line += 1
             if i == cur_line:
                 line_format = formatters[0]
-                for j in range(3):
+                for j in range(4):
                     line_format += " | "
                     if j == cur_col:
                         line_format += selectfmt + formatters[j + 1] + "\033[0m"
@@ -1612,12 +1615,12 @@ def engineStockMenu(gvas):
             namestr = namestr[:48]
 
             if frametype in waterBoiler.keys():
-                waterboilerstr = "{:.1f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
+                waterboilerstr = "{:.0f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
             else:
                 waterboilerstr = ''
 
             if frametype in waterReserves.keys():
-                waterreservestr = "{:.1f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
+                waterreservestr = "{:.0f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
             else:
                 waterreservestr = ''
 
@@ -1626,16 +1629,22 @@ def engineStockMenu(gvas):
             else:
                 firewoodstr = ''
 
+            if frametype in sandLevel.keys():
+                sandstr = "{:.0f}%".format(framesandamount[ind[i]])
+            else:
+                sandstr = ''
+
             print(line_format.format(
                 namestr,
                 waterboilerstr,
                 waterreservestr,
                 firewoodstr,
+                sandstr
             ))
         k = getKey()
 
         if k == b'KEY_RIGHT':
-            cur_col = min(2, cur_col + 1)
+            cur_col = min(3, cur_col + 1)
         if k == b'KEY_LEFT':
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
@@ -1723,6 +1732,29 @@ def engineStockMenu(gvas):
                         continue
 
                     frametenderfuel[ind[cur_line]] = val
+                    print("\033[{}A\033[J".format(1), end='')
+                    break
+
+            elif cur_col == 3 and curframetype in sandLevel.keys():
+                prompt_text = "> Enter new value or leave blank for max: "
+                while True:
+                    val = input(prompt_text)
+                    try:
+                        if val == '':
+                            val = sandLevel[curframetype]
+                        else:
+                            val = float(val)
+                    except ValueError:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid input! Enter new value: "
+                        continue
+
+                    if val < 0 or val > sandLevel[curframetype]:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid amount! Enter new value: "
+                        continue
+
+                    framesandamount[ind[cur_line]] = val
                     print("\033[{}A\033[J".format(1), end='')
                     break
 

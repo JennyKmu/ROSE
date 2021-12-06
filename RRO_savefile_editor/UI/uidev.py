@@ -159,10 +159,34 @@ def devslotA(gvas):
             print("\033[1A\033[J", end='')
             return None
 
-
 def devslotB(gvas):
+    import math
+    from .uiutils import getKey
     print("> Running DEV SLOT B")
-    pass
+    print("> Fetching removed trees...")
+    removedtrees = gvas.data.find("RemovedVegetationAssetsArray").data
+    tformat = "[{:<17}, {:<17}, {:<17}]"
+    if len(removedtrees) > 1000:
+        print("> These are many trees, displaying in parts of 1000, ENTER to continue")
+        for thousands in range(int(math.ceil(len(removedtrees)/1000.0))):
+            print("{},000s of trees ({} TOTAL) ".format(thousands, len(removedtrees)) + "-" * 80)
+            k = None
+            while k != b'RETURN':
+                k = getKey()
+                if k == b'ESCAPE':
+                    return
+            for t in range(1000):
+                if (t + thousands * 1000) >= len(removedtrees):
+                    break
+                else:
+                    print(tformat.format(*removedtrees[t + thousands * 1000]))
+    else:
+        for tree in removedtrees:
+            print(tformat.format(*tree))
+    print("> End of trees. {} in Total".format(len(removedtrees)))
+    print("Any key to return")
+    getKey()
+    print("-" * 80 + "\n")
 
 def devslotC(gvas):
     print("> Running DEV SLOT C")
