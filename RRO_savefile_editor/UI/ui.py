@@ -1556,13 +1556,14 @@ def engineStockMenu(gvas):
     formatters = [
         "{:<48s}",
         "{:>12}",
-        "{:>12}",
-        "{:>12}",
-        "{:>12}"
+        "{:>11}",
+        "{:>11}",
+        "{:>4}"
     ]
     dashline = ''
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
     ltot = len(ind)
     if ltot > 10:
         split_data = True
