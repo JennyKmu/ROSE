@@ -161,15 +161,29 @@ def devslotA(gvas):
 
 def devslotB(gvas):
     import math
+    import numpy as np
     from .uiutils import getKey
+    from .defaultRemovedTrees import default_removed_trees
     print("> Running DEV SLOT B")
     print("> Fetching removed trees...")
     removedtrees = gvas.data.find("RemovedVegetationAssetsArray").data
-    tformat = "[{:<17}, {:<17}, {:<17}]"
+    defaulttrees = np.asarray(default_removed_trees, dtype=np.float32)
+    tformat = "[{:<17}, {:<17}, {:<17}],"
+    print("(A)ll Trees or just additional (R)emoved ones?")
+    while True:
+        k = getKey()
+        if k == b'r' or k == b'R':
+            print("Limiting to player-removed trees...")
+            removedtrees = removedtrees[~((removedtrees[:, None, :] == defaulttrees).all(-1)).any(1)]
+            break
+        elif k == b'ESCAPE':
+            return
+        elif k == b'a' or k == b'A':
+            break
     if len(removedtrees) > 1000:
         print("> These are many trees, displaying in parts of 1000, ENTER to continue")
         for thousands in range(int(math.ceil(len(removedtrees)/1000.0))):
-            print("{},000s of trees ({} TOTAL) ".format(thousands, len(removedtrees)) + "-" * 80)
+            print("{},000s of trees ({} TOTAL) ".format(thousands, len(removedtrees)) + "-" * 60)
             k = None
             while k != b'RETURN':
                 k = getKey()
@@ -180,7 +194,7 @@ def devslotB(gvas):
                     break
                 else:
                     print(tformat.format(*removedtrees[t + thousands * 1000]))
-    else:
+    elif len(removedtrees) > 0:
         for tree in removedtrees:
             print(tformat.format(*tree))
     print("> End of trees. {} in Total".format(len(removedtrees)))
