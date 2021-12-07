@@ -162,6 +162,18 @@ availableHeadlights = {
 }
 
 
+sandLevel = {
+    # Max amounts of sand
+    "porter_040": 100,
+    "porter_042": 100,
+    "climax": 100,
+    "heisler": 100,
+    "cooke260": 100,
+    "class70": 100,
+    "eureka": 100,
+}
+
+
 def getnaminglimits(frametype, field) -> tuple[int, int]:
     # Returns the limits of that field. 0 = Number, 1 = Name
     if frametype not in frametypeNamingLimiter:
