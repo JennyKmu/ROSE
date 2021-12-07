@@ -1,4 +1,4 @@
-rollingStockData = {}
+import numpy as np
 
 
 frametypeNamingLimiter = {
@@ -162,6 +162,18 @@ availableHeadlights = {
 }
 
 
+sandLevel = {
+    # Max amounts of sand
+    "porter_040": 100,
+    "porter_042": 100,
+    "climax": 100,
+    "heisler": 100,
+    "cooke260": 100,
+    "class70": 100,
+    "eureka": 100,
+}
+
+
 def getnaminglimits(frametype, field) -> tuple[int, int]:
     # Returns the limits of that field. 0 = Number, 1 = Name
     if frametype not in frametypeNamingLimiter:
@@ -233,73 +245,36 @@ def gettypedescription(frametype, short=0) -> str:
             return frametypeTranslatorLong["default"]
 
 
-def getnaming():
-    pass
+def getidentifier(type, name, number, loc, includey=False, indtypes=None, indlocs=None, onlynear=False):
+    # Get a set of formatted info as string: Type, Name and Number, Location, nearest industry and distance to it
+    typestr = gettypedescription(type, 1)
 
+    idstr = ""
+    if number is not None:
+        number = number.split("<br>")[0].strip()
+        if not number == "":
+            idstr += "{:>4} ".format(number)
+    if name is not None:
+        name = name.split("<br>")[0].strip()
+        if not name == "":
+            idstr += name
+    idstr = idstr[:40]
 
-def getnumber():
-    pass
+    returnpackage = [typestr, idstr]
 
+    if not onlynear:
+        locm = np.round_(loc / 100)
+        if includey:
+            locstr = "{:5.0f}|{:5.0f}|{:5.0f}".format(*locm)
+        else:
+            locstr = "{:5.0f}|{:5.0f}".format(locm[0], locm[2])
+        returnpackage.append(locstr)
 
-def setnaming():
-    pass
+    if indtypes is not None and indlocs is not None:
+        from .playerTeleportReferences import getclosest
+        from .industryPlacables import industryNames
+        nearest, distance = getclosest(loc, indlocs)
+        nearstr = industryNames[indtypes[nearest]] + " {:3.0f}m".format(distance/100)
+        returnpackage.append(nearstr)
 
-
-def setnumber():
-    pass
-
-
-def getshortnaming():
-    pass
-
-
-def getcargo():
-    pass
-
-
-def setcargo():
-    pass
-
-
-def getcargocars():
-    pass
-
-
-def getcargocarsoftype():
-    pass
-
-
-def getfuelreserve():
-    pass
-
-
-def setfuelreserve():
-    pass
-
-
-def getfuelreservecars():
-    pass
-
-
-def getwaterreserve():
-    pass
-
-
-def setwaterreserve():
-    pass
-
-
-def getwaterreservecars():
-    pass
-
-
-def getwaterboiler():
-    pass
-
-
-def setwaterboiler():
-    pass
-
-
-def getcarsbasedontype():
-    pass
+    return returnpackage

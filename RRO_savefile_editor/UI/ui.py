@@ -60,7 +60,7 @@ def mainMenu(gvas, dev_version_i=False):
         from .uidev import devslotA, devslotB, devslotC, devslotD, devslotE
         dev_options = [
             ("DEV A: move Industries", devslotA),
-            ("DEV B", devslotB),
+            ("DEV B: show removed Trees", devslotB),
             ("DEV C", devslotC),
             ("DEV D", devslotD),
             ("DEV E", devslotE)
@@ -554,10 +554,7 @@ def editindustries(gvas):
             line_format = " | ".join(formatters)
         print(line_format.format(
             "Inputs:",
-            inputstrs[0],
-            inputstrs[1],
-            inputstrs[2],
-            inputstrs[3],
+            *inputstrs
         ))
         if 1 == cur_line:
             line_format = formatters[0]
@@ -571,10 +568,7 @@ def editindustries(gvas):
             line_format = " | ".join(formatters)
         print(line_format.format(
             "Outputs:",
-            outputstrs[0],
-            outputstrs[1],
-            outputstrs[2],
-            outputstrs[3],
+            *outputstrs
         ))
 
         k = getKey()
@@ -668,18 +662,17 @@ def editplacables(gvas):
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
     dashline = dashline[2:]
-    offset = 0
     ltot = len(ind) + len(watertowers)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
-        n_page = 0
+        n_page = 1
     while True:
         print("Select Utility to fill (ESCAPE to quit, ENTER to fill)")
         print("")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -690,7 +683,7 @@ def editplacables(gvas):
         print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
@@ -723,7 +716,7 @@ def editplacables(gvas):
                 outputstr,
             ))
         for i in range(len(watertowers)):
-            if i + len(ind) not in range(offset, offset + 10) and split_data:
+            if np.floor((i+len(ind)) / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i + len(ind) == cur_line:
@@ -760,21 +753,20 @@ def editplacables(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
         if k == b'RETURN':
             if cur_line in range(len(ind)):
                 depotindex = ind[cur_line]
@@ -815,7 +807,6 @@ def playerteleport(gvas, dev_version=False):
     standardindlocs = industrylocs[standardinds]
 
     cur_line = 0
-    offset = 0
     ltot = len(playernames)
     if ltot > 10:
         split_data = True
@@ -895,19 +886,15 @@ def playerteleport(gvas, dev_version=False):
         k = getKey()
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if np.floor(cur_line / 10) < cur_page:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
             cur_line = min(cur_line + 1, ltot - 1)
-            if np.floor(cur_line / 10) > cur_page:
-                k = b'PAGE_DOWN'
         if k == b'PAGE_UP':
             if split_data and cur_page > 0:
                 cur_page -= 1
                 cur_line = cur_page * 10 + 9
             else:
                 cur_line = 0
-        if k == b'PAGE_DOWN':  # and split_data:
+        if k == b'PAGE_DOWN':
             if split_data and cur_page < n_page - 1:
                 cur_page += 1
                 cur_line = cur_page * 10
@@ -1047,12 +1034,8 @@ def playerteleport(gvas, dev_version=False):
                             n_line = 1
                             if k3 == b'KEY_UP':
                                 cur_line2 = max(0, cur_line2 - 1)
-                                if np.floor(cur_line2 / 10) < cur_page2:
-                                    k3 = b'PAGE_UP'
                             if k3 == b'KEY_DOWN':
                                 cur_line2 = min(cur_line2 + 1, ltot2 - 1)
-                                if np.floor(cur_line2 / 10) > cur_page2:
-                                    k3 = b'PAGE_DOWN'
                             if k3 == b'PAGE_UP' and split_data2:
                                 if cur_page2 < n_page2 - 1:
                                     cur_page2 += 1
@@ -1091,17 +1074,16 @@ def playerMenu(gvas):
     player_xp_prop = gvas.data.find("PlayerXPArray")
     cur_col = 0
     cur_line = 0
-    offset = 0
     ltot = len(player_names_prop.data)
-    if len(player_names_prop.data) > 10:
+    if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
     while True:
         print("Select a field to edit (ESCAPE to quit, ENTER to valid selection)")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print("{:<65s} | {:>9s} | {:>9s}".format(
@@ -1117,7 +1099,7 @@ def playerMenu(gvas):
         ]
         n_line = 0
         for i in range(len(player_names_prop.data)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             line_format = "{:<64s} "
@@ -1145,21 +1127,21 @@ def playerMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             prompt_text = "> Enter new value: "
             while True:
@@ -1191,9 +1173,7 @@ def renameStockMenu(gvas):
     framenumbers = gvas.data.find("FrameNumberArray").data
     framenames = gvas.data.find("FrameNameArray").data
     frametypes = gvas.data.find("FrameTypeArray").data
-    # print(framenumbers)
-    # print(framenames)
-    # print(frametypes)
+
     cur_col = 0
     cur_line = 0
     formatters = [
@@ -1201,11 +1181,10 @@ def renameStockMenu(gvas):
         "{:<32s}",
         "{:<32s}",
     ]
-    offset = 0
     ltot = len(frametypes)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
@@ -1213,7 +1192,7 @@ def renameStockMenu(gvas):
         print("Select field to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Use <br> to create multiple line values where applicable.")
         print("Sanity checks are enabled. To ignore limitation start your input with \i")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -1224,7 +1203,7 @@ def renameStockMenu(gvas):
         print("-" * (32 * 3 + 3 * 2))
         n_line = 0
         for i in range(len(frametypes)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
@@ -1244,10 +1223,6 @@ def renameStockMenu(gvas):
             num = '-' if num is None else num
             nam = '-' if nam is None else nam
 
-            # not necessary anymore (new line stored as <br>)
-            # num = num if '<br>' not in num else num.replace('\n', '<br>')
-            # nam = nam if '<br>' not in nam else nam.replace('\n', '<br>')
-
             print(line_format.format(
                 frametypeTranslatorLong[frametypes[i]],
                 num,
@@ -1261,21 +1236,21 @@ def renameStockMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             maximums = getnaminglimits(frametypes[cur_line], cur_col)
             if maximums[0] == 0 or maximums[1] == 0:
@@ -1332,32 +1307,40 @@ def teleportStockMenu(gvas):
     framebrakes = gvas.data.find("BrakeValueArray").data
     framecouplingfront = gvas.data.find("CouplerFrontStateArray").data
     framecouplingrear = gvas.data.find("CouplerRearStateArray").data
-    # print(framenumbers)
-    # print(framenames)
-    # print(frametypes)
+
+    indtypes = gvas.data.find("IndustryTypeArray").data
+    indlocs = gvas.data.find("IndustryLocationArray").data
+
+    standardtypes = []
+    standardlocs = []
+    for index in range(len(indtypes)):
+        if indtypes[index] in mapIndustries:
+            standardtypes.append(indtypes[index])
+            standardlocs.append(indlocs[index])
+
     cur_col = 0
     cur_line = 0
     formatters = [
-        "{:^7s}",
-        "{:<12s}",
-        "{:<16s}",
-        "{:<32s}",
-        "{:^11s}",
-        "{:^11s}"
+        "{:^6s}",
+        "{:<10s}",
+        "{:<25s}",
+        "{:^17s}",
+        "{:>18s}",
+        "{:^9s}",
+        "{:^9s}"
     ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
 
     min_height = 1000.
-    indexes = framelocs[:, 2] < min_height
-    submapframes = framelocs[indexes, :]
-
-
     status_str = "⬤"
 
-    offset = 0
     ltot = len(frametypes)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
@@ -1365,7 +1348,7 @@ def teleportStockMenu(gvas):
         n_line = 0
         print("Select method (ESCAPE to quit, ENTER to valid selection)")
         n_line += 1
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
 
         print("\033[1;41m" + "      " + "\033[0m marks frames which are below ground.")
         n_line += 1
@@ -1379,59 +1362,47 @@ def teleportStockMenu(gvas):
             n_line += 1
             print(f"\033[1;32m{nbelow}\033[0m frames were found below {int(min_height/100.):d} m in height.")
 
-
-
-
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
             n_line += 1
         print(" | ".join(formatters).format(
             "Status",
             "Frame type",
-            "Number",
-            "Name",
+            "Number/Name",
+            "Location",
+            "Near",
             "Respawn",
             "Yeet it"
         ))
-        print("-" * (32 * 3 + 3 * 2))
+        print(dashline)
         n_line += 2
 
-
         for i in range(len(frametypes)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
 
             if i == cur_line:
-                line_format = " | ".join(formatters[0:4])
+                line_format = " | ".join(formatters[:5])
                 for j in range(2):
                     line_format += " | "
                     if j == cur_col:
-                        line_format += selectfmt + formatters[j + 4] + "\033[0m"
+                        line_format += selectfmt + formatters[j + 5] + "\033[0m"
                     else:
-                        line_format += formatters[j + 4]
+                        line_format += formatters[j + 5]
             else:
                 line_format = " | ".join(formatters)
 
-            num = framenumbers[i]
-            nam = framenames[i]
+            identifier = getidentifier(frametypes[i], framenames[i], framenumbers[i], framelocs[i], True, standardtypes,
+                                       standardlocs)
 
-            num = '-' if num is None else num
-            nam = '-' if nam is None else nam
-
-            # not necessary anymore (new line stored as <br>)
-            # num = num if '<br>' not in num else num.replace('\n', '<br>')
-            # nam = nam if '<br>' not in nam else nam.replace('\n', '<br>')
-
-            if framelocs[i,2] < min_height:
+            if framelocs[i, 2] < min_height:
                 line_format = line_format.split(" | ")
                 line_format[0] = "\033[1;41m" + line_format[0] + "\033[0m"
                 line_format = " | ".join(line_format)
 
             print(line_format.format(
-                " ",
-                frametypeTranslatorShort[frametypes[i]],
-                num,
-                nam,
+                status_str,
+                *identifier,
                 "[RESPAWN]",
                 "[YEET IT]"
             ))
@@ -1444,21 +1415,21 @@ def teleportStockMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             moved_something = False
             if cur_col == 0:
@@ -1572,36 +1543,38 @@ def engineStockMenu(gvas):
     frameboilerwater = gvas.data.find("BoilerWaterLevelArray").data
     frametenderwater = gvas.data.find("TenderWaterAmountArray").data
     frametenderfuel = gvas.data.find("TenderFuelAmountArray").data
+    framesandamount = gvas.data.find("SanderAmountArray").data
 
     ind = []
     for i in range(len(frametypes)):
         if (frametypes[i] in waterBoiler.keys()) or (frametypes[i] in waterReserves.keys()) or \
-                (frametypes[i] in firewoodReserves.keys()):
+                (frametypes[i] in firewoodReserves.keys() or frametypes[i] in sandLevel.keys()):
             ind.append(i)
 
     cur_col = 0
     cur_line = 0
     formatters = [
         "{:<48s}",
-        "{:>14}",
-        "{:>14}",
         "{:>12}",
+        "{:>11}",
+        "{:>11}",
+        "{:>4}"
     ]
-    dashline =''
+    dashline = ''
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
-    offset = 0
+    dashline = dashline[2:]
     ltot = len(ind)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
     while True:
         print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Enter nothing to fill up, or type in an amount.")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -1609,16 +1582,17 @@ def engineStockMenu(gvas):
             "Water Boiler",
             "Water Tank",
             "Firewood",
+            "Sand",
         ))
         print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
                 line_format = formatters[0]
-                for j in range(3):
+                for j in range(4):
                     line_format += " | "
                     if j == cur_col:
                         line_format += selectfmt + formatters[j + 1] + "\033[0m"
@@ -1642,12 +1616,12 @@ def engineStockMenu(gvas):
             namestr = namestr[:48]
 
             if frametype in waterBoiler.keys():
-                waterboilerstr = "{:.1f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
+                waterboilerstr = "{:.0f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
             else:
                 waterboilerstr = ''
 
             if frametype in waterReserves.keys():
-                waterreservestr = "{:.1f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
+                waterreservestr = "{:.0f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
             else:
                 waterreservestr = ''
 
@@ -1656,35 +1630,41 @@ def engineStockMenu(gvas):
             else:
                 firewoodstr = ''
 
+            if frametype in sandLevel.keys():
+                sandstr = "{:.0f}%".format(framesandamount[ind[i]])
+            else:
+                sandstr = ''
+
             print(line_format.format(
                 namestr,
                 waterboilerstr,
                 waterreservestr,
                 firewoodstr,
+                sandstr
             ))
         k = getKey()
 
         if k == b'KEY_RIGHT':
-            cur_col = min(2, cur_col + 1)
+            cur_col = min(3, cur_col + 1)
         if k == b'KEY_LEFT':
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             curframetype = frametypes[ind[cur_line]]
             if cur_col == 0 and curframetype in waterBoiler.keys():
@@ -1756,6 +1736,29 @@ def engineStockMenu(gvas):
                     print("\033[{}A\033[J".format(1), end='')
                     break
 
+            elif cur_col == 3 and curframetype in sandLevel.keys():
+                prompt_text = "> Enter new value or leave blank for max: "
+                while True:
+                    val = input(prompt_text)
+                    try:
+                        if val == '':
+                            val = sandLevel[curframetype]
+                        else:
+                            val = float(val)
+                    except ValueError:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid input! Enter new value: "
+                        continue
+
+                    if val < 0 or val > sandLevel[curframetype]:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid amount! Enter new value: "
+                        continue
+
+                    framesandamount[ind[cur_line]] = val
+                    print("\033[{}A\033[J".format(1), end='')
+                    break
+
         if ltot <= 10:
             print("\033[{}A\033[J".format(ltot + 4), end='')
         else:
@@ -1788,18 +1791,17 @@ def editattachmentmenu(gvas):
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
     dashline = dashline[2:]
-    offset = 0
     ltot = len(ind)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
     while True:
         print("Select field to edit (ESCAPE to quit, ENTER to valid selection)")
         print("")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -1810,7 +1812,7 @@ def editattachmentmenu(gvas):
         print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
@@ -1869,21 +1871,21 @@ def editattachmentmenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             curtype = frametypes[ind[cur_line]]
             if cur_col == 0 and curtype in availableSmokestacks.keys():
@@ -1961,6 +1963,17 @@ def cargoStockMenu(gvas):
     frametypes = gvas.data.find("FrameTypeArray").data
     framecargotypes = gvas.data.find("FreightTypeArray").data
     framecargoamounts = gvas.data.find("FreightAmountArray").data
+    framelocations = gvas.data.find("FrameLocationArray").data
+
+    indtypes = gvas.data.find("IndustryTypeArray").data
+    indlocs = gvas.data.find("IndustryLocationArray").data
+
+    standardtypes = []
+    standardlocs = []
+    for index in range(len(indtypes)):
+        if indtypes[index] in mapIndustries:
+            standardtypes.append(indtypes[index])
+            standardlocs.append(indlocs[index])
 
     ind = []
     for i in range(len(frametypes)):
@@ -1970,60 +1983,59 @@ def cargoStockMenu(gvas):
     cur_col = 0
     cur_line = 0
     formatters = [
-        "{:<48s}",
+        "{:^8}",
+        "{:<40}",
+        "{:>18}",
         "{:<12}",
         "{:>6}",
     ]
-    offset = 0
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
+
     ltot = len(ind)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
     while True:
         print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Empty fields mean this wagon hasn't been used yet")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
-            "Cargo Wagon",
             "Type",
+            "Number / Name",
+            "Near",
+            "Cargo",
             "Amount"
         ))
-        print("-" * (48 + 12 + 6 + 3 * 2))
+        print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
-                line_format = formatters[0]
+                line_format = " | ".join(formatters[:3])
                 for j in range(2):
                     line_format += " | "
                     if j == cur_col:
-                        line_format += selectfmt + formatters[j + 1] + "\033[0m"
+                        line_format += selectfmt + formatters[j + 3] + "\033[0m"
                     else:
-                        line_format += formatters[j + 1]
+                        line_format += formatters[j + 3]
             else:
                 line_format = " | ".join(formatters)
 
-            frametype = frametypes[ind[i]]
-            num = framenumbers[ind[i]]
-            nam = framenames[ind[i]]
-            cargo = framecargotypes[ind[i]]
+            j = ind[i]
+            cargo = framecargotypes[j]
 
-            num = '' if num is None else num
-            nam = '' if nam is None else nam
-
-            namestr = "{:<10s}:".format(frametypeTranslatorShort[frametype])
-            if not num == '':
-                namestr += " " + num.split("<br>")[0].strip()
-            if not nam == '':
-                namestr += " " + nam.split("<br>")[0].strip()
-            namestr = namestr[:48]
+            identifier = getidentifier(frametypes[j], framenames[j], framenumbers[j], framelocations[j], True,
+                                       standardtypes, standardlocs, True)
 
             if cargo in cargotypeTranslator.keys():
                 cargostr = cargotypeTranslator[cargo]
@@ -2033,13 +2045,13 @@ def cargoStockMenu(gvas):
                 cargostr = cargotypeTranslator["default"]
 
             if cargo is not None:
-                amount = framecargoamounts[ind[i]]
-                amountstr = "{}/{}".format(amount, frametypeCargoLimits[frametype][cargo])
+                amount = framecargoamounts[j]
+                amountstr = "{}/{}".format(amount, frametypeCargoLimits[frametypes[j]][cargo])
             else:
                 amountstr = ''
 
             print(line_format.format(
-                namestr,
+                *identifier,
                 cargostr,
                 amountstr
             ))
@@ -2051,21 +2063,21 @@ def cargoStockMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             curframetype = frametypes[ind[cur_line]]
             curframecargo = framecargotypes[ind[cur_line]]
@@ -2148,12 +2160,22 @@ def changestockmenu(gvas):
     framecargotypes = gvas.data.find("FreightTypeArray").data
     framecargoamounts = gvas.data.find("FreightAmountArray").data
 
+    indtypes = gvas.data.find("IndustryTypeArray").data
+    indlocs = gvas.data.find("IndustryLocationArray").data
+
+    standardtypes = []
+    standardlocs = []
+    for index in range(len(indtypes)):
+        if indtypes[index] in mapIndustries:
+            standardtypes.append(indtypes[index])
+            standardlocs.append(indlocs[index])
+
     cur_line = 0
     formatters = [
-        "{:>10}",
-        "{:<48}",
-        "{:^13}",
-        "{:<18}",
+        "{:^10}",
+        "{:<40}",
+        "{:>18}",
+        "{:<16}",
     ]
     dashline = ''
     for i in formatters:
@@ -2168,11 +2190,10 @@ def changestockmenu(gvas):
     ltot = len(ind)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
-        n_page = 0
-    offset = 0
+        n_page = 1
     while True:
         print("Select flatcar (ESCAPE to quit, ENTER to valid selection)")
         supported_names = "Only supported types are: "
@@ -2180,21 +2201,21 @@ def changestockmenu(gvas):
             supported_names += gettypedescription(flatcar, 1) + ", "
         print(supported_names[:-2])
         n_line = 2
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
             n_line += 1
         print(" | ".join(formatters).format(
-            "Frametype",
+            "Type",
             "Number / Name",
-            "Location",
+            "Near",
             "Cargo"
         ))
         print(dashline)
         n_line += 2
 
         for i in range(ltot):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
 
             if i == cur_line:
@@ -2203,20 +2224,11 @@ def changestockmenu(gvas):
             else:
                 line_format = " | ".join(formatters)
 
+            j = ind[i]
             frametype = frametypes[ind[i]]
 
-            num = '' if framenumbers[ind[i]] is None else framenumbers[ind[i]]
-            nam = '' if framenames[ind[i]] is None else framenames[ind[i]]
-
-            namestr = ""
-            if not num == '':
-                namestr += " " + num.split("<br>")[0].strip()
-            if not nam == '':
-                namestr += " " + nam.split("<br>")[0].strip()
-            namestr = namestr[:48]
-
-            curloc = framelocs[ind[i]]
-            locstr = "{:>5} | {:>5}".format(round(curloc[0] / 100), round(curloc[1] / 100))
+            identifier = getidentifier(frametype, framenames[j], framenumbers[j], framelocs[j], False,
+                                       standardtypes, standardlocs, True)
 
             curcargotype = framecargotypes[ind[i]]
             if curcargotype is None:
@@ -2229,33 +2241,29 @@ def changestockmenu(gvas):
                     cargostr = "{:2}/{:2} ".format(curcargoamount, frametypeCargoLimits[frametype][curcargotype]) + \
                         cargotypeTranslator[curcargotype]
 
-
             print(line_format.format(
-                frametypeTranslatorShort[frametype],
-                namestr,
-                locstr,
+                *identifier,
                 cargostr
             ))
             n_line += 1
         k = getKey()
-
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
-        if k == b'PAGE_UP' and split_data:
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
-        if k == b'PAGE_DOWN' and split_data:
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            cur_line = min(cur_line + 1, ltot - 1)
+        if k == b'PAGE_UP':
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
+        if k == b'PAGE_DOWN':
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             curframetype = frametypes[ind[cur_line]]
             cursor = 0
