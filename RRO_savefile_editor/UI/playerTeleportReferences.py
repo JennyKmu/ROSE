@@ -31,7 +31,7 @@ location_names = {
     ''
 }
 
-player_teleport_pts = {  # keys referring to industry types
+player_teleport_pts = {  # keys referring to industry types or rolling stock
     # Absolute positions: [False, [x, y, z], r]
     # Relative positions: [True, [rel dir, rel dist, rel z], rel r]
     0: [False, [338.8, -3430.9, 10182.3], 0.0],  # Spawn point
@@ -45,6 +45,7 @@ player_teleport_pts = {  # keys referring to industry types
     8: [True, [92.5, 1885.9, 220.2], 255.0],  # Iron mine
     9: [True, [-163.2, 3160.8, 206.7], 30.0],  # Freight Depot
     10: [True, [-62.3, 531.1, 178.9], 56.0],  # Firewood Depot
+    "caboose": [True, [194.1, 162.4, 100.0], 0.0],  # Bobber Caboose
 }
 
 
