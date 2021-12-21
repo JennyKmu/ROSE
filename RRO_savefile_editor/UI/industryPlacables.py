@@ -9,6 +9,10 @@ industryNames = {
     6: "Refinery",
     9: "Freight Depot",
     10: "Firewood Depot",
+    11: "Shed Alp. Blue",
+    12: "Shed AspenGold",
+    13: "Shed Barn Red",
+    14: "Shed Min.Brown",
 }
 
 
@@ -74,4 +78,11 @@ waterTower = {
 sandHouse = {
     "type": 0,
     "output": 50,
+}
+
+shed = {
+    11: "Alpine Blue",
+    12: "Aspen Gold",
+    13: "Barn Red",
+    14: "Mineral Brown"
 }

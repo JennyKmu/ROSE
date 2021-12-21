@@ -44,7 +44,7 @@ def inner_main():
 
     version = (0, 3, 9)
     dev_version = True
-    beta_version = False
+    beta_version = True
     current_save_version = "1"
 
     def header():

@@ -1,8 +1,10 @@
 __pycache__
 *.sav
-backup
+backup*
 build
 dist
 *.spec
 *.exe
 *.pyz
+saves
+venv

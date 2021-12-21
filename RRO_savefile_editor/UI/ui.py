@@ -21,9 +21,18 @@ selectfmt = "\033[1;32;42m"
 
 
 def selectSaveFile(loc):
+    excludedfiles = [
+        "Options.sav",
+        "GraphicsOptions.sav",
+    ]
     # filelist = glob.glob(loc + '/' + "slot*.sav")
     filelist = glob.glob(loc + '/' + "*.sav")
     current = 0
+    if len(filelist) == 0:
+        return None
+    for file in filelist:
+        if file.split("\\")[-1] in excludedfiles:
+            filelist.remove(file)
     if len(filelist) == 0:
         return None
     while True:
@@ -115,11 +124,18 @@ def noSaveAndExit(gvas):
     sys.exit()
 
 
+def failedtofind(string):
+    print("Couldn't find {} on your save.\nPress any key to return".format(string))
+    getKey()
+    print("\033[2A\033[J", end='')
+
+
 def mainEnvMenu(gvas):
     options = [
         ("Edit Industry Contents", editindustries),
         ("Edit Utility Contents", editplacables),
         ("Smart tree reset", resetTreesSmart),
+        ("Repaint Sheds", exchangesheds),
         ("Reset trees to new game state (EXPERIMENTAL)", resetTreesToNewGame),
     ]
     current = 0
@@ -471,7 +487,11 @@ def resetTreesSmart(gvas):
 
 
 def editindustries(gvas):
-    industrytypes = gvas.data.find("IndustryTypeArray").data
+    try:
+        industrytypes = gvas.data.find("IndustryTypeArray").data
+    except AttributeError:
+        failedtofind("industries")
+        return
     industryin1 = gvas.data.find("IndustryStorageEduct1Array").data
     industryin2 = gvas.data.find("IndustryStorageEduct2Array").data
     industryin3 = gvas.data.find("IndustryStorageEduct3Array").data
@@ -488,6 +508,9 @@ def editindustries(gvas):
     for i in range(len(industrytypes)):
         if industrytypes[i] in industryInputs.keys() or industrytypes[i] in industryOutputs.keys():
             ind.append(i)
+    if len(ind) == 0:
+        failedtofind("industries")
+        return
 
     cur_col = 0
     cur_line = 0
@@ -635,16 +658,30 @@ def editindustries(gvas):
 
 
 def editplacables(gvas):
-    industrytypes = gvas.data.find("IndustryTypeArray").data
-    industrylocations = gvas.data.find("IndustryLocationArray").data
-    industryinputs1 = gvas.data.find("IndustryStorageEduct1Array").data
-    industryoutputs1 = gvas.data.find("IndustryStorageProduct1Array").data
-    industryoutputs2 = gvas.data.find("IndustryStorageProduct2Array").data
-    industryoutputs3 = gvas.data.find("IndustryStorageProduct3Array").data
-    industryoutputs4 = gvas.data.find("IndustryStorageProduct4Array").data
-    watertowers = gvas.data.find("WatertowerTypeArray").data
-    watertowerlocations = gvas.data.find("WatertowerLocationArray").data
-    watertowerlevels = gvas.data.find("WatertowerWaterlevelArray").data
+    try:
+        industrytypes = gvas.data.find("IndustryTypeArray").data
+        industrylocations = gvas.data.find("IndustryLocationArray").data
+        industryinputs1 = gvas.data.find("IndustryStorageEduct1Array").data
+        industryoutputs1 = gvas.data.find("IndustryStorageProduct1Array").data
+        industryoutputs2 = gvas.data.find("IndustryStorageProduct2Array").data
+        industryoutputs3 = gvas.data.find("IndustryStorageProduct3Array").data
+        industryoutputs4 = gvas.data.find("IndustryStorageProduct4Array").data
+    except AttributeError:
+        industrytypes = []
+        industrylocations = []
+        industryinputs1 = []
+        industryoutputs1 = []
+        industryoutputs2 = []
+        industryoutputs3 = []
+        industryoutputs4 = []
+    try:
+        watertowers = gvas.data.find("WatertowerTypeArray").data
+        watertowerlocations = gvas.data.find("WatertowerLocationArray").data
+        watertowerlevels = gvas.data.find("WatertowerWaterlevelArray").data
+    except AttributeError:
+        watertowers = []
+        watertowerlocations = []
+        watertowerlevels = []
 
     ind = []
     for i in range(len(industrytypes)):
@@ -663,6 +700,9 @@ def editplacables(gvas):
         dashline += "---" + len(i.format('')) * "-"
     dashline = dashline[2:]
     ltot = len(ind) + len(watertowers)
+    if ltot == 0:
+        failedtofind("Depots or Water towers")
+        return
     if ltot > 10:
         split_data = True
         n_page = int(np.ceil(ltot / 10))
@@ -790,21 +830,183 @@ def editplacables(gvas):
             return None
 
 
-def playerteleport(gvas, dev_version=False):
-    playernames = gvas.data.find("PlayerNameArray").data
-    playerlocs = gvas.data.find("PlayerLocationArray").data
-    playerrots = gvas.data.find("PlayerRotationArray").data
+def exchangesheds(gvas):
+    try:
+        industrytypes = gvas.data.find("IndustryTypeArray").data
+        industrylocations = gvas.data.find("IndustryLocationArray").data
+    except AttributeError:
+        failedtofind("sheds")
+        return
 
-    industrytypes = gvas.data.find("IndustryTypeArray").data
-    industrylocs = gvas.data.find("IndustryLocationArray").data
-    industryrots = gvas.data.find("IndustryRotationArray").data
-
+    ind = []
     standardinds = []
     for i in range(len(industrytypes)):
+        if industrytypes[i] in shed.keys():
+            ind.append(i)
         if industrytypes[i] in mapIndustries:
             standardinds.append(i)
     standardindtypes = industrytypes[standardinds]
-    standardindlocs = industrylocs[standardinds]
+    standardlocations = industrylocations[standardinds]
+    if len(ind) == 0:
+        failedtofind("sheds")
+        return
+
+    cur_line = 0
+    formatters = [
+        "{:15}",
+        "{:15}",
+        "{:15}",
+        "{:8}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
+    ltot = len(ind)
+    if ltot > 10:
+        split_data = True
+        n_page = int(np.ceil(ltot / 10))
+    else:
+        split_data = False
+        n_page = 1
+    while True:
+        print("Select Shed to repaint (ESCAPE to quit, ENTER to select)")
+        print("")
+        cur_page = int(np.floor(cur_line / 10))
+        if split_data:
+            print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
+        print(" | ".join(formatters).format(
+            "Shed",
+            "Location",
+            "Near",
+            "Distance",
+        ))
+        print(dashline)
+        n_line = 0
+        for i in range(len(ind)):
+            if np.floor(i / 10) != cur_page and split_data:
+                continue
+            n_line += 1
+            if i == cur_line:
+                line_format = selectfmt + formatters[0] + "\033[0m | "
+                line_format += " | ".join(formatters[1:])
+            else:
+                line_format = " | ".join(formatters)
+
+            namestr = industryNames[industrytypes[ind[i]]]
+            curlocation = industrylocations[ind[i]]
+            curx = round(curlocation[0] / 100)
+            cury = round(curlocation[1] / 100)
+            locstr = "{:>6}/{:>6}".format(curx, cury)
+
+            closest = getclosest(curlocation, standardlocations)
+            closestname = industryNames[standardindtypes[closest[0]]]
+            closestdist = "{:>6}m".format(int(closest[1]/100))
+
+            print(line_format.format(
+                namestr,
+                locstr,
+                closestname,
+                closestdist
+            ))
+
+        k = getKey()
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+        if k == b'KEY_DOWN':
+            cur_line = min(cur_line + 1, ltot - 1)
+        if k == b'PAGE_UP':
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
+        if k == b'PAGE_DOWN':
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+        if k == b'RETURN':
+            curshedtype = industrytypes[ind[cur_line]]
+            choices = []
+            for shedtype in shed.keys():
+                choices.append(shedtype)
+            cursor = choices.index(curshedtype)
+            while True:
+                typeselection = "> Choose new paint:"
+                for option in range(len(choices)):
+                    if option == cursor:
+                        typeselection += "  " + selectfmt + shed[choices[option]] + "\033[0m"
+                    else:
+                        typeselection += "  " + shed[choices[option]]
+                print(typeselection)
+
+                k2 = getKey()
+                print("\033[{}A\033[J".format(1), end='')
+
+                if k2 == b'KEY_RIGHT':
+                    cursor = min(len(choices) - 1, cursor + 1)
+                if k2 == b'KEY_LEFT':
+                    cursor = max(0, cursor - 1)
+
+                if k2 == b'RETURN':
+                    industrytypes[ind[cur_line]] = choices[cursor]
+                    break
+
+                if k2 == b'ESCAPE':
+                    break
+
+        if ltot <= 10:
+            print("\033[{}A\033[J".format(ltot + 4), end='')
+        else:
+            print("\033[{}A\033[J".format(n_line + 5), end='')
+
+        if k == b'ESCAPE':
+            return None
+
+
+def playerteleport(gvas):
+    try:
+        playernames = gvas.data.find("PlayerNameArray").data
+        playerlocs = gvas.data.find("PlayerLocationArray").data
+        playerrots = gvas.data.find("PlayerRotationArray").data
+    except AttributeError:
+        failedtofind("players")
+        return
+
+    try:
+        industrytypes = gvas.data.find("IndustryTypeArray").data
+        industrylocs = gvas.data.find("IndustryLocationArray").data
+        industryrots = gvas.data.find("IndustryRotationArray").data
+    except AttributeError:
+        industrytypes = []
+        industrylocs = []
+        industryrots = []
+
+    if len(industrytypes) > 0:
+        standardinds = []
+        for i in range(len(industrytypes)):
+            if industrytypes[i] in mapIndustries:
+                standardinds.append(i)
+        standardindtypes = industrytypes[standardinds]
+        standardindlocs = industrylocs[standardinds]
+    else:
+        standardindtypes = []
+        standardindlocs = []
+
+    try:
+        framenumbers = gvas.data.find("FrameNumberArray").data
+        framenames = gvas.data.find("FrameNameArray").data
+        frametypes = gvas.data.find("FrameTypeArray").data
+        framelocs = gvas.data.find("FrameLocationArray").data
+        framerots = gvas.data.find("FrameRotationArray").data
+    except AttributeError:
+        framenumbers = []
+        framenames = []
+        frametypes = []
+        framelocs = []
+        framerots = []
 
     cur_line = 0
     ltot = len(playernames)
@@ -867,7 +1069,20 @@ def playerteleport(gvas, dev_version=False):
                     diststr = "{:.2f}m".format(closest[1]/100)
                     closestpos = industrylocs[closest[0]]
                     closestrot = industryrots[closest[0]]
-                    print("Closest: {} in {:.0f}cm".format(industrytypes[closest[0]], closest[1]))
+                    print("Closest Ind: {} in {:.0f}cm".format(industrytypes[closest[0]], closest[1]))
+                    print("Player vals: {} {}".format(cur_loc, cur_rot))
+                    print("Target vals: {} {}".format(closestpos, closestrot))
+                    print("Relative:    [Dir {:.1f}, Dist {:.1f}, Height {:.1f}], Rot {:.1f}".format(
+                        *getrelative(cur_loc, cur_rot, closestpos, closestrot)))
+                    n_line += 4
+
+                if dev_version and cur_line == 0 and i == 0:  # DEV Tool to find relative positions
+                    closest = getclosest(cur_loc, framelocs)
+                    clostr = frametypeTranslatorShort[frametypes[closest[0]]]
+                    diststr = "{:.2f}m".format(closest[1]/100)
+                    closestpos = framelocs[closest[0]]
+                    closestrot = framerots[closest[0]]
+                    print("Closest car: {} in {:.0f}cm".format(frametypes[closest[0]], closest[1]))
                     print("Player vals: {} {}".format(cur_loc, cur_rot))
                     print("Target vals: {} {}".format(closestpos, closestrot))
                     print("Relative:    [Dir {:.1f}, Dist {:.1f}, Height {:.1f}], Rot {:.1f}".format(
@@ -907,6 +1122,7 @@ def playerteleport(gvas, dev_version=False):
                 "Spawn.",
                 "Industry...",
                 "Firewood Depot...",
+                "Caboose...",
                 "other Player..."
             ]
             while True:
@@ -948,6 +1164,18 @@ def playerteleport(gvas, dev_version=False):
                                     listloc.append(industrylocs[i])
                                     listrot.append(industryrots[i])
                         elif cursor == 3:
+                            listname = "Caboose"
+                            for i in range(len(frametypes)):
+                                if frametypes[i] in player_teleport_pts.keys():
+                                    cabooseid = getidentifier(frametypes[i], framenames[i], framenumbers[i],
+                                                              framelocs[i], onlynear=True)
+                                    if cabooseid[1] == "":
+                                        list.append(cabooseid[0])
+                                    else:
+                                        list.append(cabooseid[1])
+                                    listloc.append(framelocs[i])
+                                    listrot.append(framerots[i])
+                        elif cursor == 4:
                             listname = "Player"
                             for i in range(len(playernames)):
                                 if playernames[i] != playernames[cur_line]:
@@ -957,6 +1185,7 @@ def playerteleport(gvas, dev_version=False):
                         else:
                             break  # to make the IDE happy and prevent anything weird
                         if len(list) == 0:  # if there is nothing to choose from, abort
+                            failedtofind("teleport targets")
                             break
 
                         namelist = []
@@ -968,14 +1197,16 @@ def playerteleport(gvas, dev_version=False):
                             cur_y = int(round(listloc[j][1] / 100))
                             cur_z = int(round(listloc[j][2] / 100))
                             loclist.append("{:.0f}/{:.0f}/{:.0f}".format(cur_x, cur_y, cur_z))
-                            if cursor != 3:  # Name is an Industry or Firewood Depot
+                            if cursor == 1 or cursor == 2:  # Name is an Industry or Firewood Depot
                                 namelist.append(industryNames[list[j]])
-                            else:            # Name is player
+                            elif cursor == 3:               # Name is Caboose
+                                namelist.append(list[j])
+                            elif cursor == 4:               # Name is player
                                 namelist.append(list[j])
                             if cursor == 1:  # Is industry, no need to find nearest
                                 nearlist.append("")
                                 distlist.append("")
-                            else:            # Nearest Industry to Firewood Depot or Player
+                            else:            # Nearest Industry
                                 closest = getclosest(listloc[j], standardindlocs)
                                 nearlist.append(industryNames[standardindtypes[closest[0]]])
                                 distlist.append("{:.2f}m".format(closest[1] / 100))
@@ -1004,7 +1235,7 @@ def playerteleport(gvas, dev_version=False):
                             print("Teleport " + selectfmt + playernames[cur_line] + "\033[0m to ...")
                             print("Select destination (ESCAPE to quit, ENTER to select)")
                             cur_page2 = np.floor(cur_line2/10)
-                            if split_data:
+                            if split_data2:
                                 print("Use PAGE UP and PAGE DOWN to scroll pages ({}/{})".format(cur_page + 1, n_page))
                                 n_line += 1
                             print(" | ".join(formatters2).format(
@@ -1036,26 +1267,32 @@ def playerteleport(gvas, dev_version=False):
                                 cur_line2 = max(0, cur_line2 - 1)
                             if k3 == b'KEY_DOWN':
                                 cur_line2 = min(cur_line2 + 1, ltot2 - 1)
-                            if k3 == b'PAGE_UP' and split_data2:
-                                if cur_page2 < n_page2 - 1:
-                                    cur_page2 += 1
-                                    cur_line2 = cur_page2 * 10
-                            if k3 == b'PAGE_DOWN' and split_data2:
-                                if cur_page2 > 0:
+                            if k3 == b'PAGE_UP':
+                                if cur_page2 < n_page2 - 1 and split_data2:
                                     cur_page2 -= 1
                                     cur_line2 = cur_page2 * 10
+                                else:
+                                    cur_line2 = 0
+                            if k3 == b'PAGE_DOWN':
+                                if cur_page2 > 0 and split_data2:
+                                    cur_page2 += 1
+                                    cur_line2 = cur_page2 * 10
+                                else:
+                                    cur_line2 = ltot2 - 1
                             if k3 == b'ESCAPE':
                                 break
                             if k3 == b'RETURN':
-                                if cursor == 3:  # if it's a player, just copy values
+                                if cursor == 4:  # if it's a player, just copy values
                                     playerlocs[cur_line] = listloc[cur_line2]
                                     playerrots[cur_line] = listrot[cur_line2]
                                 else:            # else get the absolute position that's relative to the target
-                                    newposrot = getplayertppos(list[cur_line2], listloc[cur_line2], listrot[cur_line2])
+                                    if cursor == 3:  # for cabooses replace name with type
+                                        tptype = "caboose"
+                                    else:
+                                        tptype = list[cur_line2]
+                                    newposrot = getplayertppos(tptype, listloc[cur_line2], listrot[cur_line2])
                                     playerlocs[cur_line] = newposrot[0]
                                     playerrots[cur_line] = newposrot[1]
-                                # TODO: check if all tp positions are correct, else
-                                # playerlocs[cur_line][2] += 20.  # add height just in case
                                 break  # exit destination sel
                         n_line -= 2
                         break  # exit destination type sel, always happens after leaving destination sel
@@ -1893,7 +2130,11 @@ def editattachmentmenu(gvas):
                 for option in range(1, availableSmokestacks[curtype] + 1):
                     choices.append(option)
                 curstack = framestacks[ind[cur_line]] - 1
-                cursor = curstack if curstack + 1 in choices else 0
+                try:
+                    cursor = choices.index(curstack) + 1
+                except ValueError:
+                    cursor = 0
+                # cursor = curstack if curstack + 1 in choices else 0
                 while True:
                     typeselection = "> Choose new Smokestack:"
                     for option in range(len(choices)):
@@ -1923,7 +2164,11 @@ def editattachmentmenu(gvas):
                 for option in range(1, availableHeadlights[curtype] + 1):
                     choices.append(option)
                 curlight = framelights[ind[cur_line]] - 1
-                cursor = curlight if curlight + 1 in choices else 0
+                try:
+                    cursor = choices.index(curlight) + 1
+                except ValueError:
+                    cursor = 0
+                # cursor = curlight if curlight + 1 in choices else 0
                 while True:
                     typeselection = "> Choose new Headlight:"
                     for option in range(len(choices)):
@@ -2082,10 +2327,10 @@ def cargoStockMenu(gvas):
             curframetype = frametypes[ind[cur_line]]
             curframecargo = framecargotypes[ind[cur_line]]
             if cur_col == 0:
-                cursor = 0
                 choices = [None, ]
                 for cargotype in frametypeCargoLimits[curframetype].keys():
                     choices.append(cargotype)
+                cursor = choices.index(curframecargo)
                 while True:
                     typeselection = "> Choose new cargo:"
                     for option in range(len(choices)):
@@ -2266,10 +2511,10 @@ def changestockmenu(gvas):
 
         if k == b'RETURN':
             curframetype = frametypes[ind[cur_line]]
-            cursor = 0
             choices = []
             for frametype in frametypeExchangeable:
                 choices.append(frametype)
+            cursor = choices.index(curframetype)
             while True:
                 typeselection = "> Choose new type:"
                 for option in range(len(choices)):

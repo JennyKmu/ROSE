@@ -20,6 +20,7 @@ frametypeNamingLimiter = {
     "eureka": {"numlen": 2, "numlines": 1, "namelen": 8, "namelines": 1},
     "eureka_tender": {"numlen": 0, "numlines": 0, "namelen": 18, "namelines": 1},
     "handcar": {"numlen": 5, "numlines": 1, "namelen": 18, "namelines": 1},
+    "caboose": {"numlen": 12, "numlines": 1, "namelen": 20, "namelines": 1},
 }
 
 
@@ -42,6 +43,7 @@ frametypeTranslatorLong = {
     "eureka": "Eureka",
     "eureka_tender": "Eureka Tender",
     "handcar": "Handcar",
+    "caboose": "Bobber Caboose",
 }
 
 
@@ -64,6 +66,7 @@ frametypeTranslatorShort = {
     "eureka": "Eureka",
     "eureka_tender": "Eureka-T",
     "handcar": "Handcar",
+    "caboose": "Caboose",
 }
 
 
@@ -96,6 +99,7 @@ cargotypeTranslator = {
 
 
 frametypeExchangeable = [
+    # Flatcars that have the exact same length
     "flatcar_logs",
     "flatcar_stakes",
     "flatcar_cordwood",
@@ -112,10 +116,14 @@ firewoodReserves = {
     "cooke260_tender": 1460,
     "class70_tender": 1350,
     "eureka_tender": 499,
+    "caboose": 15,
 }
 
 
 waterReserves = {
+    # Amount of water that fits in the tank
+    # For tank engines, it's with the engine
+    # For tender engines, it's with the engine
     "porter_040": 800,
     "porter_042": 800,
     "climax": 3000,
@@ -127,6 +135,7 @@ waterReserves = {
 
 
 waterBoiler = {
+    # Amount of water that fits in the boiler
     "porter_040": 500,
     "porter_042": 500,
     "climax": 4000,
@@ -245,9 +254,9 @@ def gettypedescription(frametype, short=0) -> str:
             return frametypeTranslatorLong["default"]
 
 
-def getidentifier(type, name, number, loc, includey=False, indtypes=None, indlocs=None, onlynear=False):
+def getidentifier(stocktype, name, number, loc, includey=False, indtypes=None, indlocs=None, onlynear=False):
     # Get a set of formatted info as string: Type, Name and Number, Location, nearest industry and distance to it
-    typestr = gettypedescription(type, 1)
+    typestr = gettypedescription(stocktype, 1)
 
     idstr = ""
     if number is not None:
