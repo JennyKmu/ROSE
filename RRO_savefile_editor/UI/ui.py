@@ -134,7 +134,7 @@ def mainEnvMenu(gvas):
     options = [
         ("Edit Industry Contents", editindustries),
         ("Edit Utility Contents", editplacables),
-        ("Smart tree reset", resetTreesSmart),
+        ("Smart tree replant", resetTreesSmart),
         ("Repaint Sheds", exchangesheds),
         ("Reset trees to new game state (EXPERIMENTAL)", resetTreesToNewGame),
     ]
@@ -214,7 +214,7 @@ def resetTreesSmart(gvas):
     print(" * Trees in the middle of the track (obviously)")
     print(" * Rolling stock being yeeted through the air at hypersonic speeds...")
     print(" * Or worse, through the ground. But for that you can use the respawn tool.")
-    print("This tool will attempt to reset trees avoiding tracks and other assets.")
+    print("This tool will attempt to replant trees avoiding tracks and other assets.")
     print("Expect some computing time after launching the tool.")
 
 
@@ -223,6 +223,9 @@ def resetTreesSmart(gvas):
     safeDistWater= 700.
     safeDistFirewood = 1500.
     safeDistSand = 1200.
+    # TODO: Add actual shapes (rectangles) for the facilities to be able to replant very close to them
+    # Shed for example has the origin placed at the front wall, it would not allow replanting in a very large
+    # area in front of it when using just a radius.
 
     removedTreesProp = gvas.data.find("RemovedVegetationAssetsArray")
     splinepoints = gvas.data.find("SplineControlPointsArray")
@@ -230,12 +233,15 @@ def resetTreesSmart(gvas):
     industrytype = gvas.data.find("IndustryTypeArray")
     industrypos = gvas.data.find("IndustryLocationArray")
     firewoodpos = industrypos.data[industrytype.data == firewoodDepot["type"], :]
+    shedpos = industrypos.data[industrytype in shed.keys(), :]
     sandpos = gvas.data.find("SandhouseLocationArray")
     switchpos = gvas.data.find("SwitchLocationArray")
     # switchtype = gvas.data.find("SwitchTypeArray")
 
     if firewoodpos.size == 0:
         firewoodpos = None
+    if shedpos.size == 0:
+        shedpos = None
     if switchpos is not None:
         if switchpos.data.size == 0:
             switchpos = None
@@ -269,10 +275,11 @@ def resetTreesSmart(gvas):
                 t0 = time.perf_counter()
 
                 A = removedTreesProp.data
-                B = splinepoints.data
+                B = splinepoints.data if splinepoints is not None else None
                 C = waterpos.data if waterpos is not None else None
                 D = firewoodpos
                 E = sandpos.data if sandpos is not None else None
+                F = shedpos
 
                 # print(f"Before reset: {A.shape}")
                 # print(repr(A))
@@ -285,17 +292,18 @@ def resetTreesSmart(gvas):
 
                 # print(f"After removing origin: {A.shape}")
                 check_comp_data = (
-                    B.size > 0 or
+                    B is not None or
                     C is not None or
-                    D.size > 0 or
-                    E is not None
+                    D is not None or
+                    E is not None or
+                    F is not None
                     )
                 # Check if there's enough data for comparison else give rose default trees
                 if A.size == 0 or not check_comp_data:
                     A = np.vstack([T, R])
                     removedTreesProp._data = A.astype(np.float32)
                     t1 = time.perf_counter()
-                    print(f"There is no tree to reset. Computation took {t1-t0:f} s.")
+                    print(f"There is no tree to replant. Computation took {t1-t0:f} s.")
                     print("(Press any key to go back to previous menu)")
                     getKey()
                     print("\033[{}A\033[J".format(10), end='')
@@ -449,11 +457,14 @@ def resetTreesSmart(gvas):
                     cdistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-C[None,:2,:])**2, axis=1)), axis=1)
                     distmask = np.vstack([distmask, cdistmask])
                 if D is not None:
-                    ddistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-D[None,:2,:])**2, axis=1)), axis=1)
+                    ddistmask = safeDistFirewood > np.min(np.sqrt(np.sum((A[:,:2,None]-D[None,:2,:])**2, axis=1)), axis=1)
                     distmask = np.vstack([distmask, ddistmask])
                 if E is not None:
-                    edistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-E[None,:2,:])**2, axis=1)), axis=1)
+                    edistmask = safeDistSand     > np.min(np.sqrt(np.sum((A[:,:2,None]-E[None,:2,:])**2, axis=1)), axis=1)
                     distmask = np.vstack([distmask, edistmask])
+                if F is not None:
+                    fdistmask = safeDistFirewood > np.min(np.sqrt(np.sum((A[:,:2,None]-F[None,:2,:])**2, axis=1)), axis=1)
+                    distmask = np.vstack([distmask, fdistmask])
                 #--- End of Placeable checks ---
 
                 # Combine checks into one mask
