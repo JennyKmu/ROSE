@@ -123,7 +123,7 @@ firewoodReserves = {
 waterReserves = {
     # Amount of water that fits in the tank
     # For tank engines, it's with the engine
-    # For tender engines, it's with the engine
+    # For tender engines, it's the tender
     "porter_040": 800,
     "porter_042": 800,
     "climax": 3000,
@@ -241,17 +241,17 @@ def namingsanitycheck(frametype, field, newname) -> str:
 
 
 def gettypedescription(frametype, short=0) -> str:
-    # Lookup for rolling stock type
+    # Lookup for rolling stock type name; if not in list, use descriptor
     if short == 1:
         if frametype in frametypeTranslatorShort.keys():
             return frametypeTranslatorShort[frametype]
         else:
-            return frametypeTranslatorShort["default"]
+            return frametype
     else:
         if frametype in frametypeTranslatorLong.keys():
             return frametypeTranslatorLong[frametype]
         else:
-            return frametypeTranslatorLong["default"]
+            return frametype
 
 
 def getidentifier(stocktype, name, number, loc, includey=False, indtypes=None, indlocs=None, onlynear=False):
