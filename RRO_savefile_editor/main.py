@@ -10,7 +10,7 @@ def inner_main():
     if not sys.version_info > (3, 9):
         print("------------------")
         print("> \033[1;31mERROR: Python version not officially supported.\033[0m")
-        print("> Please use/install Python version 3.9 or above (3.10+ recomended).")
+        print("> Please use/install Python version 3.9 or above (3.10+ recommended).")
         # if sys.version_info > (3,):
         #     print("> You can input 'continue' if you're sure your python install meets requirements.")
         #     c = input("> ")
@@ -42,9 +42,10 @@ def inner_main():
         "Leif_The_Head",
     ]
 
-    version = (0, 3, 8)
+    version = (0, 3, 9)
     dev_version = False
     beta_version = False
+    current_save_version = "1"
 
     def header():
         print("=" * 72)
@@ -125,8 +126,36 @@ def inner_main():
         filepath = Path(filename)
 
         gvas = GVAS(filepath)
+
         print("Currently loaded file is '\033[1m{}\033[0m'".format(filename))
         print("------------------")
+
+        try:
+            saveversion = gvas.data.find("SaveGameVersion").data
+        except:
+            saveversion = 0
+        if saveversion != current_save_version:
+            print("Save Version: {}, intended save version: {}".format(saveversion, current_save_version))
+            try:
+                saveversion = int(saveversion)
+                current_save_ver = int(current_save_version)
+            except:
+                print("Version mismatch, check for Updates on GitHub (see link above)")
+                getKey()
+                sys.exit()
+            else:
+                if saveversion > current_save_ver:
+                    print("Save Version is NEWER than currently supported.")
+                    print("Features may not work as intended or at all. Check for Updates on GitHub (link above)")
+                    print("Do you want to continue anyway? Type 'YES':")
+                    if input("> ") != "YES":
+                        sys.exit()
+                    print("\033[2A\033[J------------------")
+                elif saveversion < current_save_ver:
+                    print("Save Version is OLDER than currently supported. Please open & save it in game once.")
+                    print("Press any key to exit.\n------------------")
+                    getKey()
+                    sys.exit()
 
         mainMenu(gvas, dev_version)
 

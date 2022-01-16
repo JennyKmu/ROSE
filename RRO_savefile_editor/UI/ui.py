@@ -1,3 +1,5 @@
+from typing import Any
+
 import glob
 import os
 import shutil
@@ -7,6 +9,8 @@ from pathlib import Path
 from .industryPlacables import *
 from .rollingStock import *
 from .trackData import *
+from .playerTeleportReferences import *
+dev_version = False
 
 try:
     from uiutils import getKey
@@ -17,8 +21,18 @@ selectfmt = "\033[1;32;42m"
 
 
 def selectSaveFile(loc):
-    filelist = glob.glob(loc + '/' + "slot*.sav")
+    excludedfiles = [
+        "Options.sav",
+        "GraphicsOptions.sav",
+    ]
+    # filelist = glob.glob(loc + '/' + "slot*.sav")
+    filelist = glob.glob(loc + '/' + "*.sav")
     current = 0
+    if len(filelist) == 0:
+        return None
+    for file in filelist:
+        if file.split("\\")[-1] in excludedfiles:
+            filelist.remove(file)
     if len(filelist) == 0:
         return None
     while True:
@@ -40,9 +54,12 @@ def selectSaveFile(loc):
             return -1
 
 
-def mainMenu(gvas, dev_version = False):
+def mainMenu(gvas, dev_version_i=False):
+    global dev_version
+    dev_version = dev_version_i
     options = [
         ("Players", playerMenu),
+        ("Teleport", playerteleport),
         ("Rolling stock", mainStockMenu),
         ("Environment", mainEnvMenu),
         ("Save & Exit", saveAndExit),
@@ -51,8 +68,8 @@ def mainMenu(gvas, dev_version = False):
     if dev_version:
         from .uidev import devslotA, devslotB, devslotC, devslotD, devslotE
         dev_options = [
-            ("DEV A", devslotA),
-            ("DEV B", devslotB),
+            ("DEV A: move Industries", devslotA),
+            ("DEV B: show removed Trees", devslotB),
             ("DEV C", devslotC),
             ("DEV D", devslotD),
             ("DEV E", devslotE)
@@ -107,11 +124,18 @@ def noSaveAndExit(gvas):
     sys.exit()
 
 
+def failedtofind(string):
+    print("Couldn't find {} on your save.\nPress any key to return".format(string))
+    getKey()
+    print("\033[2A\033[J", end='')
+
+
 def mainEnvMenu(gvas):
     options = [
         ("Edit Industry Contents", editindustries),
         ("Edit Utility Contents", editplacables),
-        ("Smart tree reset", resetTreesSmart),
+        ("Smart tree replant", resetTreesSmart),
+        ("Repaint Sheds", exchangesheds),
         ("Reset trees to new game state (EXPERIMENTAL)", resetTreesToNewGame),
     ]
     current = 0
@@ -183,7 +207,6 @@ def resetTreesSmart(gvas):
     # NOTE:
     # - 500. for safe dist with norm1 gives a not to bad result, could be used
     #   to make a "network for rehab after long time unused"
-    import numpy as np
     from .defaultRemovedTrees import default_removed_trees
     from .betterDefaultRemovedTrees import better_default_removed_trees
     print("This is an \033[1;31mEXPERIMENTAL\033[0m feature. Use at your own risks.")
@@ -191,7 +214,7 @@ def resetTreesSmart(gvas):
     print(" * Trees in the middle of the track (obviously)")
     print(" * Rolling stock being yeeted through the air at hypersonic speeds...")
     print(" * Or worse, through the ground. But for that you can use the respawn tool.")
-    print("This tool will attempt to reset trees avoiding tracks and other assets.")
+    print("This tool will attempt to replant trees avoiding tracks and other assets.")
     print("Expect some computing time after launching the tool.")
 
 
@@ -200,6 +223,9 @@ def resetTreesSmart(gvas):
     safeDistWater= 700.
     safeDistFirewood = 1500.
     safeDistSand = 1200.
+    # TODO: Add actual shapes (rectangles) for the facilities to be able to replant very close to them
+    # Shed for example has the origin placed at the front wall, it would not allow replanting in a very large
+    # area in front of it when using just a radius.
 
     removedTreesProp = gvas.data.find("RemovedVegetationAssetsArray")
     splinepoints = gvas.data.find("SplineControlPointsArray")
@@ -207,13 +233,18 @@ def resetTreesSmart(gvas):
     industrytype = gvas.data.find("IndustryTypeArray")
     industrypos = gvas.data.find("IndustryLocationArray")
     firewoodpos = industrypos.data[industrytype.data == firewoodDepot["type"], :]
+    shedpos = industrypos.data[industrytype in shed.keys(), :]
     sandpos = gvas.data.find("SandhouseLocationArray")
     switchpos = gvas.data.find("SwitchLocationArray")
     # switchtype = gvas.data.find("SwitchTypeArray")
 
-    if firewoodpos.size == 0:       firewoodpos = None
+    if firewoodpos.size == 0:
+        firewoodpos = None
+    if shedpos.size == 0:
+        shedpos = None
     if switchpos is not None:
-        if switchpos.data.size == 0: switchpos == None
+        if switchpos.data.size == 0:
+            switchpos = None
     # others are returned as None if not found in the savefile
 
 
@@ -244,10 +275,11 @@ def resetTreesSmart(gvas):
                 t0 = time.perf_counter()
 
                 A = removedTreesProp.data
-                B = splinepoints.data
+                B = splinepoints.data if splinepoints is not None else None
                 C = waterpos.data if waterpos is not None else None
                 D = firewoodpos
                 E = sandpos.data if sandpos is not None else None
+                F = shedpos
 
                 # print(f"Before reset: {A.shape}")
                 # print(repr(A))
@@ -260,17 +292,18 @@ def resetTreesSmart(gvas):
 
                 # print(f"After removing origin: {A.shape}")
                 check_comp_data = (
-                    B.size > 0 or
+                    B is not None or
                     C is not None or
-                    D.size > 0 or
-                    E is not None
+                    D is not None or
+                    E is not None or
+                    F is not None
                     )
                 # Check if there's enough data for comparison else give rose default trees
                 if A.size == 0 or not check_comp_data:
                     A = np.vstack([T, R])
                     removedTreesProp._data = A.astype(np.float32)
                     t1 = time.perf_counter()
-                    print(f"There is no tree to reset. Computation took {t1-t0:f} s.")
+                    print(f"There is no tree to replant. Computation took {t1-t0:f} s.")
                     print("(Press any key to go back to previous menu)")
                     getKey()
                     print("\033[{}A\033[J".format(10), end='')
@@ -424,11 +457,14 @@ def resetTreesSmart(gvas):
                     cdistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-C[None,:2,:])**2, axis=1)), axis=1)
                     distmask = np.vstack([distmask, cdistmask])
                 if D is not None:
-                    ddistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-D[None,:2,:])**2, axis=1)), axis=1)
+                    ddistmask = safeDistFirewood > np.min(np.sqrt(np.sum((A[:,:2,None]-D[None,:2,:])**2, axis=1)), axis=1)
                     distmask = np.vstack([distmask, ddistmask])
                 if E is not None:
-                    edistmask = safeDistWater    > np.min(np.sqrt(np.sum((A[:,:2,None]-E[None,:2,:])**2, axis=1)), axis=1)
+                    edistmask = safeDistSand     > np.min(np.sqrt(np.sum((A[:,:2,None]-E[None,:2,:])**2, axis=1)), axis=1)
                     distmask = np.vstack([distmask, edistmask])
+                if F is not None:
+                    fdistmask = safeDistFirewood > np.min(np.sqrt(np.sum((A[:,:2,None]-F[None,:2,:])**2, axis=1)), axis=1)
+                    distmask = np.vstack([distmask, fdistmask])
                 #--- End of Placeable checks ---
 
                 # Combine checks into one mask
@@ -462,7 +498,11 @@ def resetTreesSmart(gvas):
 
 
 def editindustries(gvas):
-    industrytypes = gvas.data.find("IndustryTypeArray").data
+    try:
+        industrytypes = gvas.data.find("IndustryTypeArray").data
+    except AttributeError:
+        failedtofind("industries")
+        return
     industryin1 = gvas.data.find("IndustryStorageEduct1Array").data
     industryin2 = gvas.data.find("IndustryStorageEduct2Array").data
     industryin3 = gvas.data.find("IndustryStorageEduct3Array").data
@@ -477,8 +517,11 @@ def editindustries(gvas):
 
     ind = []
     for i in range(len(industrytypes)):
-        if industrytypes[i] in industryNames.keys():
+        if industrytypes[i] in industryInputs.keys() or industrytypes[i] in industryOutputs.keys():
             ind.append(i)
+    if len(ind) == 0:
+        failedtofind("industries")
+        return
 
     cur_col = 0
     cur_line = 0
@@ -514,16 +557,22 @@ def editindustries(gvas):
         outputstrs = []
 
         for p in range(4):
-            ingood = industryInputs[cur_indtype][p]
-            if ingood[0] is not None:
-                goodname = cargotypeTranslator[ingood[0]]
-                inputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryins[cur_ind][p], ingood[1]))
+            if cur_indtype in industryInputs.keys():
+                ingood = industryInputs[cur_indtype][p]
+                if ingood[0] is not None:
+                    goodname = cargotypeTranslator[ingood[0]]
+                    inputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryins[cur_ind][p], ingood[1]))
+                else:
+                    inputstrs.append("")
             else:
                 inputstrs.append("")
-            outgood = industryOutputs[cur_indtype][p]
-            if outgood[0] is not None:
-                goodname = cargotypeTranslator[outgood[0]]
-                outputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryouts[cur_ind][p], outgood[1]))
+            if cur_indtype in industryOutputs.keys():
+                outgood = industryOutputs[cur_indtype][p]
+                if outgood[0] is not None:
+                    goodname = cargotypeTranslator[outgood[0]]
+                    outputstrs.append("{:>11}: {:4}/{:4}".format(goodname, industryouts[cur_ind][p], outgood[1]))
+                else:
+                    outputstrs.append("")
             else:
                 outputstrs.append("")
 
@@ -539,10 +588,7 @@ def editindustries(gvas):
             line_format = " | ".join(formatters)
         print(line_format.format(
             "Inputs:",
-            inputstrs[0],
-            inputstrs[1],
-            inputstrs[2],
-            inputstrs[3],
+            *inputstrs
         ))
         if 1 == cur_line:
             line_format = formatters[0]
@@ -556,10 +602,7 @@ def editindustries(gvas):
             line_format = " | ".join(formatters)
         print(line_format.format(
             "Outputs:",
-            outputstrs[0],
-            outputstrs[1],
-            outputstrs[2],
-            outputstrs[3],
+            *outputstrs
         ))
 
         k = getKey()
@@ -576,10 +619,12 @@ def editindustries(gvas):
         if k == b'PAGE_DOWN':
             cur_page = min(n_page - 1, cur_page + 1)
         if k == b'RETURN':
-            if cur_line == 0:
+            if cur_line == 0 and cur_indtype in industryInputs.keys():
                 cur_good = industryInputs[cur_indtype][cur_col]
-            else:
+            elif cur_line == 1 and cur_indtype in industryOutputs.keys():
                 cur_good = industryOutputs[cur_indtype][cur_col]
+            else:
+                cur_good = [None, 0]
             if cur_good[0] is not None:
                 prompt_text = "> Enter new value or leave blank for max: "
                 while True:
@@ -624,16 +669,30 @@ def editindustries(gvas):
 
 
 def editplacables(gvas):
-    industrytypes = gvas.data.find("IndustryTypeArray").data
-    industrylocations = gvas.data.find("IndustryLocationArray").data
-    industryinputs1 = gvas.data.find("IndustryStorageEduct1Array").data
-    industryoutputs1 = gvas.data.find("IndustryStorageProduct1Array").data
-    industryoutputs2 = gvas.data.find("IndustryStorageProduct2Array").data
-    industryoutputs3 = gvas.data.find("IndustryStorageProduct3Array").data
-    industryoutputs4 = gvas.data.find("IndustryStorageProduct4Array").data
-    watertowers = gvas.data.find("WatertowerTypeArray").data
-    watertowerlocations = gvas.data.find("WatertowerLocationArray").data
-    watertowerlevels = gvas.data.find("WatertowerWaterlevelArray").data
+    try:
+        industrytypes = gvas.data.find("IndustryTypeArray").data
+        industrylocations = gvas.data.find("IndustryLocationArray").data
+        industryinputs1 = gvas.data.find("IndustryStorageEduct1Array").data
+        industryoutputs1 = gvas.data.find("IndustryStorageProduct1Array").data
+        industryoutputs2 = gvas.data.find("IndustryStorageProduct2Array").data
+        industryoutputs3 = gvas.data.find("IndustryStorageProduct3Array").data
+        industryoutputs4 = gvas.data.find("IndustryStorageProduct4Array").data
+    except AttributeError:
+        industrytypes = []
+        industrylocations = []
+        industryinputs1 = []
+        industryoutputs1 = []
+        industryoutputs2 = []
+        industryoutputs3 = []
+        industryoutputs4 = []
+    try:
+        watertowers = gvas.data.find("WatertowerTypeArray").data
+        watertowerlocations = gvas.data.find("WatertowerLocationArray").data
+        watertowerlevels = gvas.data.find("WatertowerWaterlevelArray").data
+    except AttributeError:
+        watertowers = []
+        watertowerlocations = []
+        watertowerlevels = []
 
     ind = []
     for i in range(len(industrytypes)):
@@ -650,17 +709,21 @@ def editplacables(gvas):
     dashline = ''
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
-    offset = 0
+    dashline = dashline[2:]
     ltot = len(ind) + len(watertowers)
+    if ltot == 0:
+        failedtofind("Depots or Water towers")
+        return
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
+        n_page = 1
     while True:
         print("Select Utility to fill (ESCAPE to quit, ENTER to fill)")
         print("")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -671,7 +734,7 @@ def editplacables(gvas):
         print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
@@ -685,11 +748,11 @@ def editplacables(gvas):
             else:
                 line_format = " | ".join(formatters)
 
-            namestr = "Firewood Depot"
+            namestr = industryNames[industrytypes[ind[i]]]
             curlocation = industrylocations[ind[i]]
             curx = round(curlocation[0] / 100)
             cury = round(curlocation[1] / 100)
-            namestr += " @ {:.0f}/ {:.0f}".format(curx, cury)
+            namestr += " {:.0f}/ {:.0f}".format(curx, cury)
 
             inputstr = "{:3} / {:3} Wood".format(industryinputs1[ind[i]], firewoodDepot["input"][0])
             outputstr = ''
@@ -704,7 +767,7 @@ def editplacables(gvas):
                 outputstr,
             ))
         for i in range(len(watertowers)):
-            if i + len(ind) not in range(offset, offset + 10) and split_data:
+            if np.floor((i+len(ind)) / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i + len(ind) == cur_line:
@@ -741,21 +804,20 @@ def editplacables(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
         if k == b'RETURN':
             if cur_line in range(len(ind)):
                 depotindex = ind[cur_line]
@@ -779,22 +841,497 @@ def editplacables(gvas):
             return None
 
 
+def exchangesheds(gvas):
+    try:
+        industrytypes = gvas.data.find("IndustryTypeArray").data
+        industrylocations = gvas.data.find("IndustryLocationArray").data
+    except AttributeError:
+        failedtofind("sheds")
+        return
+
+    ind = []
+    standardinds = []
+    for i in range(len(industrytypes)):
+        if industrytypes[i] in shed.keys():
+            ind.append(i)
+        if industrytypes[i] in mapIndustries:
+            standardinds.append(i)
+    standardindtypes = industrytypes[standardinds]
+    standardlocations = industrylocations[standardinds]
+    if len(ind) == 0:
+        failedtofind("sheds")
+        return
+
+    cur_line = 0
+    formatters = [
+        "{:15}",
+        "{:15}",
+        "{:15}",
+        "{:8}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
+    ltot = len(ind)
+    if ltot > 10:
+        split_data = True
+        n_page = int(np.ceil(ltot / 10))
+    else:
+        split_data = False
+        n_page = 1
+    while True:
+        print("Select Shed to repaint (ESCAPE to quit, ENTER to select)")
+        print("")
+        cur_page = int(np.floor(cur_line / 10))
+        if split_data:
+            print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
+        print(" | ".join(formatters).format(
+            "Shed",
+            "Location",
+            "Near",
+            "Distance",
+        ))
+        print(dashline)
+        n_line = 0
+        for i in range(len(ind)):
+            if np.floor(i / 10) != cur_page and split_data:
+                continue
+            n_line += 1
+            if i == cur_line:
+                line_format = selectfmt + formatters[0] + "\033[0m | "
+                line_format += " | ".join(formatters[1:])
+            else:
+                line_format = " | ".join(formatters)
+
+            namestr = industryNames[industrytypes[ind[i]]]
+            curlocation = industrylocations[ind[i]]
+            curx = round(curlocation[0] / 100)
+            cury = round(curlocation[1] / 100)
+            locstr = "{:>6}/{:>6}".format(curx, cury)
+
+            closest = getclosest(curlocation, standardlocations)
+            closestname = industryNames[standardindtypes[closest[0]]]
+            closestdist = "{:>6}m".format(int(closest[1]/100))
+
+            print(line_format.format(
+                namestr,
+                locstr,
+                closestname,
+                closestdist
+            ))
+
+        k = getKey()
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+        if k == b'KEY_DOWN':
+            cur_line = min(cur_line + 1, ltot - 1)
+        if k == b'PAGE_UP':
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
+        if k == b'PAGE_DOWN':
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+        if k == b'RETURN':
+            curshedtype = industrytypes[ind[cur_line]]
+            choices = []
+            for shedtype in shed.keys():
+                choices.append(shedtype)
+            cursor = choices.index(curshedtype)
+            while True:
+                typeselection = "> Choose new paint:"
+                for option in range(len(choices)):
+                    if option == cursor:
+                        typeselection += "  " + selectfmt + shed[choices[option]] + "\033[0m"
+                    else:
+                        typeselection += "  " + shed[choices[option]]
+                print(typeselection)
+
+                k2 = getKey()
+                print("\033[{}A\033[J".format(1), end='')
+
+                if k2 == b'KEY_RIGHT':
+                    cursor = min(len(choices) - 1, cursor + 1)
+                if k2 == b'KEY_LEFT':
+                    cursor = max(0, cursor - 1)
+
+                if k2 == b'RETURN':
+                    industrytypes[ind[cur_line]] = choices[cursor]
+                    break
+
+                if k2 == b'ESCAPE':
+                    break
+
+        if ltot <= 10:
+            print("\033[{}A\033[J".format(ltot + 4), end='')
+        else:
+            print("\033[{}A\033[J".format(n_line + 5), end='')
+
+        if k == b'ESCAPE':
+            return None
+
+
+def playerteleport(gvas):
+    try:
+        playernames = gvas.data.find("PlayerNameArray").data
+        playerlocs = gvas.data.find("PlayerLocationArray").data
+        playerrots = gvas.data.find("PlayerRotationArray").data
+    except AttributeError:
+        failedtofind("players")
+        return
+
+    try:
+        industrytypes = gvas.data.find("IndustryTypeArray").data
+        industrylocs = gvas.data.find("IndustryLocationArray").data
+        industryrots = gvas.data.find("IndustryRotationArray").data
+    except AttributeError:
+        industrytypes = []
+        industrylocs = []
+        industryrots = []
+
+    if len(industrytypes) > 0:
+        standardinds = []
+        for i in range(len(industrytypes)):
+            if industrytypes[i] in mapIndustries:
+                standardinds.append(i)
+        standardindtypes = industrytypes[standardinds]
+        standardindlocs = industrylocs[standardinds]
+    else:
+        standardindtypes = []
+        standardindlocs = []
+
+    try:
+        framenumbers = gvas.data.find("FrameNumberArray").data
+        framenames = gvas.data.find("FrameNameArray").data
+        frametypes = gvas.data.find("FrameTypeArray").data
+        framelocs = gvas.data.find("FrameLocationArray").data
+        framerots = gvas.data.find("FrameRotationArray").data
+    except AttributeError:
+        framenumbers = []
+        framenames = []
+        frametypes = []
+        framelocs = []
+        framerots = []
+
+    cur_line = 0
+    ltot = len(playernames)
+    if ltot > 10:
+        split_data = True
+        n_page = int(np.ceil(ltot / 10))
+    else:
+        split_data = False
+        n_page = 1
+    formatters = [
+        "{:35}",
+        "{:18}",
+        "{:15}",
+        "{:>10}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
+
+    while True:
+        print("Select a player to teleport (ESCAPE to quit, ENTER to select)")
+        cur_page = int(np.floor(cur_line / 10))
+        n_line = 3
+        if split_data:
+            print("Use PAGE UP and PAGE DOWN to scroll pages ({}/{})".format(cur_page + 1, n_page))
+            n_line += 1
+        print(" | ".join(formatters).format(
+            "Player",
+            "Location in m",
+            "Near",
+            "Distance  ",
+        ))
+        print(dashline)
+
+        for i in range(ltot):
+            if np.floor(i / 10) == cur_page:
+                if i == cur_line:
+                    line_format = selectfmt + formatters[0] + "\033[0m"
+                    for j in range(len(formatters) - 1):
+                        line_format += " | " + formatters[j + 1]
+                else:
+                    line_format = " | ".join(formatters)
+                cur_name = playernames[i]
+                cur_loc = playerlocs[i]
+                cur_rot = playerrots[i]
+
+                cur_x = int(round(cur_loc[0] / 100))
+                cur_y = int(round(cur_loc[1] / 100))
+                cur_z = int(round(cur_loc[2] / 100))
+                locstr = "{:.0f}/{:.0f}/{:.0f}".format(cur_x, cur_y, cur_z)
+
+                closest = getclosest(cur_loc, standardindlocs)
+                clostr = industryNames[standardindtypes[closest[0]]]
+                diststr = "{:.2f}m".format(closest[1]/100)
+
+                if dev_version and cur_line == 0 and i == 0:  # DEV Tool to find relative positions
+                    closest = getclosest(cur_loc, industrylocs)
+                    clostr = industryNames[industrytypes[closest[0]]]
+                    diststr = "{:.2f}m".format(closest[1]/100)
+                    closestpos = industrylocs[closest[0]]
+                    closestrot = industryrots[closest[0]]
+                    print("Closest Ind: {} in {:.0f}cm".format(industrytypes[closest[0]], closest[1]))
+                    print("Player vals: {} {}".format(cur_loc, cur_rot))
+                    print("Target vals: {} {}".format(closestpos, closestrot))
+                    print("Relative:    [Dir {:.1f}, Dist {:.1f}, Height {:.1f}], Rot {:.1f}".format(
+                        *getrelative(cur_loc, cur_rot, closestpos, closestrot)))
+                    n_line += 4
+
+                if dev_version and cur_line == 0 and i == 0:  # DEV Tool to find relative positions
+                    closest = getclosest(cur_loc, framelocs)
+                    clostr = gettypedescription(frametypes[closest[0]], 1)
+                    diststr = "{:.2f}m".format(closest[1]/100)
+                    closestpos = framelocs[closest[0]]
+                    closestrot = framerots[closest[0]]
+                    print("Closest car: {} in {:.0f}cm".format(frametypes[closest[0]], closest[1]))
+                    print("Player vals: {} {}".format(cur_loc, cur_rot))
+                    print("Target vals: {} {}".format(closestpos, closestrot))
+                    print("Relative:    [Dir {:.1f}, Dist {:.1f}, Height {:.1f}], Rot {:.1f}".format(
+                        *getrelative(cur_loc, cur_rot, closestpos, closestrot)))
+                    n_line += 4
+
+                n_line += 1
+
+                print(line_format.format(
+                    cur_name,
+                    locstr,
+                    clostr,
+                    diststr,
+                ))
+
+        k = getKey()
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+        if k == b'KEY_DOWN':
+            cur_line = min(cur_line + 1, ltot - 1)
+        if k == b'PAGE_UP':
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
+        if k == b'PAGE_DOWN':
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
+        if k == b'RETURN':
+            cursor = 0
+            options = [
+                "Spawn.",
+                "Industry...",
+                "Firewood Depot...",
+                "Caboose...",
+                "other Player..."
+            ]
+            while True:
+                prompt_line = "Teleport to: "
+                for c in range(len(options)):
+                    if c == cursor:
+                        prompt_line += selectfmt + " " + options[c]
+                    else:
+                        prompt_line += " \033[0m" + options[c]
+                prompt_line += " \033[0m"
+                print(prompt_line)
+
+                k2 = getKey()
+                print("\033[1A\033[J", end='')
+                if k2 == b'KEY_RIGHT':
+                    cursor = min(cursor + 1, len(options) - 1)
+                if k2 == b'KEY_LEFT':
+                    cursor = max(0, cursor - 1)
+                if k2 == b'RETURN':
+                    if cursor == 0:
+                        playerlocs[cur_line], playerrots[cur_line] = getplayertppos(0)
+                        break  # move player to start and exit destination type sel
+                    else:
+                        list = []
+                        listloc = []
+                        listrot = []
+                        if cursor == 1:
+                            listname = "Industry"
+                            for i in range(len(industrytypes)):
+                                if industrytypes[i] in mapIndustries:
+                                    list.append(industrytypes[i])
+                                    listloc.append(industrylocs[i])
+                                    listrot.append(industryrots[i])
+                        elif cursor == 2:
+                            listname = "Firewood Depot"
+                            for i in range(len(industrytypes)):
+                                if industrytypes[i] == firewoodDepot["type"]:
+                                    list.append(industrytypes[i])
+                                    listloc.append(industrylocs[i])
+                                    listrot.append(industryrots[i])
+                        elif cursor == 3:
+                            listname = "Caboose"
+                            for i in range(len(frametypes)):
+                                if frametypes[i] in player_teleport_pts.keys():
+                                    cabooseid = getidentifier(frametypes[i], framenames[i], framenumbers[i],
+                                                              framelocs[i], onlynear=True)
+                                    if cabooseid[1] == "":
+                                        list.append(cabooseid[0])
+                                    else:
+                                        list.append(cabooseid[1])
+                                    listloc.append(framelocs[i])
+                                    listrot.append(framerots[i])
+                        elif cursor == 4:
+                            listname = "Player"
+                            for i in range(len(playernames)):
+                                if playernames[i] != playernames[cur_line]:
+                                    list.append(playernames[i])
+                                    listloc.append(playerlocs[i])
+                                    listrot.append(playerrots[i])
+                        else:
+                            break  # to make the IDE happy and prevent anything weird
+                        if len(list) == 0:  # if there is nothing to choose from, abort
+                            failedtofind("teleport targets")
+                            break
+
+                        namelist = []
+                        loclist = []
+                        nearlist = []
+                        distlist = []
+                        for j in range(len(list)):
+                            cur_x = int(round(listloc[j][0] / 100))
+                            cur_y = int(round(listloc[j][1] / 100))
+                            cur_z = int(round(listloc[j][2] / 100))
+                            loclist.append("{:.0f}/{:.0f}/{:.0f}".format(cur_x, cur_y, cur_z))
+                            if cursor == 1 or cursor == 2:  # Name is an Industry or Firewood Depot
+                                namelist.append(industryNames[list[j]])
+                            elif cursor == 3:               # Name is Caboose
+                                namelist.append(list[j])
+                            elif cursor == 4:               # Name is player
+                                namelist.append(list[j])
+                            if cursor == 1:  # Is industry, no need to find nearest
+                                nearlist.append("")
+                                distlist.append("")
+                            else:            # Nearest Industry
+                                closest = getclosest(listloc[j], standardindlocs)
+                                nearlist.append(industryNames[standardindtypes[closest[0]]])
+                                distlist.append("{:.2f}m".format(closest[1] / 100))
+
+                        cur_line2 = 0
+                        ltot2 = len(list)
+                        if ltot2 > 10:
+                            split_data2 = True
+                            n_page2 = np.ceil(ltot2/10)
+                        else:
+                            split_data2 = False
+                            n_page2 = 1
+                        print("\033[{}A\033[J".format(n_line), end='')
+                        formatters2 = [
+                            "{:35}",
+                            "{:18}",
+                            "{:15}",
+                            "{:>10}",
+                        ]
+                        dashline2 = ''
+                        for i in formatters:
+                            dashline2 += "---" + len(i.format('')) * "-"
+                        dashline2 = dashline2[2:]
+                        while True:
+                            n_line = 4
+                            print("Teleport " + selectfmt + playernames[cur_line] + "\033[0m to ...")
+                            print("Select destination (ESCAPE to quit, ENTER to select)")
+                            cur_page2 = np.floor(cur_line2/10)
+                            if split_data2:
+                                print("Use PAGE UP and PAGE DOWN to scroll pages ({}/{})".format(cur_page + 1, n_page))
+                                n_line += 1
+                            print(" | ".join(formatters2).format(
+                                listname,
+                                "Location",
+                                "Near",
+                                "Distance",
+                            ))
+                            print(dashline2)
+                            for i in range(len(list)):
+                                if np.floor(i/10) == cur_page2:
+                                    if i == cur_line2:
+                                        line_format = selectfmt + formatters2[0] + "\033[0m | "
+                                        line_format += " | ".join(formatters2[1:])
+                                    else:
+                                        line_format = " | ".join(formatters2)
+                                    print(line_format.format(
+                                        namelist[i],
+                                        loclist[i],
+                                        nearlist[i],
+                                        distlist[i],
+                                    ))
+                                    n_line += 1
+
+                            k3 = getKey()
+                            print("\033[{}A\033[J".format(n_line), end='')
+                            n_line = 1
+                            if k3 == b'KEY_UP':
+                                cur_line2 = max(0, cur_line2 - 1)
+                            if k3 == b'KEY_DOWN':
+                                cur_line2 = min(cur_line2 + 1, ltot2 - 1)
+                            if k3 == b'PAGE_UP':
+                                if cur_page2 < n_page2 - 1 and split_data2:
+                                    cur_page2 -= 1
+                                    cur_line2 = cur_page2 * 10
+                                else:
+                                    cur_line2 = 0
+                            if k3 == b'PAGE_DOWN':
+                                if cur_page2 > 0 and split_data2:
+                                    cur_page2 += 1
+                                    cur_line2 = cur_page2 * 10
+                                else:
+                                    cur_line2 = ltot2 - 1
+                            if k3 == b'ESCAPE':
+                                break
+                            if k3 == b'RETURN':
+                                if cursor == 4:  # if it's a player, just copy values
+                                    playerlocs[cur_line] = listloc[cur_line2]
+                                    playerrots[cur_line] = listrot[cur_line2]
+                                else:            # else get the absolute position that's relative to the target
+                                    if cursor == 3:  # for cabooses replace name with type
+                                        tptype = "caboose"
+                                    else:
+                                        tptype = list[cur_line2]
+                                    newposrot = getplayertppos(tptype, listloc[cur_line2], listrot[cur_line2])
+                                    playerlocs[cur_line] = newposrot[0]
+                                    playerrots[cur_line] = newposrot[1]
+                                break  # exit destination sel
+                        n_line -= 2
+                        break  # exit destination type sel, always happens after leaving destination sel
+
+                if k2 == b'ESCAPE':
+                    break  # exit destination type sel
+
+        print("\033[{}A\033[J".format(n_line), end='')
+        if k == b'ESCAPE':
+            break  # exit menu
+
+
 def playerMenu(gvas):
     player_names_prop = gvas.data.find("PlayerNameArray")
     player_money_prop = gvas.data.find("PlayerMoneyArray")
     player_xp_prop = gvas.data.find("PlayerXPArray")
     cur_col = 0
     cur_line = 0
-    offset = 0
     ltot = len(player_names_prop.data)
-    if len(player_names_prop.data) > 10:
+    if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
+        n_page = 1
     while True:
         print("Select a field to edit (ESCAPE to quit, ENTER to valid selection)")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print("{:<65s} | {:>9s} | {:>9s}".format(
@@ -810,7 +1347,7 @@ def playerMenu(gvas):
         ]
         n_line = 0
         for i in range(len(player_names_prop.data)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             line_format = "{:<64s} "
@@ -838,21 +1375,21 @@ def playerMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             prompt_text = "> Enter new value: "
             while True:
@@ -884,9 +1421,7 @@ def renameStockMenu(gvas):
     framenumbers = gvas.data.find("FrameNumberArray").data
     framenames = gvas.data.find("FrameNameArray").data
     frametypes = gvas.data.find("FrameTypeArray").data
-    # print(framenumbers)
-    # print(framenames)
-    # print(frametypes)
+
     cur_col = 0
     cur_line = 0
     formatters = [
@@ -894,18 +1429,18 @@ def renameStockMenu(gvas):
         "{:<32s}",
         "{:<32s}",
     ]
-    offset = 0
     ltot = len(frametypes)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
+        n_page = 1
     while True:
         print("Select field to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Use <br> to create multiple line values where applicable.")
         print("Sanity checks are enabled. To ignore limitation start your input with \i")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -916,7 +1451,7 @@ def renameStockMenu(gvas):
         print("-" * (32 * 3 + 3 * 2))
         n_line = 0
         for i in range(len(frametypes)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
@@ -936,12 +1471,8 @@ def renameStockMenu(gvas):
             num = '-' if num is None else num
             nam = '-' if nam is None else nam
 
-            # not necessary anymore (new line stored as <br>)
-            # num = num if '<br>' not in num else num.replace('\n', '<br>')
-            # nam = nam if '<br>' not in nam else nam.replace('\n', '<br>')
-
             print(line_format.format(
-                frametypeTranslatorLong[frametypes[i]],
+                gettypedescription(frametypes[i]),
                 num,
                 nam,
             ))
@@ -953,21 +1484,21 @@ def renameStockMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             maximums = getnaminglimits(frametypes[cur_line], cur_col)
             if maximums[0] == 0 or maximums[1] == 0:
@@ -1024,39 +1555,48 @@ def teleportStockMenu(gvas):
     framebrakes = gvas.data.find("BrakeValueArray").data
     framecouplingfront = gvas.data.find("CouplerFrontStateArray").data
     framecouplingrear = gvas.data.find("CouplerRearStateArray").data
-    # print(framenumbers)
-    # print(framenames)
-    # print(frametypes)
+
+    indtypes = gvas.data.find("IndustryTypeArray").data
+    indlocs = gvas.data.find("IndustryLocationArray").data
+
+    standardtypes = []
+    standardlocs = []
+    for index in range(len(indtypes)):
+        if indtypes[index] in mapIndustries:
+            standardtypes.append(indtypes[index])
+            standardlocs.append(indlocs[index])
+
     cur_col = 0
     cur_line = 0
     formatters = [
-        "{:^7s}",
-        "{:<12s}",
-        "{:<16s}",
-        "{:<32s}",
-        "{:^11s}",
-        "{:^11s}"
+        "{:^6s}",
+        "{:<10s}",
+        "{:<25s}",
+        "{:^17s}",
+        "{:>18s}",
+        "{:^9s}",
+        "{:^9s}"
     ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
 
     min_height = 1000.
-    indexes = framelocs[:, 2] < min_height
-    submapframes = framelocs[indexes, :]
-
-
     status_str = "⬤"
 
-    offset = 0
     ltot = len(frametypes)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
+        n_page = 1
     while True:
         n_line = 0
         print("Select method (ESCAPE to quit, ENTER to valid selection)")
         n_line += 1
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
 
         print("\033[1;41m" + "      " + "\033[0m marks frames which are below ground.")
         n_line += 1
@@ -1070,59 +1610,47 @@ def teleportStockMenu(gvas):
             n_line += 1
             print(f"\033[1;32m{nbelow}\033[0m frames were found below {int(min_height/100.):d} m in height.")
 
-
-
-
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
             n_line += 1
         print(" | ".join(formatters).format(
             "Status",
             "Frame type",
-            "Number",
-            "Name",
+            "Number/Name",
+            "Location",
+            "Near",
             "Respawn",
             "Yeet it"
         ))
-        print("-" * (32 * 3 + 3 * 2))
+        print(dashline)
         n_line += 2
 
-
         for i in range(len(frametypes)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
 
             if i == cur_line:
-                line_format = " | ".join(formatters[0:4])
+                line_format = " | ".join(formatters[:5])
                 for j in range(2):
                     line_format += " | "
                     if j == cur_col:
-                        line_format += selectfmt + formatters[j + 4] + "\033[0m"
+                        line_format += selectfmt + formatters[j + 5] + "\033[0m"
                     else:
-                        line_format += formatters[j + 4]
+                        line_format += formatters[j + 5]
             else:
                 line_format = " | ".join(formatters)
 
-            num = framenumbers[i]
-            nam = framenames[i]
+            identifier = getidentifier(frametypes[i], framenames[i], framenumbers[i], framelocs[i], True, standardtypes,
+                                       standardlocs)
 
-            num = '-' if num is None else num
-            nam = '-' if nam is None else nam
-
-            # not necessary anymore (new line stored as <br>)
-            # num = num if '<br>' not in num else num.replace('\n', '<br>')
-            # nam = nam if '<br>' not in nam else nam.replace('\n', '<br>')
-
-            if framelocs[i,2] < min_height:
+            if framelocs[i, 2] < min_height:
                 line_format = line_format.split(" | ")
                 line_format[0] = "\033[1;41m" + line_format[0] + "\033[0m"
                 line_format = " | ".join(line_format)
 
             print(line_format.format(
-                " ",
-                frametypeTranslatorShort[frametypes[i]],
-                num,
-                nam,
+                status_str,
+                *identifier,
                 "[RESPAWN]",
                 "[YEET IT]"
             ))
@@ -1135,21 +1663,21 @@ def teleportStockMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             moved_something = False
             if cur_col == 0:
@@ -1263,35 +1791,38 @@ def engineStockMenu(gvas):
     frameboilerwater = gvas.data.find("BoilerWaterLevelArray").data
     frametenderwater = gvas.data.find("TenderWaterAmountArray").data
     frametenderfuel = gvas.data.find("TenderFuelAmountArray").data
+    framesandamount = gvas.data.find("SanderAmountArray").data
 
     ind = []
     for i in range(len(frametypes)):
         if (frametypes[i] in waterBoiler.keys()) or (frametypes[i] in waterReserves.keys()) or \
-                (frametypes[i] in firewoodReserves.keys()):
+                (frametypes[i] in firewoodReserves.keys() or frametypes[i] in sandLevel.keys()):
             ind.append(i)
 
     cur_col = 0
     cur_line = 0
     formatters = [
         "{:<48s}",
-        "{:>14}",
-        "{:>14}",
         "{:>12}",
+        "{:>11}",
+        "{:>11}",
+        "{:>4}"
     ]
-    dashline =''
+    dashline = ''
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
-    offset = 0
+    dashline = dashline[2:]
     ltot = len(ind)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
+        n_page = 1
     while True:
         print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Enter nothing to fill up, or type in an amount.")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -1299,16 +1830,17 @@ def engineStockMenu(gvas):
             "Water Boiler",
             "Water Tank",
             "Firewood",
+            "Sand",
         ))
         print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
                 line_format = formatters[0]
-                for j in range(3):
+                for j in range(4):
                     line_format += " | "
                     if j == cur_col:
                         line_format += selectfmt + formatters[j + 1] + "\033[0m"
@@ -1324,7 +1856,7 @@ def engineStockMenu(gvas):
             num = '' if num is None else num
             nam = '' if nam is None else nam
 
-            namestr = "{:<10s}:".format(frametypeTranslatorShort[frametype])
+            namestr = "{:<10s}:".format(gettypedescription(frametype, 1))
             if not num == '':
                 namestr += " {:>4}".format(num.split("<br>")[0].strip())
             if not nam == '':
@@ -1332,12 +1864,12 @@ def engineStockMenu(gvas):
             namestr = namestr[:48]
 
             if frametype in waterBoiler.keys():
-                waterboilerstr = "{:.1f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
+                waterboilerstr = "{:.0f} / {:4}".format(frameboilerwater[ind[i]], waterBoiler[frametype])
             else:
                 waterboilerstr = ''
 
             if frametype in waterReserves.keys():
-                waterreservestr = "{:.1f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
+                waterreservestr = "{:.0f} / {:4}".format(frametenderwater[ind[i]], waterReserves[frametype])
             else:
                 waterreservestr = ''
 
@@ -1346,35 +1878,41 @@ def engineStockMenu(gvas):
             else:
                 firewoodstr = ''
 
+            if frametype in sandLevel.keys():
+                sandstr = "{:.0f}%".format(framesandamount[ind[i]])
+            else:
+                sandstr = ''
+
             print(line_format.format(
                 namestr,
                 waterboilerstr,
                 waterreservestr,
                 firewoodstr,
+                sandstr
             ))
         k = getKey()
 
         if k == b'KEY_RIGHT':
-            cur_col = min(2, cur_col + 1)
+            cur_col = min(3, cur_col + 1)
         if k == b'KEY_LEFT':
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             curframetype = frametypes[ind[cur_line]]
             if cur_col == 0 and curframetype in waterBoiler.keys():
@@ -1446,6 +1984,29 @@ def engineStockMenu(gvas):
                     print("\033[{}A\033[J".format(1), end='')
                     break
 
+            elif cur_col == 3 and curframetype in sandLevel.keys():
+                prompt_text = "> Enter new value or leave blank for max: "
+                while True:
+                    val = input(prompt_text)
+                    try:
+                        if val == '':
+                            val = sandLevel[curframetype]
+                        else:
+                            val = float(val)
+                    except ValueError:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid input! Enter new value: "
+                        continue
+
+                    if val < 0 or val > sandLevel[curframetype]:
+                        print("\033[{}A\033[J".format(1), end='')
+                        prompt_text = "> Invalid amount! Enter new value: "
+                        continue
+
+                    framesandamount[ind[cur_line]] = val
+                    print("\033[{}A\033[J".format(1), end='')
+                    break
+
         if ltot <= 10:
             print("\033[{}A\033[J".format(ltot + 4), end='')
         else:
@@ -1477,18 +2038,18 @@ def editattachmentmenu(gvas):
     dashline = ''
     for i in formatters:
         dashline += "---" + len(i.format('')) * "-"
-    offset = 0
+    dashline = dashline[2:]
     ltot = len(ind)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
         n_page = 1
     while True:
         print("Select field to edit (ESCAPE to quit, ENTER to valid selection)")
         print("")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
@@ -1499,7 +2060,7 @@ def editattachmentmenu(gvas):
         print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
@@ -1522,7 +2083,7 @@ def editattachmentmenu(gvas):
             num = '' if num is None else num
             nam = '' if nam is None else nam
 
-            namestr = "{:<10s}:".format(frametypeTranslatorShort[frametype])
+            namestr = "{:<10s}:".format(gettypedescription(frametype, 1))
             if not num == '':
                 namestr += " " + num.split("<br>")[0].strip()
             if not nam == '':
@@ -1558,21 +2119,21 @@ def editattachmentmenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             curtype = frametypes[ind[cur_line]]
             if cur_col == 0 and curtype in availableSmokestacks.keys():
@@ -1580,7 +2141,11 @@ def editattachmentmenu(gvas):
                 for option in range(1, availableSmokestacks[curtype] + 1):
                     choices.append(option)
                 curstack = framestacks[ind[cur_line]] - 1
-                cursor = curstack if curstack + 1 in choices else 0
+                try:
+                    cursor = choices.index(curstack) + 1
+                except ValueError:
+                    cursor = 0
+                # cursor = curstack if curstack + 1 in choices else 0
                 while True:
                     typeselection = "> Choose new Smokestack:"
                     for option in range(len(choices)):
@@ -1610,7 +2175,11 @@ def editattachmentmenu(gvas):
                 for option in range(1, availableHeadlights[curtype] + 1):
                     choices.append(option)
                 curlight = framelights[ind[cur_line]] - 1
-                cursor = curlight if curlight + 1 in choices else 0
+                try:
+                    cursor = choices.index(curlight) + 1
+                except ValueError:
+                    cursor = 0
+                # cursor = curlight if curlight + 1 in choices else 0
                 while True:
                     typeselection = "> Choose new Headlight:"
                     for option in range(len(choices)):
@@ -1650,6 +2219,17 @@ def cargoStockMenu(gvas):
     frametypes = gvas.data.find("FrameTypeArray").data
     framecargotypes = gvas.data.find("FreightTypeArray").data
     framecargoamounts = gvas.data.find("FreightAmountArray").data
+    framelocations = gvas.data.find("FrameLocationArray").data
+
+    indtypes = gvas.data.find("IndustryTypeArray").data
+    indlocs = gvas.data.find("IndustryLocationArray").data
+
+    standardtypes = []
+    standardlocs = []
+    for index in range(len(indtypes)):
+        if indtypes[index] in mapIndustries:
+            standardtypes.append(indtypes[index])
+            standardlocs.append(indlocs[index])
 
     ind = []
     for i in range(len(frametypes)):
@@ -1659,59 +2239,59 @@ def cargoStockMenu(gvas):
     cur_col = 0
     cur_line = 0
     formatters = [
-        "{:<48s}",
+        "{:^8}",
+        "{:<40}",
+        "{:>18}",
         "{:<12}",
         "{:>6}",
     ]
-    offset = 0
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
+
     ltot = len(ind)
     if ltot > 10:
         split_data = True
-        n_page = int(ltot / 10) + 1 * (not ltot % 10 == 0)
+        n_page = int(np.ceil(ltot / 10))
     else:
         split_data = False
+        n_page = 1
     while True:
         print("Select value to edit (ESCAPE to quit, ENTER to valid selection)")
         print("Empty fields mean this wagon hasn't been used yet")
-        cur_page = int(offset / 10)
+        cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
         print(" | ".join(formatters).format(
-            "Cargo Wagon",
             "Type",
+            "Number / Name",
+            "Near",
+            "Cargo",
             "Amount"
         ))
-        print("-" * (48 + 12 + 6 + 3 * 2))
+        print(dashline)
         n_line = 0
         for i in range(len(ind)):
-            if i not in range(offset, offset + 10) and split_data:
+            if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
             if i == cur_line:
-                line_format = formatters[0]
+                line_format = " | ".join(formatters[:3])
                 for j in range(2):
                     line_format += " | "
                     if j == cur_col:
-                        line_format += selectfmt + formatters[j + 1] + "\033[0m"
+                        line_format += selectfmt + formatters[j + 3] + "\033[0m"
                     else:
-                        line_format += formatters[j + 1]
+                        line_format += formatters[j + 3]
             else:
                 line_format = " | ".join(formatters)
 
-            frametype = frametypes[ind[i]]
-            num = framenumbers[ind[i]]
-            nam = framenames[ind[i]]
-            cargo = framecargotypes[ind[i]]
+            j = ind[i]
+            cargo = framecargotypes[j]
 
-            num = '' if num is None else num
-            nam = '' if nam is None else nam
-
-            namestr = "{:<10s}:".format(frametypeTranslatorShort[frametype])
-            if not num == '':
-                namestr += " " + num.split("<br>")[0].strip()
-            if not nam == '':
-                namestr += " " + nam.split("<br>")[0].strip()
-            namestr = namestr[:48]
+            identifier = getidentifier(frametypes[j], framenames[j], framenumbers[j], framelocations[j], True,
+                                       standardtypes, standardlocs, True)
 
             if cargo in cargotypeTranslator.keys():
                 cargostr = cargotypeTranslator[cargo]
@@ -1721,13 +2301,13 @@ def cargoStockMenu(gvas):
                 cargostr = cargotypeTranslator["default"]
 
             if cargo is not None:
-                amount = framecargoamounts[ind[i]]
-                amountstr = "{}/{}".format(amount, frametypeCargoLimits[frametype][cargo])
+                amount = framecargoamounts[j]
+                amountstr = "{}/{}".format(amount, frametypeCargoLimits[frametypes[j]][cargo])
             else:
                 amountstr = ''
 
             print(line_format.format(
-                namestr,
+                *identifier,
                 cargostr,
                 amountstr
             ))
@@ -1739,29 +2319,29 @@ def cargoStockMenu(gvas):
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
             cur_line = max(0, cur_line - 1)
-            if cur_line < offset:
-                k = b'PAGE_UP'
         if k == b'KEY_DOWN':
-            cur_line = min(ltot - 1, cur_line + 1)
-            if cur_line >= offset + 10:
-                k = b'PAGE_DOWN'
+            cur_line = min(cur_line + 1, ltot - 1)
         if k == b'PAGE_UP':
-            offset = max(0, offset - 10)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset + 10 - 1
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
         if k == b'PAGE_DOWN':
-            max_offset = ltot - ltot % 10
-            offset = min(offset + 10, max_offset)
-            if cur_line not in range(offset, offset + 10):
-                cur_line = offset
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
         if k == b'RETURN':
             curframetype = frametypes[ind[cur_line]]
             curframecargo = framecargotypes[ind[cur_line]]
             if cur_col == 0:
-                cursor = 0
                 choices = [None, ]
                 for cargotype in frametypeCargoLimits[curframetype].keys():
                     choices.append(cargotype)
+                cursor = choices.index(curframecargo)
                 while True:
                     typeselection = "> Choose new cargo:"
                     for option in range(len(choices)):
@@ -1825,6 +2405,164 @@ def cargoStockMenu(gvas):
             return None
 
 
+def changestockmenu(gvas):
+    framenumbers = gvas.data.find("FrameNumberArray").data
+    framenames = gvas.data.find("FrameNameArray").data
+    frametypes = gvas.data.find("FrameTypeArray").data
+    framebrakes = gvas.data.find("BrakeValueArray").data
+    framelocs = gvas.data.find("FrameLocationArray").data
+    framecouplingfront = gvas.data.find("CouplerFrontStateArray").data
+    framecouplingrear = gvas.data.find("CouplerRearStateArray").data
+    framecargotypes = gvas.data.find("FreightTypeArray").data
+    framecargoamounts = gvas.data.find("FreightAmountArray").data
+
+    indtypes = gvas.data.find("IndustryTypeArray").data
+    indlocs = gvas.data.find("IndustryLocationArray").data
+
+    standardtypes = []
+    standardlocs = []
+    for index in range(len(indtypes)):
+        if indtypes[index] in mapIndustries:
+            standardtypes.append(indtypes[index])
+            standardlocs.append(indlocs[index])
+
+    cur_line = 0
+    formatters = [
+        "{:^10}",
+        "{:<40}",
+        "{:>18}",
+        "{:<16}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
+
+    ind = []
+    for i in range(len(frametypes)):
+        if frametypes[i] in frametypeExchangeable:
+            ind.append(i)
+
+    ltot = len(ind)
+    if ltot > 10:
+        split_data = True
+        n_page = int(np.ceil(ltot / 10))
+    else:
+        split_data = False
+        n_page = 1
+    while True:
+        print("Select flatcar (ESCAPE to quit, ENTER to valid selection)")
+        supported_names = "Only supported types are: "
+        for flatcar in frametypeExchangeable:
+            supported_names += gettypedescription(flatcar, 1) + ", "
+        print(supported_names[:-2])
+        n_line = 2
+        cur_page = int(np.floor(cur_line / 10))
+        if split_data:
+            print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
+            n_line += 1
+        print(" | ".join(formatters).format(
+            "Type",
+            "Number / Name",
+            "Near",
+            "Cargo"
+        ))
+        print(dashline)
+        n_line += 2
+
+        for i in range(ltot):
+            if np.floor(i / 10) != cur_page and split_data:
+                continue
+
+            if i == cur_line:
+                line_format = selectfmt + formatters[0] + "\033[0m | "
+                line_format += " | ".join(formatters[1:])
+            else:
+                line_format = " | ".join(formatters)
+
+            j = ind[i]
+            frametype = frametypes[ind[i]]
+
+            identifier = getidentifier(frametype, framenames[j], framenumbers[j], framelocs[j], False,
+                                       standardtypes, standardlocs, True)
+
+            curcargotype = framecargotypes[ind[i]]
+            if curcargotype is None:
+                cargostr = cargotypeTranslator[None]
+            else:
+                curcargoamount = framecargoamounts[ind[i]]
+                if curcargoamount == 0:
+                    cargostr = "Last: " + cargotypeTranslator[curcargotype]
+                else:
+                    cargostr = "{:2}/{:2} ".format(curcargoamount, frametypeCargoLimits[frametype][curcargotype]) + \
+                        cargotypeTranslator[curcargotype]
+
+            print(line_format.format(
+                *identifier,
+                cargostr
+            ))
+            n_line += 1
+        k = getKey()
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+        if k == b'KEY_DOWN':
+            cur_line = min(cur_line + 1, ltot - 1)
+        if k == b'PAGE_UP':
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
+        if k == b'PAGE_DOWN':
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
+        if k == b'RETURN':
+            curframetype = frametypes[ind[cur_line]]
+            choices = []
+            for frametype in frametypeExchangeable:
+                choices.append(frametype)
+            cursor = choices.index(curframetype)
+            while True:
+                typeselection = "> Choose new type:"
+                for option in range(len(choices)):
+                    if option == cursor:
+                        typeselection += "  " + selectfmt + gettypedescription(choices[option], 1) + "\033[0m"
+                    else:
+                        typeselection += "  " + gettypedescription(choices[option], 1)
+                print(typeselection)
+
+                k = getKey()
+                print("\033[{}A\033[J".format(1), end='')
+
+                if k == b'KEY_RIGHT':
+                    cursor = min(len(choices)-1, cursor + 1)
+                if k == b'KEY_LEFT':
+                    cursor = max(0, cursor - 1)
+
+                if k == b'RETURN':
+                    newtype = choices[cursor]
+                    if not curframetype == newtype:
+                        frametypes[ind[cur_line]] = newtype
+                        framecargotypes[ind[cur_line]] = None
+                        framecargoamounts[ind[cur_line]] = 0
+                    break
+
+                if k == b'ESCAPE':
+                    break
+
+        if ltot <= 10:
+            print("\033[{}A\033[J".format(n_line), end='')
+        else:
+            print("\033[{}A\033[J".format(n_line), end='')
+
+        if k == b'ESCAPE':
+            return None
+
+
 def mainStockMenu(gvas):
     options = [
         ("Rename", renameStockMenu),
@@ -1832,6 +2570,7 @@ def mainStockMenu(gvas):
         ("Cargo", cargoStockMenu),
         ("Locomotive Restock", engineStockMenu),
         ("Change Attachments", editattachmentmenu),
+        ("Replace Flatcar Types", changestockmenu),
     ]
     current = 0
     while True:
@@ -1854,7 +2593,7 @@ def mainStockMenu(gvas):
 
 
 if __name__ == "__main__":
-    filename = selectSaveFile()
+    filename = selectSaveFile('')
     print(filename)
     submenu = mainMenu()
     print(submenu)
