@@ -1089,7 +1089,7 @@ def playerteleport(gvas):
 
                 if dev_version and cur_line == 0 and i == 0:  # DEV Tool to find relative positions
                     closest = getclosest(cur_loc, framelocs)
-                    clostr = frametypeTranslatorShort[frametypes[closest[0]]]
+                    clostr = gettypedescription(frametypes[closest[0]], 1)
                     diststr = "{:.2f}m".format(closest[1]/100)
                     closestpos = framelocs[closest[0]]
                     closestrot = framerots[closest[0]]
@@ -1472,7 +1472,7 @@ def renameStockMenu(gvas):
             nam = '-' if nam is None else nam
 
             print(line_format.format(
-                frametypeTranslatorLong[frametypes[i]],
+                gettypedescription(frametypes[i]),
                 num,
                 nam,
             ))
@@ -1856,7 +1856,7 @@ def engineStockMenu(gvas):
             num = '' if num is None else num
             nam = '' if nam is None else nam
 
-            namestr = "{:<10s}:".format(frametypeTranslatorShort[frametype])
+            namestr = "{:<10s}:".format(gettypedescription(frametype, 1))
             if not num == '':
                 namestr += " {:>4}".format(num.split("<br>")[0].strip())
             if not nam == '':
@@ -2083,7 +2083,7 @@ def editattachmentmenu(gvas):
             num = '' if num is None else num
             nam = '' if nam is None else nam
 
-            namestr = "{:<10s}:".format(frametypeTranslatorShort[frametype])
+            namestr = "{:<10s}:".format(gettypedescription(frametype, 1))
             if not num == '':
                 namestr += " " + num.split("<br>")[0].strip()
             if not nam == '':
@@ -2530,9 +2530,9 @@ def changestockmenu(gvas):
                 typeselection = "> Choose new type:"
                 for option in range(len(choices)):
                     if option == cursor:
-                        typeselection += "  " + selectfmt + frametypeTranslatorShort[choices[option]] + "\033[0m"
+                        typeselection += "  " + selectfmt + gettypedescription(choices[option], 1) + "\033[0m"
                     else:
-                        typeselection += "  " + frametypeTranslatorShort[choices[option]]
+                        typeselection += "  " + gettypedescription(choices[option], 1)
                 print(typeselection)
 
                 k = getKey()
