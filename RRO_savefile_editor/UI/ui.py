@@ -980,8 +980,14 @@ def exchangesheds(gvas):
 def playerteleport(gvas):
     try:
         playernames = gvas.data.find("PlayerNameArray").data
-        playerlocs = gvas.data.find("PlayerLocationArray").data
-        playerrots = gvas.data.find("PlayerRotationArray").data
+        try:
+            playerlocs = gvas.data.find("PlayerLocationArray").data
+        except AttributeError:
+            playerlocs = gvas.data.find("playerlocationarray").data
+        try:
+            playerrots = gvas.data.find("PlayerRotationArray").data
+        except AttributeError:
+            playerrots = np.zeros_like(playerlocs)
     except AttributeError:
         failedtofind("players")
         return
@@ -1317,12 +1323,18 @@ def playerteleport(gvas):
 
 
 def playerMenu(gvas):
-    player_names_prop = gvas.data.find("PlayerNameArray")
-    player_money_prop = gvas.data.find("PlayerMoneyArray")
-    player_xp_prop = gvas.data.find("PlayerXPArray")
+    player_names = gvas.data.find("PlayerNameArray").data
+    try:
+        player_money = gvas.data.find("PlayerMoneyArray").data
+    except AttributeError:
+        player_money = gvas.data.find("playermoneyarray").data
+    try:
+        player_xp = gvas.data.find("PlayerXPArray").data
+    except AttributeError:
+        player_xp = gvas.data.find("playerxparray").data
     cur_col = 0
     cur_line = 0
-    ltot = len(player_names_prop.data)
+    ltot = len(player_names)
     if ltot > 10:
         split_data = True
         n_page = int(np.ceil(ltot / 10))
@@ -1346,7 +1358,7 @@ def playerMenu(gvas):
             "{:>9.0f}",
         ]
         n_line = 0
-        for i in range(len(player_names_prop.data)):
+        for i in range(len(player_names)):
             if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
@@ -1362,9 +1374,9 @@ def playerMenu(gvas):
                 line_format += "".join([" | " + f for f in formatters[1:]])
 
             line = line_format.format(
-                player_names_prop.data[i],
-                player_xp_prop.data[i],
-                player_money_prop.data[i]
+                player_names[i],
+                player_xp[i],
+                player_money[i]
             )
             print(line)
         k = getKey()
@@ -1403,13 +1415,13 @@ def playerMenu(gvas):
                     prompt_text = "> Invalid input! Enter new value: "
                     continue
 
-                data = [player_xp_prop.data, player_money_prop.data]
+                data = [player_xp, player_money]
                 data[cur_col][cur_line] = val
                 print("\033[{}A\033[J".format(n_rline), end='')
                 break
 
-        if len(player_names_prop.data) <= 10:
-            print("\033[{}A\033[J".format(len(player_names_prop.data) + 3), end='')
+        if len(player_names) <= 10:
+            print("\033[{}A\033[J".format(len(player_names) + 3), end='')
         else:
             print("\033[{}A\033[J".format(n_line + 4), end='')
 
