@@ -58,7 +58,7 @@ def mainMenu(gvas, dev_version_i=False):
     global dev_version
     dev_version = dev_version_i
     options = [
-        ("Players", playerMenu),
+        ("Players", playerXpMoney),
         ("Teleport", playerteleport),
         ("Rolling stock", mainStockMenu),
         ("Environment", mainEnvMenu),
@@ -979,15 +979,8 @@ def exchangesheds(gvas):
 
 def playerteleport(gvas):
     try:
-        playernames = gvas.data.find("PlayerNameArray").data
-        try:
-            playerlocs = gvas.data.find("PlayerLocationArray").data
-        except AttributeError:
-            playerlocs = gvas.data.find("playerlocationarray").data
-        try:
-            playerrots = gvas.data.find("PlayerRotationArray").data
-        except AttributeError:
-            playerrots = np.zeros_like(playerlocs)
+        playernames = gvas.data.find("playernamearray").data
+        playerlocs = gvas.data.find("playerlocationarray").data
     except AttributeError:
         failedtofind("players")
         return
@@ -1069,7 +1062,6 @@ def playerteleport(gvas):
                     line_format = " | ".join(formatters)
                 cur_name = playernames[i]
                 cur_loc = playerlocs[i]
-                cur_rot = playerrots[i]
 
                 cur_x = int(round(cur_loc[0] / 100))
                 cur_y = int(round(cur_loc[1] / 100))
@@ -1087,10 +1079,10 @@ def playerteleport(gvas):
                     closestpos = industrylocs[closest[0]]
                     closestrot = industryrots[closest[0]]
                     print("Closest Ind: {} in {:.0f}cm".format(industrytypes[closest[0]], closest[1]))
-                    print("Player vals: {} {}".format(cur_loc, cur_rot))
+                    print("Player vals: {}".format(cur_loc))
                     print("Target vals: {} {}".format(closestpos, closestrot))
                     print("Relative:    [Dir {:.1f}, Dist {:.1f}, Height {:.1f}], Rot {:.1f}".format(
-                        *getrelative(cur_loc, cur_rot, closestpos, closestrot)))
+                        *getrelative(cur_loc, 0, closestpos, closestrot)))
                     n_line += 4
 
                 if dev_version and cur_line == 0 and i == 0:  # DEV Tool to find relative positions
@@ -1100,10 +1092,10 @@ def playerteleport(gvas):
                     closestpos = framelocs[closest[0]]
                     closestrot = framerots[closest[0]]
                     print("Closest car: {} in {:.0f}cm".format(frametypes[closest[0]], closest[1]))
-                    print("Player vals: {} {}".format(cur_loc, cur_rot))
+                    print("Player vals: {}".format(cur_loc))
                     print("Target vals: {} {}".format(closestpos, closestrot))
                     print("Relative:    [Dir {:.1f}, Dist {:.1f}, Height {:.1f}], Rot {:.1f}".format(
-                        *getrelative(cur_loc, cur_rot, closestpos, closestrot)))
+                        *getrelative(cur_loc, 0, closestpos, closestrot)))
                     n_line += 4
 
                 n_line += 1
@@ -1160,7 +1152,7 @@ def playerteleport(gvas):
                     cursor = max(0, cursor - 1)
                 if k2 == b'RETURN':
                     if cursor == 0:
-                        playerlocs[cur_line], playerrots[cur_line] = getplayertppos(0)
+                        playerlocs[cur_line] = getplayertppos
                         break  # move player to start and exit destination type sel
                     else:
                         list = []
@@ -1198,7 +1190,7 @@ def playerteleport(gvas):
                                 if playernames[i] != playernames[cur_line]:
                                     list.append(playernames[i])
                                     listloc.append(playerlocs[i])
-                                    listrot.append(playerrots[i])
+                                    # not building listrot since 220121, player rotation isn't saved
                         else:
                             break  # to make the IDE happy and prevent anything weird
                         if len(list) == 0:  # if there is nothing to choose from, abort
@@ -1301,15 +1293,13 @@ def playerteleport(gvas):
                             if k3 == b'RETURN':
                                 if cursor == 4:  # if it's a player, just copy values
                                     playerlocs[cur_line] = listloc[cur_line2]
-                                    playerrots[cur_line] = listrot[cur_line2]
                                 else:            # else get the absolute position that's relative to the target
                                     if cursor == 3:  # for cabooses replace name with type
                                         tptype = "caboose"
                                     else:
                                         tptype = list[cur_line2]
                                     newposrot = getplayertppos(tptype, listloc[cur_line2], listrot[cur_line2])
-                                    playerlocs[cur_line] = newposrot[0]
-                                    playerrots[cur_line] = newposrot[1]
+                                    playerlocs[cur_line] = newposrot
                                 break  # exit destination sel
                         n_line -= 2
                         break  # exit destination type sel, always happens after leaving destination sel
@@ -1322,16 +1312,11 @@ def playerteleport(gvas):
             break  # exit menu
 
 
-def playerMenu(gvas):
-    player_names = gvas.data.find("PlayerNameArray").data
-    try:
-        player_money = gvas.data.find("PlayerMoneyArray").data
-    except AttributeError:
-        player_money = gvas.data.find("playermoneyarray").data
-    try:
-        player_xp = gvas.data.find("PlayerXPArray").data
-    except AttributeError:
-        player_xp = gvas.data.find("playerxparray").data
+def playerXpMoney(gvas):
+    player_ids = gvas.data.find("playeridarray").data
+    player_names = gvas.data.find("playernamearray").data
+    player_money = gvas.data.find("playermoneyarray").data
+    player_xp = gvas.data.find("playerxparray").data
     cur_col = 0
     cur_line = 0
     ltot = len(player_names)
@@ -1341,42 +1326,49 @@ def playerMenu(gvas):
     else:
         split_data = False
         n_page = 1
+    formatters = [
+        "{:<35}",
+        "{:<20}",
+        "{:>9}",
+        "{:>9}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
+
     while True:
         print("Select a field to edit (ESCAPE to quit, ENTER to valid selection)")
         cur_page = int(np.floor(cur_line / 10))
         if split_data:
             print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
-        print("{:<65s} | {:>9s} | {:>9s}".format(
+        print(" | ".join(formatters).format(
             "Player name",
+            "Steam ID 64",
             "XP",
             "Money"
         ))
-        print("-" * (65 + 3 + 9 + 3 + 9))
-        formatters = [
-            "{:<64s}",
-            "{:>9d}",
-            "{:>9.0f}",
-        ]
+        print(dashline)
+
         n_line = 0
         for i in range(len(player_names)):
             if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
-            line_format = "{:<64s} "
+            line_format = " | ".join([*formatters[:2], ""])
             if i == cur_line:
-                for j in range(2):
-                    line_format += " | "
-                    if j == cur_col:
-                        line_format += selectfmt + formatters[j + 1] + "\033[0m"
-                    else:
-                        line_format += formatters[j + 1]
+                if cur_col == 0:
+                    line_format += selectfmt + formatters[2] + "\033[0m | " + formatters[3]
+                else:
+                    line_format += formatters[2] + " | " + selectfmt + formatters[3] + "\033[0m"
             else:
-                line_format += "".join([" | " + f for f in formatters[1:]])
+                line_format += " | ".join(formatters[2:])
 
             line = line_format.format(
                 player_names[i],
+                player_ids[i],
                 player_xp[i],
-                player_money[i]
+                player_money[i],
             )
             print(line)
         k = getKey()

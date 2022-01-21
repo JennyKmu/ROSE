@@ -1,7 +1,7 @@
 __all__ = [
     "selectSaveFile",
     "mainMenu",
-    "playerMenu",
+    "playerXpMoney",
     "mainStockMenu",
     "renameStockMenu",
     "moveStockMenu",
@@ -9,9 +9,9 @@ __all__ = [
 ]
 
 try:
-    from ui import selectSaveFile, mainMenu, playerMenu, mainStockMenu, renameStockMenu, moveStockMenu
+    from ui import selectSaveFile, mainMenu, playerXpMoney, mainStockMenu, renameStockMenu, moveStockMenu
 except ModuleNotFoundError:
-    from .ui import selectSaveFile, mainMenu, playerMenu, mainStockMenu, renameStockMenu, moveStockMenu
+    from .ui import selectSaveFile, mainMenu, playerXpMoney, mainStockMenu, renameStockMenu, moveStockMenu
 
 try:
     from uiutils import getKey
