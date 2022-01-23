@@ -42,9 +42,9 @@ def inner_main():
         "Leif_The_Head",
     ]
 
-    version = (0, 3, 9)
-    dev_version = True
-    beta_version = False
+    version = (0, 3, 10)
+    dev_version = False
+    beta_version = True
     current_save_version = "220120"
 
     def header():

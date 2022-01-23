@@ -1152,7 +1152,7 @@ def playerteleport(gvas):
                     cursor = max(0, cursor - 1)
                 if k2 == b'RETURN':
                     if cursor == 0:
-                        playerlocs[cur_line] = getplayertppos
+                        playerlocs[cur_line] = getplayertppos(0)
                         break  # move player to start and exit destination type sel
                     else:
                         list = []
@@ -1298,8 +1298,7 @@ def playerteleport(gvas):
                                         tptype = "caboose"
                                     else:
                                         tptype = list[cur_line2]
-                                    newposrot = getplayertppos(tptype, listloc[cur_line2], listrot[cur_line2])
-                                    playerlocs[cur_line] = newposrot
+                                    playerlocs[cur_line] = getplayertppos(tptype, listloc[cur_line2], listrot[cur_line2])
                                 break  # exit destination sel
                         n_line -= 2
                         break  # exit destination type sel, always happens after leaving destination sel
