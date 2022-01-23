@@ -58,8 +58,7 @@ def mainMenu(gvas, dev_version_i=False):
     global dev_version
     dev_version = dev_version_i
     options = [
-        ("Players", playerXpMoney),
-        ("Teleport", playerteleport),
+        ("Players", mainPlayerMenu),
         ("Rolling stock", mainStockMenu),
         ("Environment", mainEnvMenu),
         ("Save & Exit", saveAndExit),
@@ -137,6 +136,32 @@ def mainEnvMenu(gvas):
         ("Smart tree replant", resetTreesSmart),
         ("Repaint Sheds", exchangesheds),
         ("Reset trees to new game state (EXPERIMENTAL)", resetTreesToNewGame),
+    ]
+    current = 0
+    while True:
+        print("Select the feature you want to run (press ENTER to confirm):")
+        for i, f in enumerate(options):
+            if i == current:
+                print(" - " + selectfmt + "{}\033[0m".format(f[0]))
+            else:
+                print(" - {}".format(f[0]))
+        k = getKey()
+        if k == b'KEY_UP':
+            current = max(0, current - 1)
+        if k == b'KEY_DOWN':
+            current = min(len(options) - 1, current + 1)
+        print("\033[{}A\033[J".format(len(options) + 1), end='')
+        if k == b'RETURN':
+            options[current][1](gvas)
+        if k == b'ESCAPE':
+            return None
+
+
+def mainPlayerMenu(gvas):
+    options = [
+        ("Edit Money and XP", playerXpMoney),
+        ("Teleport", playerteleport),
+        #("Cleanup [BETA]", playercleanup),
     ]
     current = 0
     while True:
@@ -1363,9 +1388,14 @@ def playerXpMoney(gvas):
             else:
                 line_format += " | ".join(formatters[2:])
 
+            try:
+                player_id = player_ids[i]
+            except IndexError:
+                player_id = '-'
+
             line = line_format.format(
                 player_names[i],
-                player_ids[i],
+                player_id,
                 player_xp[i],
                 player_money[i],
             )
@@ -1410,6 +1440,149 @@ def playerXpMoney(gvas):
                 data[cur_col][cur_line] = val
                 print("\033[{}A\033[J".format(n_rline), end='')
                 break
+
+        if len(player_names) <= 10:
+            print("\033[{}A\033[J".format(len(player_names) + 3), end='')
+        else:
+            print("\033[{}A\033[J".format(n_line + 4), end='')
+
+        if k == b'ESCAPE':
+            return None
+
+
+def playercleanup(gvas):
+    player_ids = gvas.data.find("playeridarray").data
+    player_names = gvas.data.find("playernamearray").data
+    player_money = gvas.data.find("playermoneyarray").data
+    player_xp = gvas.data.find("playerxparray").data
+    player_loc = gvas.data.find("playerlocationarray").data
+    cur_line = 0
+    formatters = [
+        "{:<35}",
+        "{:<30}",
+        "{:^10}",
+    ]
+    dashline = ''
+    for i in formatters:
+        dashline += "---" + len(i.format('')) * "-"
+    dashline = dashline[2:]
+
+    while True:
+        ltot = len(player_names) + 1
+        cur_line = min(cur_line, ltot-1)
+        if ltot > 10:
+            split_data = True
+            n_page = int(np.ceil(ltot / 10))
+        else:
+            split_data = False
+            n_page = 1
+        print("Select a field to edit (ESCAPE to quit, ENTER to valid selection)")
+        cur_page = int(np.floor(cur_line / 10))
+        if split_data:
+            print("Use PAGE_UP and PAGE_DOWN to switch page ({}/{})".format(cur_page + 1, n_page))
+
+        print(" | ".join(formatters).format(
+            "Player name",
+            "Steam ID 64",
+            "DELETE"
+        ))
+        print(dashline)
+
+        if cur_line == 0:
+            print(selectfmt + "CLEAN UP PLAYER LIST\033[0m | This will remove duplicates and players without progress")
+        else:
+            print("Clean up player list")
+
+        n_line = 1
+        for i in range(len(player_names)):
+            if np.floor((i+1) / 10) != cur_page and split_data:
+                continue
+            n_line += 1
+            line_format = " | ".join([*formatters[:2], ""])
+            if i == cur_line-1:
+                line_format += selectfmt + formatters[2] + "\033[0m"
+            else:
+                line_format += formatters[2]
+
+            try:
+                player_id = player_ids[i]
+            except IndexError:
+                player_id = 'not joined since 220121'
+
+            line = line_format.format(
+                player_names[i],
+                player_id,
+                "[DELETE]"
+            )
+            print(line)
+        k = getKey()
+
+        if k == b'KEY_UP':
+            cur_line = max(0, cur_line - 1)
+        if k == b'KEY_DOWN':
+            cur_line = min(cur_line + 1, ltot - 1)
+        if k == b'PAGE_UP':
+            if split_data and cur_page > 0:
+                cur_page -= 1
+                cur_line = cur_page * 10 + 9
+            else:
+                cur_line = 0
+        if k == b'PAGE_DOWN':
+            if split_data and cur_page < n_page - 1:
+                cur_page += 1
+                cur_line = cur_page * 10
+            else:
+                cur_line = ltot - 1
+
+        if k == b'RETURN':
+            if cur_line > 0:
+                todelete = cur_line-1
+                print("Do you really want to remove " + selectfmt + player_names[todelete] + "\033[0m?" +
+                      "\nThis cannot be undone once saved. Press " + selectfmt + "Y\033[m to confirm:")
+                k2 = getKey()
+                if k2 == b'y':
+                    if todelete in range(len(player_ids)):
+                        player_ids = np.delete(player_ids, todelete)
+                    player_xp = np.delete(player_xp, todelete)
+                    player_money = np.delete(player_money, todelete)
+                    player_names = np.delete(player_names, todelete)
+                    player_loc = np.delete(player_loc, todelete, axis=0)
+                print("\033[2A\033[J", end='')
+            else:
+                todelete = []
+                # look for duplicates
+                for name in player_names:
+                    indexes = np.argwhere(player_names == name)
+                    if len(indexes) > 1:
+                        todelete.append(indexes[1:])
+                # look for 220120 beta artifacts (ID stored as name)
+                for ID in player_ids:
+                    indexes = np.argwhere(player_names == ID)
+                    if len(indexes) > 1:
+                        todelete.append(indexes)
+                # find those without progress not yet added
+                for i in range(len(player_names)):
+                    if player_xp[i] == 0 and player_money[i] == 2000 and i not in todelete:
+                        todelete.append(i)
+                # sort in reverse order and do it one item at a time, since ID list might mismatch
+                todelete.sort(reverse=True)
+                print(todelete)
+                print("Found {} duplicates, artifacts, zero progresses.".format(len(todelete)))
+                if len(todelete) > 0:
+                    print("This cannot be undone once saved. Press " + selectfmt + "Y\033[m to confirm:")
+                    k2 = getKey()
+                    if k2 == b'y':
+                        for num in todelete:
+                            if num in range(len(player_ids)):
+                                player_ids = np.delete(player_ids, num)
+                            player_xp = np.delete(player_xp, num)
+                            player_money = np.delete(player_money, num)
+                            player_names = np.delete(player_names, num)
+                            player_loc = np.delete(player_loc, num, axis=0)
+                else:
+                    print("Any key to return.")
+                    getKey()
+                print("\033[2A\033[J", end='')
 
         if len(player_names) <= 10:
             print("\033[{}A\033[J".format(len(player_names) + 3), end='')
