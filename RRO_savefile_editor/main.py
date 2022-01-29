@@ -42,10 +42,10 @@ def inner_main():
         "Leif_The_Head",
     ]
 
-    version = (0, 3, 9)
+    version = (0, 3, 10)
     dev_version = False
-    beta_version = False
-    current_save_version = "1"
+    beta_version = True
+    current_save_version = "220120"
 
     def header():
         print("=" * 72)
@@ -102,9 +102,9 @@ def inner_main():
         from .GVAS import GVAS
 
     try:
-        from UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
+        from UI import playerXpMoney, mainMenu, mainStockMenu, selectSaveFile, getKey
     except ModuleNotFoundError:
-        from .UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
+        from .UI import playerXpMoney, mainMenu, mainStockMenu, selectSaveFile, getKey
 
     def loop(loc="."):
         from pathlib import Path
@@ -128,7 +128,6 @@ def inner_main():
         gvas = GVAS(filepath)
 
         print("Currently loaded file is '\033[1m{}\033[0m'".format(filename))
-        print("------------------")
 
         try:
             saveversion = gvas.data.find("SaveGameVersion").data
@@ -150,12 +149,16 @@ def inner_main():
                     print("Do you want to continue anyway? Type 'YES':")
                     if input("> ") != "YES":
                         sys.exit()
-                    print("\033[2A\033[J------------------")
+                    print("\033[2A\033[J", end='')
                 elif saveversion < current_save_ver:
                     print("Save Version is OLDER than currently supported. Please open & save it in game once.")
                     print("Press any key to exit.\n------------------")
                     getKey()
                     sys.exit()
+
+        save_id = gvas.data.find("SaveGameUniqueID").data
+        print("Save ID: " + save_id)
+        print("------------------")
 
         mainMenu(gvas, dev_version)
 

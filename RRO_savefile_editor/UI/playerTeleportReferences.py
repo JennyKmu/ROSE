@@ -61,15 +61,9 @@ def getplayertppos(indtype, indpos=None, indrot=None):
         newpos[0] = indpos[0] + deltax
         newpos[1] = indpos[1] + deltay
         newpos[2] = indpos[2] + relz + 1.0  # just add a cm to avoid rdg errors sticking you into ground
-        newrot = indrot[1] + tpdata[2]
-        while newrot > 180:
-            newrot -= 360
-        while newrot < -180:
-            newrot += 360
     else:
         newpos = tpdata[1]
-        newrot = tpdata[2]
-    return newpos, newrot
+    return newpos
 
 
 def getdistfast(pos1, pos2):
@@ -106,6 +100,6 @@ def getrelative(pos, rot, compos, comrot):
     else:
         alpha = np.degrees(np.arctan(relpos[1]/relpos[0])) + 180
     reldir = alpha - comrot[1]
-    relrot = rot - comrot[1]  # viewing angle
+    relrot = rot - comrot[1]  # viewing angle, deprecated as 0f 220121
 
     return reldir, reldist, relpos[2], relrot
