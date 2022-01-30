@@ -1,0 +1,1006 @@
+[33mcommit 60bf197519c8c3120544557dde50131ea3286320[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m
+Author: Leif-The-Head <lt.holmi@web.de>
+Date:   Sun Jan 30 23:54:02 2022 +0100
+
+    First version of player classes
+
+[33mcommit 0b55e98c0de59dada95df4174cb5266ae621be39[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sat Jan 29 02:09:29 2022 +0100
+
+    Update README.md
+
+[33mcommit 3a4681e718bdcc3ffb4f8977b24859f9cf796d33[m
+Merge: 082bb89 bd7d7eb
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sat Jan 29 02:07:26 2022 +0100
+
+    Merge pull request #1 from Leif-The-Head/Update_220121-BETA
+    
+    Merge
+
+[33mcommit bd7d7ebc63906dc10452f065c3a618bf79bf7c23[m[33m ([m[1;33mtag: v0.3.10-beta[m[33m)[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sun Jan 23 17:30:12 2022 +0100
+
+    Added compensation for mixed-data saves.
+    When not all people in the save file had joined since the conversion, the lists would mismatch.
+
+[33mcommit d818118f52a2aa6c33055192436b2fa99145b929[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sun Jan 23 15:30:58 2022 +0100
+
+    Corrected a coding error.
+    Prepared to release.
+
+[33mcommit aa87c4b485933b6b25cec23c649b81e790e1e679[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Jan 21 17:52:53 2022 +0100
+
+    Removed previous fallback since the file structure change got refined.
+    Updated accepted save version.
+    Added display of Save ID.
+    Added display of Player's SteamID64 in the player edit menu.
+
+[33mcommit 63985129c3a49650ecb1f5ea403cb660a059e8bb[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Thu Jan 20 18:00:54 2022 +0100
+
+    Accommodated for some arrays changed naming and a missing array (PlayerRotationArray)
+    Not sure if intentional, so implemented as fallback in case it gets changed back.
+
+[33mcommit 082bb8911601ceaae1aa308e3fb9f196a16cc35b[m[33m ([m[1;33mtag: v0.3.9[m[33m)[m
+Merge: ef61608 d34a8ed
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sun Jan 16 04:47:39 2022 +0100
+
+    Merge pull request #50 from JennyKmu/dev_039
+    
+    039 out of beta!
+
+[33mcommit d34a8edd049a604e9cfc18530bdadaa0af5ecfd8[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sun Jan 16 04:34:18 2022 +0100
+
+    .
+
+[33mcommit 683ca92074444ee7cce93d8954a366af6a80d598[m
+Merge: 9d9d6f7 41fe1b2
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sun Jan 16 04:32:49 2022 +0100
+
+    Merge remote-tracking branch 'origin/dev_039' into dev_039
+
+[33mcommit 9d9d6f7a5f40d2bb8734958686d3fff3c0a975e7[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sun Jan 16 04:28:14 2022 +0100
+
+    Preventing future crashes when new rolling stock is added
+
+[33mcommit 41fe1b2d31a837d0e2f101580e46892f742382d9[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sun Jan 16 04:28:14 2022 +0100
+
+    Preventing future crashes when new rolling stock is added
+
+[33mcommit 89c02d672763fc9fcbe5fd7f377e6c2f85e13af0[m[33m ([m[1;33mtag: v0.3.9-beta[m[33m)[m
+Merge: 62c7141 f27ee76
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Tue Dec 21 22:46:09 2021 +0100
+
+    Merge pull request #47 from JennyKmu/update_211220
+    
+    Added Sheds to replant feature
+
+[33mcommit f27ee76e9de357a746bfeb34b6fedb3a1e17e6b0[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Tue Dec 21 22:13:13 2021 +0100
+
+    Added Sheds to replant feature
+
+[33mcommit 62c7141c032745849c93f15c555cd72c93998258[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Tue Dec 21 21:35:16 2021 +0100
+
+    Update README.md
+
+[33mcommit c0bcbde031e10df672746c42f81bfdc486958da9[m
+Merge: 0d86949 13df079
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Tue Dec 21 21:34:50 2021 +0100
+
+    Merge pull request #46 from JennyKmu/update_211220
+
+[33mcommit 13df079a75bede21d013bc2ce12e2a7c299ec268[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Tue Dec 21 21:28:47 2021 +0100
+
+    Game Update 211220:
+    * Cabooses added:
+      * restock firewood
+      * rename (with limits, override as usual)
+      * added as teleport target
+    * Sheds added:
+      * repaint
+    
+    ROSE Updates:
+    * fixes for some edge cases where the save has no content of certain type
+    * QOL update to preselect the current type for the type changers (flatcar, attachment, shed paint)
+
+[33mcommit 0d86949b99949d1d7ba065a340be4eaf1ffa83f4[m
+Merge: e1cc236 33985eb
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Tue Dec 7 18:33:24 2021 +0100
+
+    Merge pull request #44 from JennyKmu/interface-rework-039
+    
+    Interface rework 039
+
+[33mcommit 33985eb667ae557af4c6ef7bebdf99cf870fa8a0[m
+Merge: a970781 a634ef9
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Tue Dec 7 18:31:30 2021 +0100
+
+    Merge pull request #45 from JennyKmu/game-update-211204
+    
+    Game update 211204
+
+[33mcommit a634ef93506c38b42853c1658c5bf0dd9a97586e[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Mon Dec 6 19:13:27 2021 +0100
+
+    Adjusted Stock Menu lengths
+
+[33mcommit b14c8e2ece4901a0f8046b652349891fceaa616e[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Mon Dec 6 18:46:20 2021 +0100
+
+    Updated removed trees
+
+[33mcommit 1511905fbf8b52a9a5952edbf35975132698d45b[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Mon Dec 6 14:39:56 2021 +0100
+
+    Added SaveGameVersion check to mitigate future compatibility issues
+
+[33mcommit aa926833efa140413c068bd04ccd2c2a1548c322[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Mon Dec 6 14:11:30 2021 +0100
+
+    Added Sander Level Edit to Restock Menu
+    Added dev function to extract removed trees in a format ready to copy-paste
+
+[33mcommit a970781dfb6b211b853e46a888247eadc5126e59[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Mon Nov 29 14:40:00 2021 +0100
+
+    Navigation polish
+    Unified Code for moving and scrolling up/down
+    Using PG-UP/DN on first/last or only page moves cursor to first/last entry
+
+[33mcommit fe153b21e0a2e31110b61840418da4561e630639[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Mon Nov 29 13:53:32 2021 +0100
+
+    Modified interface:
+    Respawn, cargo and flatcar menu now show location and/or nearest industry for the cars
+
+[33mcommit e1cc236695b6926dd17d73d82ec80810900f4c42[m
+Merge: ef61608 7845db2
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Fri Nov 26 20:36:27 2021 +0100
+
+    Merge pull request #42 from JennyKmu/feature_player_teleport
+    
+    Feature: Player Teleport
+
+[33mcommit 7845db290ff6df8146b45414b96986b1a8d4390f[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Nov 26 17:47:16 2021 +0100
+
+    Fixed Bug in utility edit (introduced with the last batch)
+
+[33mcommit 5d67109f271baa4b91c564b925fe5ac0efa6e0cb[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Thu Nov 25 11:10:29 2021 +0100
+
+    * Changes according to comments
+    * Move Industries is now an actual DEV feature
+    * DEV variable globally available (used in a submethod)
+    * Fixed bug in the teleport feature page scrolling
+
+[33mcommit 0657326af3f896e4c3c98fb40263c87aa3b491a6[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sat Nov 20 20:44:30 2021 +0100
+
+    **Player Teleport Feature**
+    Move any player to:
+    * Spawn
+    * Any industry
+    * Any Firewood depot
+    * Any other player
+
+[33mcommit dfbb5c409b0953c7bb0892bf6f41b757925ca411[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Nov 19 16:08:26 2021 +0100
+
+    WIP Commit
+    * testing
+
+[33mcommit 94a5d07513ae7a77ed386dc2aa77e5f2f58c7fbe[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Nov 19 09:24:03 2021 +0100
+
+    Made IDE happy
+
+[33mcommit 7713e1080261df5cbb0d327362b2e2228f02e724[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Nov 19 09:20:51 2021 +0100
+
+    WIP commit
+
+[33mcommit 8c8826bdceeb0e095aae8fc999b0011752e3cbfb[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Thu Nov 18 23:59:20 2021 +0100
+
+    WIP Commit
+    * finding spawn positions
+
+[33mcommit 95d649b333d56a87501cd65d39cee58bbe45a813[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Thu Nov 18 15:40:19 2021 +0100
+
+    WIP commit
+
+[33mcommit aac41fda96320d063cc26efe63d4facca072b3c6[m
+Merge: d3be38d de38722
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Thu Nov 18 15:36:18 2021 +0100
+
+    Merge remote-tracking branch 'origin/feature_player_teleport' into feature_player_teleport
+
+[33mcommit d3be38d74c7845fec54e809efecdaf9c5c75874e[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Fri Nov 12 22:36:56 2021 +0100
+
+    Added new things, and some ongoing work
+
+[33mcommit ef6160846fb77986041bc9ede7baa33f1d5004d1[m[33m ([m[1;33mtag: v0.3.8[m[33m)[m
+Merge: 55ca9ac e0e7106
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 15 18:44:27 2021 +0100
+
+    Merge pull request #39 from JennyKmu/dev_v038
+    
+    Dev v038
+
+[33mcommit e0e7106825efd82fd87b14e27506b99c79ac5463[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 15 18:38:56 2021 +0100
+
+    Updated Readme for release
+
+[33mcommit c155d6cedec91c6191f4e9a4a566b6cb513e911a[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 15 18:34:50 2021 +0100
+
+    Updated main.py for release
+
+[33mcommit 870f8a59d5da91fdf158d993481f2e5fe90facf5[m
+Merge: 58d3af4 826a672
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Mon Nov 15 18:28:10 2021 +0100
+
+    Merge pull request #38 from JennyKmu/hotfix_smart_tree_respawn
+    
+    Hotfix: corrected Issue with Smart Tree Respawn
+
+[33mcommit 826a672241094c10f5fe5c359b068f80d4da1575[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 15 18:18:47 2021 +0100
+
+    Corrected Issue
+
+[33mcommit 58d3af4d722e995b9298115ba2c74a321466a015[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sat Nov 13 11:18:38 2021 +0100
+
+    Update README.md
+
+[33mcommit 0f2a68debaf2f018b822fd3c91956f704de0dfa5[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sat Nov 13 11:00:01 2021 +0100
+
+    Update main.py
+    
+    Removed outdated lines in header "How to use"
+
+[33mcommit d737926b28a6b33ba28087e6f59b6b456cdd95d2[m[33m ([m[1;33mtag: v0.3.8-beta[m[33m)[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Fri Nov 12 23:12:53 2021 +0100
+
+    Added note for mogul headlights in readme
+
+[33mcommit ad6985e5075e0f3c40f0e64f000eafd3f9bf7019[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Fri Nov 12 23:09:02 2021 +0100
+
+    Updated Readme for beta release
+
+[33mcommit fae50bfcb00575725c5c07d153a5eea1b0b6f117[m
+Merge: fd28fab f33f6e3
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Fri Nov 12 22:55:59 2021 +0100
+
+    Merge pull request #35 from JennyKmu/feature_edit_attachments
+    
+    Feature: Edit Attachments
+
+[33mcommit fd28fab900b251fb375962573b8b6c62d926612c[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Fri Nov 12 22:54:55 2021 +0100
+
+    Bugfiwing: Error correction for replanted tree count
+    the number was shown as negative instead of positive
+
+[33mcommit 0123701e81f54e124c502098e4e3b00ee14786dc[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Fri Nov 12 22:45:14 2021 +0100
+
+    Updated main and readme for beta release
+
+[33mcommit de38722670ac629c55b4381171828ce912d884e7[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Fri Nov 12 22:36:56 2021 +0100
+
+    Added new things, and some ongoing work
+
+[33mcommit 5a5dc8c354715cdc46536e445e7fddf6c9db0755[m
+Merge: 6c633e2 efb8d19
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Fri Nov 12 22:35:26 2021 +0100
+
+    Merge pull request #33 from JennyKmu/feature_industry_contents
+    
+    Feature: Industry Content Editor
+
+[33mcommit efb8d19a730acd2387b5eb91571a7154f8db6e3a[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Fri Nov 12 22:34:38 2021 +0100
+
+    Update ui.py
+    
+    Corrected numpy import and use
+
+[33mcommit f33f6e3d3d9ba7d853b8329a29e334222d8ed8b6[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Nov 12 22:31:06 2021 +0100
+
+    Feature: Edit Attachments
+    * Can change Smokestacks of engines
+    * Can change Headlights of engines and applicable tenders
+    
+    Note: Mogul Tender Headlight 2 only persists once, loading the game. The game saves it wrongly as 0 (which you can see in the editor), this bug is known to the game devs.
+
+[33mcommit 7494d9da9e2b3206ad9739d8395f90c3b484a3f5[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Nov 12 14:55:54 2021 +0100
+
+    Found error in Tree reset
+    
+    Wrong value edited when calculating computation time in case there are no trees to reset.
+
+[33mcommit fe7eb58107da78590857471b5ce747888751a141[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Nov 12 14:51:51 2021 +0100
+
+    Feature: Edit Industries
+
+[33mcommit 64ba8b0e6cd95bd1297bd6d4987be867d00846c4[m
+Merge: b1f975f 6c633e2
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Nov 12 14:38:57 2021 +0100
+
+    Update local edit to dev038
+
+[33mcommit 6c633e2a0580a38f5536af8a430a8b35c0250bbf[m
+Merge: a14af70 b1f975f
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Nov 12 14:38:13 2021 +0100
+
+    Merge branch 'feature_industry_contents' into dev_v038
+
+[33mcommit a14af709f320ccce5d1ab6c7d37c1308622765c7[m
+Merge: 55ca9ac c78b1f4
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 11 12:20:08 2021 +0100
+
+    Merge pull request #29 from JennyKmu/feature_improved_tree_reset
+    
+    Feature: Smart Tree Respawn
+
+[33mcommit c78b1f40a1d980fde21c9a9dd30c4f87fe21af6b[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 11 12:15:40 2021 +0100
+
+    Cleaned up code and prepared frontend.
+    Some commented debug lines where kept for future improvements.
+
+[33mcommit 606e8a998be3628d114b96d061b94232b4c57ed5[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 11 11:58:34 2021 +0100
+
+    Tuned up distance, added switch check
+
+[33mcommit f8a917de3d1b33a184ef0808b75f0da7af8d34e7[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 11 09:57:32 2021 +0100
+
+    Added spline visibility check (and commented a bit)
+
+[33mcommit ad3929d1011576aa713dbd65d51583367abbfd3a[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 10 23:20:29 2021 +0100
+
+    Added resetTreeSmart option
+    Does a better job at resetting trees, checking for tracks, groudnwork,
+    bridges, and placeables. Also includes the better_default_removed_trees
+    array.
+
+[33mcommit 310d7ceec408a2bc3f5d501e5f723c88ec847060[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 10 23:19:04 2021 +0100
+
+    Added array with some trees not cut by default but should be
+
+[33mcommit 59578fb25d33ab94cba96910e0a89ede1bd7ecdf[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 10 23:18:25 2021 +0100
+
+    Added docstring for GVAS.data.find
+
+[33mcommit 9626c1b25516fdae7b9c154926b47f70734075b1[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 10 23:17:43 2021 +0100
+
+    added sandhouse in industryPlacables.py for future compatibility
+
+[33mcommit ad07cd4d3ff2130320f1df6e00b1027eb50fbb8e[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 10 23:16:59 2021 +0100
+
+    updated dev_version and version
+
+[33mcommit 092798029110ca018453a78488b13191eefe2102[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Tue Nov 9 23:37:12 2021 +0100
+
+    Optimized code
+    2.7s over 15366 trees and 18668 spline control points.
+
+[33mcommit 7cac12623757571a979111905d970604dac53b76[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Tue Nov 9 21:20:11 2021 +0100
+
+    Tuning distance check to tracks.
+    Back to one line for the distance compute part.
+
+[33mcommit 5e55761ee3a13aa036da2694538efd945a701fee[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Tue Nov 9 21:06:16 2021 +0100
+
+    Added resetTreesSmart
+    Linked it to the ui
+    Edited text for previous full tree reset function (kept for now)
+
+[33mcommit 55ca9ac1b373120015f871bb8e54eb6d87bd7361[m[33m ([m[1;33mtag: v0.3.7[m[33m)[m
+Merge: 2266496 302d1cb
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Tue Nov 9 19:24:17 2021 +0100
+
+    Merge pull request #27 from JennyKmu/dev_v037
+    
+    v0.3.7 release
+
+[33mcommit 302d1cb7cfb7eb224116facd2dc4a0f4149ef3ed[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Tue Nov 9 19:21:55 2021 +0100
+
+    Edited readme and main.py for python version
+
+[33mcommit 8fb648309d867b4a5af310b70765a340ca37236d[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 8 18:51:29 2021 +0100
+
+    hotfix UTF16 StrProperty handling.
+
+[33mcommit b1f975fe14b70c4ead46427a506cfab906e34952[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sun Nov 7 19:52:17 2021 +0100
+
+    Update README.md
+    
+    * corrected requirement to Python 3.9
+    * added comment on the sand levels for both locomotive and utilities
+
+[33mcommit 57a69719501638da1c3b8573eaad799f9d0162f6[m[33m ([m[1;33mtag: v0.3.7-beta[m[33m)[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 17:51:34 2021 +0100
+
+    Small adjustments in Readme
+
+[33mcommit 1272f55a8876bf7637ee0f6dc64e1160d13b1f2b[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 17:36:39 2021 +0100
+
+    Updated Readme for beta release.
+
+[33mcommit 0d6604ace9285542a89dde0f10a1f9a43e7de525[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 17:23:47 2021 +0100
+
+    Updated main.py for beta release.
+
+[33mcommit c96fff96faa6d90eb6e84bd4c30171b4a72fb706[m
+Merge: 0e7331b aad7ec7
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 17:14:29 2021 +0100
+
+    Merge pull request #23 from JennyKmu/feature_placeable_contents
+    
+    Utility filling added
+
+[33mcommit aad7ec727064834526e40f3d9ff1cff7faa640fb[m
+Merge: a8cf726 0e7331b
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 17:13:42 2021 +0100
+
+    Merge branch 'dev_v037' into feature_placeable_contents
+
+[33mcommit 0e7331b5ac161b6922901629875119a576e3920e[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 17:09:12 2021 +0100
+
+    Small debug corrections
+
+[33mcommit ca924667c813b63733bf44e5fde270d98ab3cdff[m
+Merge: 14d40d7 eaa0e49
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 16:48:55 2021 +0100
+
+    Merge pull request #21 from JennyKmu/feature_rs_teleport_depot
+    
+    Feature rs teleport depot
+
+[33mcommit a8cf72689eddee1b44b5dec965b1caecb4aa4402[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sun Nov 7 16:13:10 2021 +0100
+
+    * utility filling introduced (firewood + watertowers)
+
+[33mcommit eaa0e496b86f5c056c528a66ac5f4e69b7b087c2[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 15:59:30 2021 +0100
+
+    Adapted offset for [YEET IT]
+
+[33mcommit 3843e803d43facda3d8414251789afe00defbb43[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 15:43:19 2021 +0100
+
+    Corrected [YEET IT]
+
+[33mcommit 071d0483df95f15cbddc26bf578336042e434eea[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 15:31:22 2021 +0100
+
+    Added a Z offset for some frames not respawning correctly.
+
+[33mcommit 16bad1b36ca4723e51a0613756ad504237452746[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 14:54:57 2021 +0100
+
+    Added brakes to 100% and decoupling for moved frames
+
+[33mcommit 43da200a4d70144121f958073b6ba13de37bdb24[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 14:29:09 2021 +0100
+
+    feature implemented, ready for testing in game. Added better traceback.
+
+[33mcommit 14d40d75ecfd801493885fa2b89d395347f7463b[m
+Merge: 66d5342 6e4cf15
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sun Nov 7 09:33:31 2021 +0100
+
+    Merge pull request #19 from JennyKmu/feature_cars_contents
+    
+    Rolling stock refill contents
+
+[33mcommit 6e4cf15125acee7a0d3bfa1f3c0b53c882ff47ef[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Sun Nov 7 02:49:03 2021 +0100
+
+    * engine and tender waterlevel and firewood editors introduced
+
+[33mcommit 66d5342dbe2c766f8ae420b51b2147f98fea65d3[m
+Merge: eee5d51 b1c8e73
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sat Nov 6 10:46:01 2021 +0100
+
+    Merge pull request #16 from JennyKmu/backend_dev_slots
+    
+    Closes #15
+
+[33mcommit b1c8e733dcc247aebede20523abdf8b8a335bba7[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Sat Nov 6 10:41:18 2021 +0100
+
+    Implemented dev_version slots for testing during dev
+
+[33mcommit eee5d5149a2baa7569162f5519d7b28fee097342[m
+Merge: 2266496 05dbb55
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Fri Nov 5 08:24:34 2021 +0100
+
+    Merge pull request #13 from JennyKmu/feature_cars_contents
+    
+    Feature: Editable cars contents
+
+[33mcommit 05dbb55f44080ccd08d349d47916eeb23ae0ace6[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Nov 5 05:19:12 2021 +0100
+
+    * updated Readme
+
+[33mcommit f55dd575ad089028afc79fbe39c51ddeae529c3b[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Fri Nov 5 04:58:42 2021 +0100
+
+    Feature: cars content editor
+    * content type can be changed
+      * if changing to another type, the car will be filled up
+      * if changing to empty, the car will be emptied
+    * content amount can be changed
+      * only for cars that have a content type
+    * cars are distinguished by their type and each first line of number and name (this is to not clutter the list)
+    * inputs cannot exceed what is possible ingame
+    
+    Not done in this version:
+    * shortcut buttons
+    
+    Obsolete (as in I won't work on this):
+    * shortcuts for filling and emptying, as filling can be done by changing to another type then back and emptying by switching type to empty
+    
+    Changes:
+    * moved everything rolling stock related except the menu itself into its own file
+
+[33mcommit 05b343e7ba63ed36bcbc2b0a437220670b27b543[m
+Author: Leif-The-Head <lt.holmi@web.de>
+Date:   Fri Nov 5 04:54:05 2021 +0100
+
+    Feature: cars content editor
+    * content type can be changed
+      * if changing to another type, the car will be filled up
+      * if changing to empty, the car will be emptied
+    * content amount can be changed
+      * only for cars that have a content type
+    * cars are distinguished by their type and each first line of number and name (this is to not clutter the list)
+    * inputs cannot exceed what is possible ingame
+    
+    Not done in this version:
+    * shortcut buttons
+    
+    Obsolete (as in I won't work on this):
+    * shortcuts for filling and emptying, as filling can be done by changing to another type then back and emptying by switching type to empty
+    
+    Changes:
+    * moved everything rolling stock related except the menu itself into its own file
+
+[33mcommit 58ff636f635ae9845bd960e377b8a87cf6671e40[m
+Author: Leif-The-Head <lt.holmi@web.de>
+Date:   Fri Nov 5 04:46:09 2021 +0100
+
+    Feature: cars content editor
+    * content type can be changed
+      * if changing to another type, the car will be filled up
+      * if changing to empty, the car will be emptied
+    * content amount can be changed
+      * only for cars that have a content type
+    * cars are distinguished by their type and each first line of number and name (this is to not clutter the list)
+    * inputs cannot exceed what is possible ingame
+    
+    Not done in this version:
+    * shortcut buttons
+    
+    Obsolete (as in I won't work on this):
+    * shortcuts for filling and emptying, as filling can be done by changing to another type then back and emptying by switching type to empty
+    
+    Changes:
+    * moved everything rolling stock related except the menu itself into its own file
+
+[33mcommit 2266496c569ea7e5ff5df0bb16650c976f6d51e8[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 22:33:26 2021 +0100
+
+    Hotfix: removed unused argument in main:inner_main()
+
+[33mcommit 713e5e84c8cdb45b04b9bd7833b28c847b112ca0[m[33m ([m[1;33mtag: v0.3.6[m[33m)[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 20:20:27 2021 +0100
+
+    Corrected typos in Readme
+
+[33mcommit c22d6f64ca60a7e5bf3ff9e0d635cf7a0409ddd9[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 20:19:42 2021 +0100
+
+    Updated Readme Title
+
+[33mcommit db82962ded506e992826cec2fae61860a27c5723[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 20:17:06 2021 +0100
+
+    Updated Readme Version and Checksums
+
+[33mcommit 6b5ce8b904381bf1364440347e46aba8827e7cd4[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 20:13:37 2021 +0100
+
+    Updated Readme
+
+[33mcommit 13943efbac3fc3a519e72f7f0b8ec4ba58f64d53[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 19:57:00 2021 +0100
+
+    Removed .pyz file from version control
+
+[33mcommit ae40f01ed1cb1084216c45158e48e4c5baea317d[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 19:54:03 2021 +0100
+
+    Updated for standalone .exe distribution
+
+[33mcommit aeaef1a270f6f2d72eb17767c82e93126c689eb2[m[33m ([m[1;33mtag: v0.3.5-hotfix-1[m[33m)[m
+Merge: e3ad138 e22b482
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 13:13:18 2021 +0100
+
+    Merge pull request #6 from JennyKmu/issue_5
+    
+    Corrected problem
+
+[33mcommit e22b482c773b9d213b1235ad98ba67ea61faa25f[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 13:09:43 2021 +0100
+
+    Corrected problem
+
+[33mcommit e3ad138026c498acf8c4b374936ae42f8692c1ec[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 00:54:18 2021 +0100
+
+    Updated Readme
+
+[33mcommit 64f83c305d77f3954848df909339faf69e966a92[m[33m ([m[1;33mtag: v0.3.5[m[33m)[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 00:34:17 2021 +0100
+
+    Debugged for Release v0.3.5
+
+[33mcommit 15fdddbb2d3d61129d090f7d9c4bec3920853492[m
+Merge: 712a246 7e56c58
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 00:28:27 2021 +0100
+
+    Merge pull request #4 from JennyKmu/feature_trees
+    
+    Feature trees (EXPERIMENTAL)
+
+[33mcommit 7e56c58a959c1b86edaa383df1b758925c879d8d[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 00:27:04 2021 +0100
+
+    missing debug modif
+
+[33mcommit b4f5dc8de29fb78308f5ec4fc7244b569517c580[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 00:26:35 2021 +0100
+
+    reset tree feature debugged
+
+[33mcommit ee27e2994a136cf370419e735464e1601739e5fd[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Thu Nov 4 00:19:13 2021 +0100
+
+    Added reset tree feature, to test now
+
+[33mcommit 9d637cbfe8dfc74ee582287f0d18b8b401cb2acb[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 22:55:03 2021 +0100
+
+    Moved some ui from main.py to ui.py in preparation for new feature
+
+[33mcommit 712a2464407d37a1862bf7824a35e0c80513170e[m[33m ([m[1;33mtag: v0.3.4[m[33m)[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 21:39:28 2021 +0100
+
+    Updated .pyz file for release v0.3.4
+
+[33mcommit 291f0a4f0c544c1c8f44de2cfb6bb7d320297f2b[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 21:38:31 2021 +0100
+
+    Improved numpy not found error message, Commented things, updated Readme
+
+[33mcommit 3332ad1ea73d5650a9f2189164842d550d0f4d48[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 21:28:05 2021 +0100
+
+    Clean-up, updated header, moved imports after header
+
+[33mcommit d949d06be890702870dde8afa4c386fdf8998fe1[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 21:24:01 2021 +0100
+
+    moved inner module imports in main function for better debug by users
+
+[33mcommit 3e53fe6343f485b089681f421595238e3a6b47dc[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 21:17:43 2021 +0100
+
+    Updated ui.py, feature functional
+
+[33mcommit 9082ba677206030effb601b6ef2ad5b90d613f13[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 20:35:27 2021 +0100
+
+    Repaired ui.py post-merge, prepared for moveStockMenu feature
+
+[33mcommit c33d1e7335afe92bc2c9fd83435600e1d6dfc619[m
+Merge: 4d79d8b a91cfe8
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 20:26:07 2021 +0100
+
+    Merge branch 'main' into feature_car_mover
+
+[33mcommit a91cfe8e3c709ae859fea03f352cac57bccfa0e7[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 20:13:44 2021 +0100
+
+    Reinstated specific format when writing TextProperty with only one <br>
+
+[33mcommit 423e4cba84c75d9b0ce44c4eae3c407e7882165e[m
+Merge: 8c006c1 8a1aadf
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 19:31:28 2021 +0100
+
+    Merge pull request #3 from Leif-The-Head/main
+    
+    patch for v0.3.4 - Rolling Stock Name Limiter v1
+
+[33mcommit 4d79d8be49a29b19cfec39302958a5301dfa4f37[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 19:30:42 2021 +0100
+
+    Building mainSotckMenu (work ongoing)
+
+[33mcommit 8a1aadf78cabebe79298a956949cecbf48814fc2[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Wed Nov 3 18:08:40 2021 +0100
+
+    Delete RRO_savefile_editor_033.pyz
+
+[33mcommit 914fbc859d9a7b5b551df1d6eb7b7b0917d5dc61[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Wed Nov 3 18:06:27 2021 +0100
+
+    Rolling stock name limiter v1
+
+[33mcommit 5aaf3b34ef40091b50fab4644c5265f180fd8abb[m
+Author: Leif-The-Head <93671207+Leif-The-Head@users.noreply.github.com>
+Date:   Wed Nov 3 17:56:29 2021 +0100
+
+    Updated readme to include new functionality
+
+[33mcommit ed0f72eed12ee9db249cd5bb60f7139abb4a0876[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Wed Nov 3 13:12:52 2021 +0100
+
+    Prepared architecture for new feature
+
+[33mcommit 8c006c1d617cf0d16a9689526351abd75c541d00[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Tue Nov 2 22:04:54 2021 +0100
+
+    Create LICENSE
+
+[33mcommit 76d9ed6b111b77f884f4f8ae1f5e8583a97c5c1c[m[33m ([m[1;33mtag: v0.3.3[m[33m)[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Tue Nov 2 21:28:16 2021 +0100
+
+    Updated README and main.py for 0.3.3 (improved error log as well)
+
+[33mcommit 0add5b976f059f9d38f366721acfa2f8227f777d[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Tue Nov 2 21:27:43 2021 +0100
+
+    Removed previous versions .pyz files
+
+[33mcommit dc260cf29321fc449ff8613005a7aedfba19495d[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Tue Nov 2 21:25:49 2021 +0100
+
+    Updated GVAS: better handling of formatted values in TextProperty
+
+[33mcommit 78c7d28d100c07ea0830c0faaddf8eb681fe7310[m[33m ([m[1;33mtag: v0.3.2[m[33m)[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 22:45:44 2021 +0100
+
+    Updated .pyz and version number in main
+
+[33mcommit 52fa1604ca9404fa50d88a254e6532fab8ca0a6d[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 22:44:48 2021 +0100
+
+    Updated Readme
+
+[33mcommit 979f3b2d0ce822b7a619e7ce33fb41a0acfcce78[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 22:43:41 2021 +0100
+
+    Corrected TextProperty reader and writer
+
+[33mcommit 8765a448e95c98ebc6fb4354a20fd8755e1b3a4f[m[33m ([m[1;33mtag: v0.3.1[m[33m)[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 20:52:24 2021 +0100
+
+    updated readme
+
+[33mcommit d3c84833660576fbb966a3c20287add57131c8db[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 20:50:50 2021 +0100
+
+    Updated ui, added Rolling stock names and numbers, generated 031.pyz
+
+[33mcommit aa87ca20de45f8d18f5a08d1020456ebe084935e[m[33m ([m[1;33mtag: v0.3.0[m[33m)[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 15:04:31 2021 +0100
+
+    Update README.md
+
+[33mcommit 0b846a1b526c35ef40274ce57cbf1aef2624a248[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 14:38:33 2021 +0100
+
+    Added gitignore and prepared for release
+
+[33mcommit 835217979f592c5535c27ba9e7cb5355feb31553[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 14:17:09 2021 +0100
+
+    Updated 030.pyz
+
+[33mcommit b07286be7819bad63c48c84cdc95fa051d939518[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 14:16:22 2021 +0100
+
+    Removed dev output from uiutils
+
+[33mcommit fe58e117ba43387308811b353d1560adf8c9f5c0[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 14:12:42 2021 +0100
+
+    Updated 030.pyz
+
+[33mcommit 967fbca5d837a4f2f5967f97497469e4219d0d6f[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 14:12:07 2021 +0100
+
+    io update and changing exit shortcut
+
+[33mcommit c3ad7439f58697404c24dfbc372fb0a85c89dc19[m
+Author: JennyKmu <69076245+JennyKmu@users.noreply.github.com>
+Date:   Mon Nov 1 13:10:00 2021 +0100
+
+    first commit
