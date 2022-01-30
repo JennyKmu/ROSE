@@ -1,3 +1,3 @@
-from RRO_savefile_editor.main import main
+from ROSE_experimental.main import main
 
 main()

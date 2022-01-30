@@ -5,21 +5,13 @@ import os
 import sys
 import traceback
 
+
 def inner_main():
     # Check if python3
     if not sys.version_info > (3, 9):
         print("------------------")
         print("> \033[1;31mERROR: Python version not officially supported.\033[0m")
         print("> Please use/install Python version 3.9 or above (3.10+ recommended).")
-        # if sys.version_info > (3,):
-        #     print("> You can input 'continue' if you're sure your python install meets requirements.")
-        #     c = input("> ")
-        #     if not c == "continue":
-        #         print("------------------")
-        #         sys.exit()
-        #     else:
-        #         print("------------------")
-        # else:
         print("------------------")
         print("Press Enter to exit.")
         input()
@@ -27,13 +19,6 @@ def inner_main():
 
     # To enable ANSI control sequences on Windows
     os.system('color')
-    # if os.name == 'nt':
-    #     from ctypes import windll
-    #     k = windll.kernel32
-    #     k.SetConsoleMode(k.GetStdHandle(-11), 7)
-
-    # import colorama
-    # colorama.init()
 
     # Contributors list:
 
@@ -43,9 +28,9 @@ def inner_main():
     ]
 
     version = (0, 3, 10)
-    dev_version = False
-    beta_version = True
-    current_save_version = "220120"
+    dev_version = True
+    beta_version = False
+    current_save_version = "220127"
 
     def header():
         print("=" * 72)
@@ -81,7 +66,6 @@ def inner_main():
             ))
             print("=" * 72)
 
-
     header()
 
     # Checking requirements (pip modules)
@@ -102,9 +86,9 @@ def inner_main():
         from .GVAS import GVAS
 
     try:
-        from UI import playerXpMoney, mainMenu, mainStockMenu, selectSaveFile, getKey
+        from UI import mainMenu, selectSaveFile, getKey
     except ModuleNotFoundError:
-        from .UI import playerXpMoney, mainMenu, mainStockMenu, selectSaveFile, getKey
+        from UI import mainMenu, selectSaveFile, getKey
 
     def loop(loc="."):
         from pathlib import Path
@@ -131,15 +115,16 @@ def inner_main():
 
         try:
             saveversion = gvas.data.find("SaveGameVersion").data
-        except:
+        except AttributeError:
             saveversion = 0
         if saveversion != current_save_version:
             print("Save Version: {}, intended save version: {}".format(saveversion, current_save_version))
             try:
                 saveversion = int(saveversion)
                 current_save_ver = int(current_save_version)
-            except:
+            except ValueError:
                 print("Version mismatch, check for Updates on GitHub (see link above)")
+                print("Press any key to exit.\n------------------")
                 getKey()
                 sys.exit()
             else:

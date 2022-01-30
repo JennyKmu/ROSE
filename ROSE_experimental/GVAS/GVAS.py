@@ -8,8 +8,9 @@ except ImportError:
     from fstreamutils import *
     from GVASErrors import *
 
+
 class GVAS(object):
-    def __init__(self, filename = None):
+    def __init__(self, filename=None):
         self._sourcefilename = filename
         self._data = GVASData()
         self._header = GVASHeader()
@@ -57,7 +58,7 @@ class GVASData(object):
             Look for property_name and returns it, or None if it is not found.
         """
         for p in self._properties:
-            if p.name == property_name:
+            if p._name == property_name:
                 return p
         return None
 
@@ -124,7 +125,7 @@ class GVASData(object):
             raise GVASParserNotImplemented(f"check boolean is not 0 for '{pname}'")
         struct_size = readInt32(fstream)
         pname = readUEString(fstream)
-        if pname != prop.name:
+        if pname != prop._name:
             raise GVASParserNotImplemented(f"field name in struct is different from property name for '{pname}'")
         if readUEString(fstream) != "StructProperty":
             raise GVASParserNotImplemented(f"Expected 'StructProperty' for '{pname}'")
@@ -151,7 +152,7 @@ class GVASData(object):
         # print(prop.name, plen)
         check_bool = readInt8(fstream)
         if check_bool != 0:
-            raise GVASParserNotImplemented(f"check boolean is not 0 for '{prop.name}'")
+            raise GVASParserNotImplemented(f"check boolean is not 0 for '{prop._name}'")
         nbool = readInt32(fstream)
         buffer = fstream.read(nbool)
         # print(repr(buffer))
@@ -162,7 +163,7 @@ class GVASData(object):
         # print(prop.name, plen)
         check_bool = readInt8(fstream)
         if check_bool != 0:
-            raise GVASParserNotImplemented(f"check boolean is not 0 for '{prop.name}'")
+            raise GVASParserNotImplemented(f"check boolean is not 0 for '{prop._name}'")
         nint = readInt32(fstream)
         buffer = fstream.read(nint*4)
         # print(repr(buffer))
@@ -172,7 +173,7 @@ class GVASData(object):
     def _readFloatPropertyArray(self, fstream, prop, plen):
         check_bool = readInt8(fstream)
         if check_bool != 0:
-            raise GVASParserNotImplemented(f"check boolean is not 0 for '{prop.name}'")
+            raise GVASParserNotImplemented(f"check boolean is not 0 for '{prop._name}'")
         nfloat = readInt32(fstream)
         data = np.frombuffer(fstream.read(nfloat*4), dtype=np.float32).copy()
         prop._data = data
@@ -181,7 +182,7 @@ class GVASData(object):
         # print(prop.name, plen)
         check_bool = readInt8(fstream)
         if check_bool != 0:
-            raise GVASParserNotImplemented(f"check boolean is not 0 for '{prop.name}'")
+            raise GVASParserNotImplemented(f"check boolean is not 0 for '{prop._name}'")
         nstr = readInt32(fstream)
         data = []
         for i in range(nstr):
@@ -192,7 +193,7 @@ class GVASData(object):
         # print(prop.name, plen)
         check_bool = readInt8(fstream)
         if check_bool != 0:
-            raise GVASParserNotImplemented(f"check boolean is not 0 for '{prop.name}'")
+            raise GVASParserNotImplemented(f"check boolean is not 0 for '{prop._name}'")
         ntext = readInt32(fstream)
         # print('n = ' + str(ntext))
         data = []
@@ -208,8 +209,8 @@ class GVASData(object):
             self._writeProperty(fstream, prop)
 
     def _writeProperty(self, fstream, prop):
-        writeUEString(fstream, prop.name)
-        if prop.name == "None":
+        writeUEString(fstream, prop._name)
+        if prop._name == "None":
             writeInt32(fstream, 0)
             # writeInt8(fstream, 0)
             return
@@ -410,18 +411,18 @@ class GVASData(object):
         writeInt8(fstream, 0) # check bool
         writeInt32(fstream, int(prop.data.size/3))
 
-        writeUEString(fstream, prop.name)
+        writeUEString(fstream, prop._name)
         writeUEString(fstream, prop.dtype)
         writeInt64(fstream, prop.data.size*4)
 
         writeUEString(fstream, prop.ftype)
         fstream.write(b'\x00'*17)
         buffer = prop.data.flatten().tobytes()
-        sz = (len(buffer)+17
-            +len(prop.ftype)+1+4
-            +len(prop.dtype)+1+4
-            +len(prop.name) +1+4
-            +4 + 8)
+        sz = (len(buffer) + 17
+              + len(prop.ftype) + 1 + 4
+              + len(prop.dtype) + 1 + 4
+              + len(prop._name) + 1 + 4
+              + 4 + 8)
         # print(repr(buffer))
         fstream.write(buffer)
         return sz
@@ -712,7 +713,7 @@ if __name__ == "__main__":
         if DEBUG:
             # For debugging, put whatever you want to do there
             print("> Advanced debug:")
-            print("\n".join([p.name for p in gvas.data._properties]))
+            print("\n".join([p._name for p in gvas.data._properties]))
             print(gvas.data.find("FrameLocationArray").data)
             frame_xyz = gvas.data.find("FrameLocationArray").data
             print(frame_xyz[frame_xyz[:,2] < 1000.,:])

@@ -14,7 +14,7 @@ dev_version = False
 
 try:
     from uiutils import getKey
-except:
+except ModuleNotFoundError:
     from .uiutils import getKey
 
 selectfmt = "\033[1;32;42m"
@@ -158,10 +158,13 @@ def mainEnvMenu(gvas):
 
 
 def mainPlayerMenu(gvas):
+    from .players import PlayerArrays
+    playerdata = PlayerArrays()
+    playerdata.readfromsave(gvas)
     options = [
         ("Edit Money and XP", playerXpMoney),
         ("Teleport", playerteleport),
-        #("Cleanup [BETA]", playercleanup),
+        ("Cleanup [BETA]", playercleanup),
     ]
     current = 0
     while True:
@@ -178,8 +181,9 @@ def mainPlayerMenu(gvas):
             current = min(len(options) - 1, current + 1)
         print("\033[{}A\033[J".format(len(options) + 1), end='')
         if k == b'RETURN':
-            options[current][1](gvas)
+            options[current][1](gvas, playerdata)
         if k == b'ESCAPE':
+            playerdata.writetosave(gvas)
             return None
 
 
@@ -1002,13 +1006,8 @@ def exchangesheds(gvas):
             return None
 
 
-def playerteleport(gvas):
-    try:
-        playernames = gvas.data.find("playernamearray").data
-        playerlocs = gvas.data.find("playerlocationarray").data
-    except AttributeError:
-        failedtofind("players")
-        return
+def playerteleport(gvas, playerdata):
+    players = playerdata.players
 
     try:
         industrytypes = gvas.data.find("IndustryTypeArray").data
@@ -1044,7 +1043,7 @@ def playerteleport(gvas):
         framerots = []
 
     cur_line = 0
-    ltot = len(playernames)
+    ltot = len(players)
     if ltot > 10:
         split_data = True
         n_page = int(np.ceil(ltot / 10))
@@ -1085,8 +1084,8 @@ def playerteleport(gvas):
                         line_format += " | " + formatters[j + 1]
                 else:
                     line_format = " | ".join(formatters)
-                cur_name = playernames[i]
-                cur_loc = playerlocs[i]
+                cur_name = players[i].getname()
+                cur_loc = players[i].getloc()
 
                 cur_x = int(round(cur_loc[0] / 100))
                 cur_y = int(round(cur_loc[1] / 100))
@@ -1177,7 +1176,7 @@ def playerteleport(gvas):
                     cursor = max(0, cursor - 1)
                 if k2 == b'RETURN':
                     if cursor == 0:
-                        playerlocs[cur_line] = getplayertppos(0)
+                        players[cur_line].editloc(getplayertppos(0))
                         break  # move player to start and exit destination type sel
                     else:
                         list = []
@@ -1211,10 +1210,10 @@ def playerteleport(gvas):
                                     listrot.append(framerots[i])
                         elif cursor == 4:
                             listname = "Player"
-                            for i in range(len(playernames)):
-                                if playernames[i] != playernames[cur_line]:
-                                    list.append(playernames[i])
-                                    listloc.append(playerlocs[i])
+                            for i in range(len(players)):
+                                if players[i].getname() != players[cur_line].getname():
+                                    list.append(players[i].getname())
+                                    listloc.append(players[i].getloc())
                                     # not building listrot since 220121, player rotation isn't saved
                         else:
                             break  # to make the IDE happy and prevent anything weird
@@ -1266,7 +1265,7 @@ def playerteleport(gvas):
                         dashline2 = dashline2[2:]
                         while True:
                             n_line = 4
-                            print("Teleport " + selectfmt + playernames[cur_line] + "\033[0m to ...")
+                            print("Teleport " + selectfmt + players[cur_line].getname() + "\033[0m to ...")
                             print("Select destination (ESCAPE to quit, ENTER to select)")
                             cur_page2 = np.floor(cur_line2/10)
                             if split_data2:
@@ -1317,13 +1316,14 @@ def playerteleport(gvas):
                                 break
                             if k3 == b'RETURN':
                                 if cursor == 4:  # if it's a player, just copy values
-                                    playerlocs[cur_line] = listloc[cur_line2]
+                                    players[cur_line].editloc(listloc[cur_line2])
                                 else:            # else get the absolute position that's relative to the target
                                     if cursor == 3:  # for cabooses replace name with type
                                         tptype = "caboose"
                                     else:
                                         tptype = list[cur_line2]
-                                    playerlocs[cur_line] = getplayertppos(tptype, listloc[cur_line2], listrot[cur_line2])
+                                    players[cur_line].editloc(getplayertppos(tptype, listloc[cur_line2],
+                                                                             listrot[cur_line2]))
                                 break  # exit destination sel
                         n_line -= 2
                         break  # exit destination type sel, always happens after leaving destination sel
@@ -1336,14 +1336,11 @@ def playerteleport(gvas):
             break  # exit menu
 
 
-def playerXpMoney(gvas):
-    player_ids = gvas.data.find("playeridarray").data
-    player_names = gvas.data.find("playernamearray").data
-    player_money = gvas.data.find("playermoneyarray").data
-    player_xp = gvas.data.find("playerxparray").data
+def playerXpMoney(gvas, playerdata):
+    players = playerdata.players
     cur_col = 0
     cur_line = 0
-    ltot = len(player_names)
+    ltot = len(players)
     if ltot > 10:
         split_data = True
         n_page = int(np.ceil(ltot / 10))
@@ -1375,7 +1372,7 @@ def playerXpMoney(gvas):
         print(dashline)
 
         n_line = 0
-        for i in range(len(player_names)):
+        for i in range(len(players)):
             if np.floor(i / 10) != cur_page and split_data:
                 continue
             n_line += 1
@@ -1388,16 +1385,15 @@ def playerXpMoney(gvas):
             else:
                 line_format += " | ".join(formatters[2:])
 
-            try:
-                player_id = player_ids[i]
-            except IndexError:
-                player_id = '-'
+            player_id = players[i].getid()
+            if player_id is None:
+                player_id = "-"
 
             line = line_format.format(
-                player_names[i],
+                players[i].getname(),
                 player_id,
-                player_xp[i],
-                player_money[i],
+                players[i].getxp(),
+                players[i].getmoney(),
             )
             print(line)
         k = getKey()
@@ -1424,25 +1420,35 @@ def playerXpMoney(gvas):
                 cur_line = ltot - 1
 
         if k == b'RETURN':
-            prompt_text = "> Enter new value: "
+            prompt_text = "> Enter new value (write +AMOUNT to add, or AMOUNT to set): "
             while True:
                 n_rline = 0
                 val = input(prompt_text)
+                if val.startswith("+"):
+                    add = True
+                    val = val[1:]
+                else:
+                    add = False
                 n_rline += 1
                 try:
-                    val = int(val)
+                    if cur_col == 0:
+                        val = int(val)
+                    else:
+                        val = float(val)
                 except ValueError:
                     print("\033{}A\033[J".format(n_rline), end='')
                     prompt_text = "> Invalid input! Enter new value: "
                     continue
 
-                data = [player_xp, player_money]
-                data[cur_col][cur_line] = val
+                if cur_col == 0:
+                    players[cur_line].editxp(val, add)
+                else:
+                    players[cur_line].editmoney(val, add)
                 print("\033[{}A\033[J".format(n_rline), end='')
                 break
 
-        if len(player_names) <= 10:
-            print("\033[{}A\033[J".format(len(player_names) + 3), end='')
+        if len(players) <= 10:
+            print("\033[{}A\033[J".format(len(players) + 3), end='')
         else:
             print("\033[{}A\033[J".format(n_line + 4), end='')
 
@@ -1450,12 +1456,7 @@ def playerXpMoney(gvas):
             return None
 
 
-def playercleanup(gvas):
-    player_ids = gvas.data.find("playeridarray").data
-    player_names = gvas.data.find("playernamearray").data
-    player_money = gvas.data.find("playermoneyarray").data
-    player_xp = gvas.data.find("playerxparray").data
-    player_loc = gvas.data.find("playerlocationarray").data
+def playercleanup(gvas, playerdata):
     cur_line = 0
     formatters = [
         "{:<35}",
@@ -1468,7 +1469,7 @@ def playercleanup(gvas):
     dashline = dashline[2:]
 
     while True:
-        ltot = len(player_names) + 1
+        ltot = len(playerdata.players) + 1
         cur_line = min(cur_line, ltot-1)
         if ltot > 10:
             split_data = True
@@ -1489,12 +1490,12 @@ def playercleanup(gvas):
         print(dashline)
 
         if cur_line == 0:
-            print(selectfmt + "CLEAN UP PLAYER LIST\033[0m | This will remove duplicates and players without progress")
+            print(selectfmt + "CLEAN UP PLAYER LIST\033[0m | This will remove duplicates")
         else:
             print("Clean up player list")
 
         n_line = 1
-        for i in range(len(player_names)):
+        for i in range(len(playerdata.players)):
             if np.floor((i+1) / 10) != cur_page and split_data:
                 continue
             n_line += 1
@@ -1504,13 +1505,12 @@ def playercleanup(gvas):
             else:
                 line_format += formatters[2]
 
-            try:
-                player_id = player_ids[i]
-            except IndexError:
+            player_id = playerdata.players[i].getid()
+            if player_id is None:
                 player_id = 'not joined since 220121'
 
             line = line_format.format(
-                player_names[i],
+                playerdata.players[i].getname(),
                 player_id,
                 "[DELETE]"
             )
@@ -1537,55 +1537,17 @@ def playercleanup(gvas):
         if k == b'RETURN':
             if cur_line > 0:
                 todelete = cur_line-1
-                print("Do you really want to remove " + selectfmt + player_names[todelete] + "\033[0m?" +
+                print("Do you really want to remove " + selectfmt + playerdata.players[todelete].getname() + "\033[0m?" +
                       "\nThis cannot be undone once saved. Press " + selectfmt + "Y\033[m to confirm:")
                 k2 = getKey()
                 if k2 == b'y':
-                    if todelete in range(len(player_ids)):
-                        player_ids = np.delete(player_ids, todelete)
-                    player_xp = np.delete(player_xp, todelete)
-                    player_money = np.delete(player_money, todelete)
-                    player_names = np.delete(player_names, todelete)
-                    player_loc = np.delete(player_loc, todelete, axis=0)
+                    playerdata.players.pop(todelete)
                 print("\033[2A\033[J", end='')
             else:
-                todelete = []
-                # look for duplicates
-                for name in player_names:
-                    indexes = np.argwhere(player_names == name)
-                    if len(indexes) > 1:
-                        todelete.append(indexes[1:])
-                # look for 220120 beta artifacts (ID stored as name)
-                for ID in player_ids:
-                    indexes = np.argwhere(player_names == ID)
-                    if len(indexes) > 1:
-                        todelete.append(indexes)
-                # find those without progress not yet added
-                for i in range(len(player_names)):
-                    if player_xp[i] == 0 and player_money[i] == 2000 and i not in todelete:
-                        todelete.append(i)
-                # sort in reverse order and do it one item at a time, since ID list might mismatch
-                todelete.sort(reverse=True)
-                print(todelete)
-                print("Found {} duplicates, artifacts, zero progresses.".format(len(todelete)))
-                if len(todelete) > 0:
-                    print("This cannot be undone once saved. Press " + selectfmt + "Y\033[m to confirm:")
-                    k2 = getKey()
-                    if k2 == b'y':
-                        for num in todelete:
-                            if num in range(len(player_ids)):
-                                player_ids = np.delete(player_ids, num)
-                            player_xp = np.delete(player_xp, num)
-                            player_money = np.delete(player_money, num)
-                            player_names = np.delete(player_names, num)
-                            player_loc = np.delete(player_loc, num, axis=0)
-                else:
-                    print("Any key to return.")
-                    getKey()
-                print("\033[2A\033[J", end='')
+                playerdata.removeduplicates()
 
-        if len(player_names) <= 10:
-            print("\033[{}A\033[J".format(len(player_names) + 3), end='')
+        if len(playerdata.players) <= 10:
+            print("\033[{}A\033[J".format(len(playerdata.players) + 3), end='')
         else:
             print("\033[{}A\033[J".format(n_line + 4), end='')
 
