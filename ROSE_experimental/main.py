@@ -27,7 +27,7 @@ def inner_main():
         "Leif_The_Head",
     ]
 
-    version = (0, 3, 10)
+    version = (0, 4, 0)
     dev_version = True
     beta_version = False
     current_save_version = "220127"

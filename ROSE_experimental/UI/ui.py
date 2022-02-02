@@ -158,7 +158,7 @@ def mainEnvMenu(gvas):
 
 
 def mainPlayerMenu(gvas):
-    from .players import PlayerArrays
+    from .Players import PlayerArrays
     playerdata = PlayerArrays()
     playerdata.readfromsave(gvas)
     options = [
@@ -1316,14 +1316,27 @@ def playerteleport(gvas, playerdata):
                                 break
                             if k3 == b'RETURN':
                                 if cursor == 4:  # if it's a player, just copy values
+                                    newloc = listloc[cur_line2]
                                     players[cur_line].editloc(listloc[cur_line2])
                                 else:            # else get the absolute position that's relative to the target
                                     if cursor == 3:  # for cabooses replace name with type
                                         tptype = "caboose"
                                     else:
                                         tptype = list[cur_line2]
+                                    newloc = getplayertppos(tptype, listloc[cur_line2], listrot[cur_line2])
                                     players[cur_line].editloc(getplayertppos(tptype, listloc[cur_line2],
                                                                              listrot[cur_line2]))
+                                try:
+                                    players[cur_line].editloc(newloc)
+                                except OverflowError:
+                                    print("ERROR: New position out of bounds. Didn't move player.")
+                                    getKey()
+                                    print("\033[1A\033[J", end='')
+                                except ValueError:
+                                    print("ERROR: Something went wrong. Details: ")
+                                    print(newloc)
+                                    getKey()
+                                    print("\033[2A\033[J", end='')
                                 break  # exit destination sel
                         n_line -= 2
                         break  # exit destination type sel, always happens after leaving destination sel
