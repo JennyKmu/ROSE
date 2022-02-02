@@ -6,7 +6,7 @@ class Player:
         self._name = name
         self._money = money
         self._xp = xp
-        self._loc = np.asarray(loc, dtype=float)
+        self._loc = loc
         self._steamid = steamid
 
     def getall(self):
@@ -39,8 +39,8 @@ class Player:
         return self._xp
 
     def editloc(self, newloc):
-        # Newlocation should be an array of [X, Y, Z]
-        if not np.ma.isarray(newloc):    # Check for data integrity: Array of size 3
+        # Newlocation should be an array of [X, Y, Z] in float32
+        if not np.ma.isarray(newloc):       # Check for data integrity: Array of size 3
             raise ValueError
         if not len(newloc) == 3:
             raise ValueError
@@ -91,23 +91,26 @@ class PlayerArrays:
         self._money = gvas.data.find(PlayerArrays._moneyarray).data
         self._ids = gvas.data.find(PlayerArrays._idarray).data
         self._locs = gvas.data.find(PlayerArrays._locationarray).data
-        print(self._locs)
         self.makeplayerarray()  # update player class array
 
     def makedataarrays(self):
-        self._names = []
-        self._xp = []
-        self._money = []
-        self._ids = []
-        self._locs = np.zeros((len(self.players), 3), dtype=float)
+        names = []
+        xp = []
+        money = []
+        ids = []
+        locs = []
         for player in self.players:
-            self._names.append(player.getname())
-            self._money.append(player.getmoney())
-            self._xp.append(player.getxp())
-            self._locs[self.players.index(player), :] = [*player.getloc()]
+            names.append(player.getname())
+            money.append(player.getmoney())
+            xp.append(player.getxp())
+            locs.append(player.getloc())
             if player.getid() is not None:  # Only add SteamID64 if it is specified.
-                self._ids.append(player.getid())
-        print(self._locs)
+                ids.append(player.getid())
+        self._names = np.asarray(names)
+        self._xp = np.asarray(xp)
+        self._money = np.asarray(money)
+        self._ids = np.asarray(ids)
+        self._locs = np.asarray(locs, dtype=np.float32)
 
     def writetosave(self, gvas):
         self.makedataarrays()   # update data arrays
@@ -120,11 +123,11 @@ class PlayerArrays:
     # Utility methods
     def removeduplicates(self):
         self.makedataarrays()   # update data arrays
-        namelist = self._names
-        idlist = self._ids
+        namelist = list(self._names)
+        idlist = list(self._ids)
         duplicates = []
-        for name in namelist:   # find duplicate names and mark those
-            if namelist.count(name) > 1:    # are there multiple?
+        for name in namelist:                                   # find duplicate names and mark those
+            if namelist.count(name) > 1:                        # are there multiple?
                 nameduplicates = [i for i in range(len(namelist)) if namelist[i] == name]  # entries with the same name
                 if nameduplicates[0] < len(idlist):             # does this player have an ID yet?
                     cur_id = idlist[nameduplicates[0]]
@@ -135,14 +138,11 @@ class PlayerArrays:
                         else:                                   # if other entries have no ID,
                             duplicates.append(i)                # assume it's the same player and delete
         for cur_id in idlist:
-            if cur_id in namelist:          # artifact of save data versions 1 -> 220120 -> 220121
-                duplicates.append(namelist.index(cur_id))   # where ID replaced names
+            if cur_id in namelist:                              # artifact of save data versions 220120
+                duplicates.append(namelist.index(cur_id))       # where ID replaced names
 
         duplicates.sort(reverse=True)
-        print(duplicates)
-        duplicates = list(dict.fromkeys(duplicates))  # remove duplicate duplicates
-        print(duplicates)
-        print(len(self.players))
+        duplicates = list(dict.fromkeys(duplicates))            # remove duplicate duplicates
         for duplicate in duplicates:
             self.players.pop(duplicate)
         self.makedataarrays()   # update data arrays
