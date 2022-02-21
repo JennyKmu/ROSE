@@ -8,3 +8,4 @@ dist
 *.pyz
 saves
 venv
+.idea
