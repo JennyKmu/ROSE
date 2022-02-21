@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="092c1ac8-71ce-4992-b434-9313c1161419" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ROSE_experimental/UI/Buildings.py" beforeDir="false" afterPath="$PROJECT_DIR$/ROSE_experimental/UI/Buildings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ROSE_experimental/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/ROSE_experimental/main.py" afterDir="false" />
-    </list>
+    <list default="true" id="092c1ac8-71ce-4992-b434-9313c1161419" name="Changes" comment="Workspace Update" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -60,6 +56,14 @@
       <option name="presentableId" value="Default" />
       <updated>1645466383259</updated>
     </task>
+    <task id="LOCAL-00001" summary="Workspace Update">
+      <created>1645467168417</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1645467168417</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -72,5 +76,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Workspace Update" />
+    <option name="LAST_COMMIT_MESSAGE" value="Workspace Update" />
   </component>
 </project>
