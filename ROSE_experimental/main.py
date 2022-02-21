@@ -141,8 +141,10 @@ def inner_main():
                     getKey()
                     sys.exit()
 
+        save_unique = gvas.data.find("SaveGameUniqueWorldID").data
+        print("Created:   " + save_unique)
         save_id = gvas.data.find("SaveGameUniqueID").data
-        print("Save ID: " + save_id)
+        print("Last Save: " + save_id)
         print("------------------")
 
         mainMenu(gvas, dev_version)
