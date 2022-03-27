@@ -636,9 +636,17 @@ def editindustries(gvas):
         if k == b'KEY_LEFT':
             cur_col = max(0, cur_col - 1)
         if k == b'KEY_UP':
-            cur_line = max(0, cur_line - 1)
+            if cur_line == 0 and cur_page > 0:
+                k = b'PAGE_UP'
+                cur_line = 1
+            else:
+                cur_line = max(0, cur_line - 1)
         if k == b'KEY_DOWN':
-            cur_line = min(1, cur_line + 1)
+            if cur_line == 1 and cur_page < n_page-1:
+                k = b'PAGE_DOWN'
+                cur_line = 0
+            else:
+                cur_line = min(1, cur_line + 1)
         if k == b'PAGE_UP':
             cur_page = max(0, cur_page - 1)
         if k == b'PAGE_DOWN':

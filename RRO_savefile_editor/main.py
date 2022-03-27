@@ -5,6 +5,7 @@ import os
 import sys
 import traceback
 
+
 def inner_main():
     # Check if python3
     if not sys.version_info > (3, 9):
@@ -44,8 +45,8 @@ def inner_main():
 
     version = (0, 3, 10)
     dev_version = False
-    beta_version = True
-    current_save_version = "220120"
+    beta_version = False
+    current_save_version = "220127"
 
     def header():
         print("=" * 72)
@@ -80,7 +81,6 @@ def inner_main():
                 "THIS IS A BETA VERSION. Please report potential issues on GitHub."
             ))
             print("=" * 72)
-
 
     header()
 
@@ -131,21 +131,22 @@ def inner_main():
 
         try:
             saveversion = gvas.data.find("SaveGameVersion").data
-        except:
+        except AttributeError:
             saveversion = 0
         if saveversion != current_save_version:
             print("Save Version: {}, intended save version: {}".format(saveversion, current_save_version))
             try:
                 saveversion = int(saveversion)
                 current_save_ver = int(current_save_version)
-            except:
+            except ValueError:
                 print("Version mismatch, check for Updates on GitHub (see link above)")
                 getKey()
                 sys.exit()
             else:
                 if saveversion > current_save_ver:
                     print("Save Version is NEWER than currently supported.")
-                    print("Features may not work as intended or at all. Check for Updates on GitHub (link above)")
+                    print("\033[31;1mFeatures may not work as intended or at all. Check for Updates on GitHub (link "
+                          "above)\033[0m")
                     print("Do you want to continue anyway? Type 'YES':")
                     if input("> ") != "YES":
                         sys.exit()
@@ -156,8 +157,10 @@ def inner_main():
                     getKey()
                     sys.exit()
 
+        save_unique_id = gvas.data.find("SaveGameUniqueWorldID").data
+        print("Created:   " + save_unique_id)
         save_id = gvas.data.find("SaveGameUniqueID").data
-        print("Save ID: " + save_id)
+        print("Last Host: " + save_id)
         print("------------------")
 
         mainMenu(gvas, dev_version)
