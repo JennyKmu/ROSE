@@ -40,6 +40,7 @@ def inner_main():
     contributors = [
         "Jenny",
         "Leif_The_Head",
+        "Lift Pizzas",
     ]
 
     version = (0, 3, 9)
