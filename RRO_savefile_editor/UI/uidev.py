@@ -159,21 +159,28 @@ def devslotA(gvas):
             print("\033[1A\033[J", end='')
             return None
 
+
 def devslotB(gvas):
     import math
     import numpy as np
     from .uiutils import getKey
     from .defaultRemovedTrees import default_removed_trees
+    from .betterDefaultRemovedTrees import better_default_removed_trees
     print("> Running DEV SLOT B")
     print("> Fetching removed trees...")
     removedtrees = gvas.data.find("RemovedVegetationAssetsArray").data
     defaulttrees = np.asarray(default_removed_trees, dtype=np.float32)
+    bettertrees = np.asarray(better_default_removed_trees, dtype=np.float32)
     tformat = "[{:<17}, {:<17}, {:<17}],"
-    print("(A)ll Trees or just additional (R)emoved ones?")
+    print("(A)ll Trees, just beyond (D)efault or beyond (B)etter removed trees?")
     while True:
         k = getKey()
-        if k == b'r' or k == b'R':
-            print("Limiting to player-removed trees...")
+        if k == b'b' or k == b'B':
+            print("Recounting without better removed trees ...")
+            removedtrees = removedtrees[~((removedtrees[:, None, :] == bettertrees).all(-1)).any(1)]
+            k = b'd'
+        if k == b'd' or k == b'D':
+            print("Recounting without default removed trees...")
             removedtrees = removedtrees[~((removedtrees[:, None, :] == defaulttrees).all(-1)).any(1)]
             break
         elif k == b'ESCAPE':
@@ -202,13 +209,16 @@ def devslotB(gvas):
     getKey()
     print("-" * 80 + "\n")
 
+
 def devslotC(gvas):
     print("> Running DEV SLOT C")
     pass
 
+
 def devslotD(gvas):
     print("> Running DEV SLOT D")
     pass
+
 
 def devslotE(gvas):
     print("> Running DEV SLOT E")

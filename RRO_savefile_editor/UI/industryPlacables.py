@@ -22,12 +22,12 @@ mapIndustries = (1, 2, 3, 4, 5, 6, 7, 8, 9)
 industryInputs = {
     1: [[None], [None], [None], [None]],
     2: [["log", 100], [None], [None], [None]],
-    8: [["lumber", 24], ["beam", 20], [None], [None]],
+    8: [["lumber", 50], ["beam", 30], [None], [None]],
     3: [["cordwood", 100], ["ironore", 1000], [None], [None]],
-    7: [["beam", 20], ["rail", 50], [None], [None]],
-    4: [["rawiron", 100], ["coal", 1000], [None], [None]],
-    5: [["steelpipe", 18], ["beam", 20], ["crate_tools", 100], [None]],
-    6: [["crudeoil", 1000], ["steelpipe", 100], ["lumber", 24], [None]],
+    7: [["beam", 30], ["rail", 60], [None], [None]],
+    4: [["rawiron", 100], ["coal", 1000], ["lumber", 50], [None]],
+    5: [["steelpipe", 30], ["beam", 30], ["crate_tools", 100], [None]],
+    6: [["crudeoil", 1000], ["steelpipe", 100], ["lumber", 50], [None]],
 }
 
 

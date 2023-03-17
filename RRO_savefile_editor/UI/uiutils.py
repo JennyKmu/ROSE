@@ -11,17 +11,17 @@ NeedSecondByteWin = [
 ]
 
 KeyTranslatorWin = {
-    b"\xe0H":b"KEY_UP",
-    b"\xe0M":b"KEY_RIGHT",
-    b"\xe0P":b"KEY_DOWN",
-    b"\xe0K":b"KEY_LEFT",
-    b"\xe0I":b"PAGE_UP",
-    b"\xe0Q":b"PAGE_DOWN",
-    b"\r":b"RETURN",
-    b"\x08":b"BACKSPACE",
-    b"\x1b":b"ESCAPE",
-    b"\x03":b"CTRL_C",
-    b"\x04":b"CTRL_D"
+    b"\xe0H": b"KEY_UP",
+    b"\xe0M": b"KEY_RIGHT",
+    b"\xe0P": b"KEY_DOWN",
+    b"\xe0K": b"KEY_LEFT",
+    b"\xe0I": b"PAGE_UP",
+    b"\xe0Q": b"PAGE_DOWN",
+    b"\r": b"RETURN",
+    b"\x08": b"BACKSPACE",
+    b"\x1b": b"ESCAPE",
+    b"\x03": b"CTRL_C",
+    b"\x04": b"CTRL_D"
 }
 
 
@@ -47,12 +47,13 @@ KeyTranslatorUnix = {
     b"\x04":b"CTRL_D"
 }
 
-### From StackOverflow:
+# From StackOverflow:
 # https://stackoverflow.com/questions/13207678/whats-the-simplest-way-of-detecting-keyboard-input-in-a-script-from-the-termina
 # vvvvv
 class _Getch:
     """Gets a single character from standard input.  Does not echo to the
 screen. From http://code.activestate.com/recipes/134892/"""
+
     def __init__(self):
         try:
             self._impl = _GetchWindows()
@@ -62,12 +63,12 @@ screen. From http://code.activestate.com/recipes/134892/"""
             except(AttributeError, ImportError):
                 self._impl = _GetchUnix()
 
-    def __call__(self): return self._impl()
+    def __call__(self):
+        return self._impl()
 
     @property
     def impl(self):
         return self._impl
-
 
 
 class _GetchUnix:
@@ -119,7 +120,7 @@ class _GetchWindows:
         # print("_GetchWindows")
         import msvcrt
         r = msvcrt.getch()
-        if r in NeedSecondByteWin and  _checkmorebytes == True:
+        if r in NeedSecondByteWin and _checkmorebytes == True:
             r = r + msvcrt.getch()
 
         return r
@@ -166,7 +167,6 @@ class _GetchMacCarbon:
             return chr(msg & 0x000000FF)
 
 
-
 # Adapted below by Jenny
 def getKey():
     inkey = _Getch().impl
@@ -175,12 +175,13 @@ def getKey():
     while True:
         k = inkey()
         k = inkey.translate(k)
-        if k!='': break
+        if k != '':
+            break
 
     return k
-#^^^^
 
 
 if __name__ == "__main__":
     while True:
-        print(repr(getKey()))
+        # print(repr(getKey()))
+        print(getKey())

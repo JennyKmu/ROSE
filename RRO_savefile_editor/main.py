@@ -5,6 +5,7 @@ import os
 import sys
 import traceback
 
+
 def inner_main():
     # Check if python3
     if not sys.version_info > (3, 9):
@@ -40,12 +41,13 @@ def inner_main():
     contributors = [
         "Jenny",
         "Leif_The_Head",
+        "Lift Pizzas",
     ]
 
-    version = (0, 3, 9)
+    version = (0, 3, 12)
     dev_version = False
     beta_version = False
-    current_save_version = "1"
+    current_save_version = "221006"
 
     def header():
         print("=" * 72)
@@ -81,7 +83,6 @@ def inner_main():
             ))
             print("=" * 72)
 
-
     header()
 
     # Checking requirements (pip modules)
@@ -102,9 +103,9 @@ def inner_main():
         from .GVAS import GVAS
 
     try:
-        from UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
+        from UI import playerXpMoney, mainMenu, mainStockMenu, selectSaveFile, getKey
     except ModuleNotFoundError:
-        from .UI import playerMenu, mainMenu, mainStockMenu, selectSaveFile, getKey
+        from .UI import playerXpMoney, mainMenu, mainStockMenu, selectSaveFile, getKey
 
     def loop(loc="."):
         from pathlib import Path
@@ -128,34 +129,40 @@ def inner_main():
         gvas = GVAS(filepath)
 
         print("Currently loaded file is '\033[1m{}\033[0m'".format(filename))
-        print("------------------")
 
         try:
             saveversion = gvas.data.find("SaveGameVersion").data
-        except:
+        except AttributeError:
             saveversion = 0
         if saveversion != current_save_version:
             print("Save Version: {}, intended save version: {}".format(saveversion, current_save_version))
             try:
                 saveversion = int(saveversion)
                 current_save_ver = int(current_save_version)
-            except:
+            except ValueError:
                 print("Version mismatch, check for Updates on GitHub (see link above)")
                 getKey()
                 sys.exit()
             else:
                 if saveversion > current_save_ver:
                     print("Save Version is NEWER than currently supported.")
-                    print("Features may not work as intended or at all. Check for Updates on GitHub (link above)")
+                    print("\033[31;1mFeatures may not work as intended or at all. Check for Updates on GitHub (link "
+                          "above)\033[0m")
                     print("Do you want to continue anyway? Type 'YES':")
                     if input("> ") != "YES":
                         sys.exit()
-                    print("\033[2A\033[J------------------")
+                    print("\033[2A\033[J", end='')
                 elif saveversion < current_save_ver:
                     print("Save Version is OLDER than currently supported. Please open & save it in game once.")
                     print("Press any key to exit.\n------------------")
                     getKey()
                     sys.exit()
+
+        save_unique_id = gvas.data.find("SaveGameUniqueWorldID").data
+        print("Created:   " + save_unique_id)
+        save_id = gvas.data.find("SaveGameUniqueID").data
+        print("Last Host: " + save_id)
+        print("------------------")
 
         mainMenu(gvas, dev_version)
 

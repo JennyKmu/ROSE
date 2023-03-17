@@ -21,8 +21,29 @@ frametypeNamingLimiter = {
     "eureka_tender": {"numlen": 0, "numlines": 0, "namelen": 18, "namelines": 1},
     "handcar": {"numlen": 5, "numlines": 1, "namelen": 18, "namelines": 1},
     "caboose": {"numlen": 12, "numlines": 1, "namelen": 20, "namelines": 1},
+    "montezuma": {"numlen": 4, "numlines": 1, "namelen": 16, "namelines": 1},
+    "montezuma_tender": {"numlen": 2, "numlines": 1, "namelen": 20, "namelines": 1},
+    "glenbrook": {"numlen": 2, "numlines": 1, "namelen": 16, "namelines": 1},
+    "glenbrook_tender": {"numlen": 0, "numlines": 0, "namelen": 16, "namelines": 1},
+    "shay": {"numlen": 2, "numlines": 1, "namelen": 20, "namelines": 1},
+    "mosca": {"numlen": 4, "numlines": 1, "namelen": 20, "namelines": 1},
+    "mosca_tender": {"numlen": 0, "numlines": 0, "namelen": 22, "namelines": 1},
+    "cooke260_new": {"numlen": 3, "numlines": 1, "namelen": 12, "namelines": 1},
+    "cooke260_new_tender": {"numlen": 6, "numlines": 1, "namelen": 11, "namelines": 1},
+    "tweetsie280": {"numlen": 2, "numlines": 1, "namelen": 16, "namelines": 1},
+    "tweetsie280_tender": {"numlen": 0, "numlines": 0, "namelen": 22, "namelines": 1},
+    "tenmile": {"numlen": 4, "numlines": 1, "namelen": 20, "namelines": 1},
+    "622D": {"numlen": 2, "numlines": 1, "namelen": 20, "namelines": 1},
+    "cooke280": {"numlen": 2, "numlines": 1, "namelen": 16, "namelines": 1},
+    "cooke280_tender": {"numlen": 0, "numlines": 0, "namelen": 22, "namelines": 1},
+    "rubybasin": {"numlen": 2, "numlines": 1, "namelen": 24, "namelines": 1},
+    "stockcar": {"numlen": 4, "numlines": 1, "namelen": 16, "namelines": 1},
+    "tankcarNCO": {"numlen": 4, "numlines": 1, "namelen": 16, "namelines": 1},
+    "skeletoncar": {"numlen": 4, "numlines": 1, "namelen": 0, "namelines": 0},
+    "waycar": {"numlen": 4, "numlines": 1, "namelen": 32, "namelines": 1},
+    "plow": {"numlen": 4, "numlines": 1, "namelen": 16, "namelines": 1},
+    "hopperBB": {"numlen": 4, "numlines": 1, "namelen": 20, "namelines": 1},
 }
-
 
 frametypeTranslatorLong = {
     "default": "Unknown",
@@ -44,6 +65,28 @@ frametypeTranslatorLong = {
     "eureka_tender": "Eureka Tender",
     "handcar": "Handcar",
     "caboose": "Bobber Caboose",
+    "stockcar": "Stock Car",
+    "tankcarNCO": "Coffin Tanker",
+    "skeletoncar": "Skeleton Log Car",
+    "waycar": "Waycar",
+    "plow": "Snow Plow",
+    "montezuma": "Montezuma",
+    "montezuma_tender": "Montezuma Tender",
+    "glenbrook": "Glenbrook",
+    "glenbrook_tender": "Glenbrook Tender",
+    "shay": "Shay",
+    "mosca": "Mosca",
+    "mosca_tender": "Mosca Tender",
+    "cooke260_new": "Mogul-Coal",
+    "cooke260_new_tender": "Mogul-Coal Tender",
+    "tweetsie280": "ET&WNC 280",
+    "tweetsie280_tender": "ET&WNC 280 Tender",
+    "tenmile": "Tenmile",
+    "hopperBB": "Dump Car",
+    "622D": "D&RGW Class 48",
+    "cooke280": "Cooke 280",
+    "cooke280_tender": "Cooke 280 Tender",
+    "rubybasin": "Ruby Basin",
 }
 
 
@@ -67,6 +110,28 @@ frametypeTranslatorShort = {
     "eureka_tender": "Eureka-T",
     "handcar": "Handcar",
     "caboose": "Caboose",
+    "stockcar": "Stock Car",
+    "tankcarNCO": "Cof-Tank",
+    "skeletoncar": "Skeleton",
+    "waycar": "Waycar",
+    "plow": "SnowPlow",
+    "montezuma": "Montezuma",
+    "montezuma_tender": "Montezuma-T",
+    "glenbrook": "Glenbrook",
+    "glenbrook_tender": "Glenbrook-T",
+    "shay": "Shay",
+    "mosca": "Mosca",
+    "mosca_tender": "Mosca-T",
+    "cooke260_new": "Mogul-Coal",
+    "cooke260_new_tender": "Mogul-Coal-T",
+    "tweetsie280": "ET&WNC 280",
+    "tweetsie280_tender": "ET&WNC 280-T",
+    "tenmile": "Tenmile",
+    "hopperBB": "Dump Car",
+    "622D": "D&RGW Class 48",
+    "cooke280": "Cooke 280",
+    "cooke280_tender": "Cooke 280-T",
+    "rubybasin": "Ruby Basin",
 }
 
 
@@ -77,6 +142,10 @@ frametypeCargoLimits = {
     "flatcar_hopper": {"ironore": 10, "coal": 10},
     "flatcar_tanker": {"crudeoil": 12},
     "boxcar": {"crate_tools": 32},
+    "tankcarNCO": {"crudeoil": 8},
+    "skeletoncar": {"log": 5},
+    "hopperBB": {"ironore": 10, "coal": 10},
+    "stockcar": {"crate_tools": 32},
 }
 
 
@@ -117,7 +186,18 @@ firewoodReserves = {
     "class70_tender": 1350,
     "eureka_tender": 499,
     "caboose": 15,
+    "waycar": 25,
+    "montezuma_tender": 470,
+    "glenbrook_tender": 798,
+    "shay": 317,
+    "mosca_tender": 854,
+    "cooke260_new_tender": 6000,
+    "tweetsie280_tender": 6000,
+    "tenmile": 3320,
+    "622D": 144,
+    "cooke280_tender": 1428,
 }
+
 
 
 waterReserves = {
@@ -131,6 +211,15 @@ waterReserves = {
     "cooke260_tender": 9500,
     "class70_tender": 9500,
     "eureka_tender": 3800,
+    "montezuma_tender": 5900,
+    "glenbrook_tender": 3800,
+    "shay": 4000,
+    "mosca_tender": 3800,
+    "cooke260_new_tender": 9500,
+    "tweetsie280_tender": 9500,
+    "tenmile": 5000,
+    "622D": 5000,
+    "cooke280_tender": 9500,
 }
 
 
@@ -143,6 +232,15 @@ waterBoiler = {
     "cooke260": 5000,
     "class70": 6000,
     "eureka": 5000,
+    "montezuma": 5000,
+    "glenbrook": 5000,
+    "shay": 4000,
+    "mosca": 5000,
+    "cooke260_new": 5000,
+    "tweetsie280": 5000,
+    "tenmile": 5000,
+    "622D": 5000,
+    "cooke280": 5000,
 }
 
 
@@ -155,6 +253,15 @@ availableSmokestacks = {
     "cooke260": 3,
     "class70": 3,
     "eureka": 1,
+    "montezuma": 3,
+    "glenbrook": 5,
+    "shay": 4,
+    "mosca": 5,
+    "cooke260_new": 5,
+    "tweetsie280": 3,
+    "tenmile": 9,
+    "622D": 3,
+    "cooke280": 4,
 }
 
 
@@ -168,6 +275,15 @@ availableHeadlights = {
     "cooke260_tender": 2,
     "class70": 2,
     "eureka": 3,
+    "montezuma": 2,
+    "glenbrook": 3,
+    "shay": 3,
+    "mosca": 3,
+    "cooke260_new": 3,
+    "tweetsie280": 3,
+    "tenmile": 9,
+    "622D": 1,
+    "cooke280": 3,
 }
 
 
@@ -180,6 +296,15 @@ sandLevel = {
     "cooke260": 100,
     "class70": 100,
     "eureka": 100,
+    "montezuma": 100,
+    "glenbrook": 100,
+    "shay": 100,
+    "mosca": 100,
+    "cooke260_new": 100,
+    "tweetsie280": 100,
+    "tenmile": 100,
+    "622D": 100,
+    "cooke280": 100,
 }
 
 
