@@ -143,7 +143,7 @@ class GVASData(object):
         # print(sz)
         check_bool = readInt8(fstream)
         if check_bool != 0:
-            raise GVASParserNotImplemented(f"check boolean is not 0 for '{pname}'")
+            raise GVASParserNotImplemented(f"check boolean is not 0 for '{prop.name}'")
         prop._data = readUEString(fstream)
         # print(prop.data)
 
